@@ -66,16 +66,17 @@ function updateStylingControls(data) {
     const idParts = data.id.split('-')
 
     if(idParts[0] == 'webpage'){
+      document.getElementById('accordion-carousel-styling').classList.add('hidden')
       document.getElementById('accordion-font-styling').classList.add('hidden')
       document.getElementById('accordion-border-wave-section').classList.remove('hidden')
       document.getElementById('box-width-field').classList.add('hidden')
       document.getElementById('accordion-box-field').classList.remove('hidden')
-      // document.getElementById('flex-position-accordion').classList.remove('hidden')
       document.getElementById('accordion-head-indicator-wrapper').classList.add('hidden')
       document.getElementById('accordion-modal-type').classList.add('hidden')
       console.log('webpage')
 
     }else if(idParts[0] == 'field'){
+      document.getElementById('accordion-carousel-styling').classList.add('hidden')
       document.getElementById('accordion-border-wave-section').classList.add('hidden')
       document.getElementById('accordion-font-styling').classList.remove('hidden')
       document.getElementById('accordion-modal-type').classList.add('hidden')
@@ -97,6 +98,7 @@ function updateStylingControls(data) {
       console.log('field')
 
     }else if(data.id.startsWith('video')){
+      document.getElementById('accordion-carousel-styling').classList.add('hidden')
       document.getElementById('accordion-border-wave-section').classList.add('hidden')
       document.getElementById('accordion-modal-type').classList.add('hidden')
       document.getElementById('accordion-font-styling').classList.add('hidden')
@@ -110,6 +112,7 @@ function updateStylingControls(data) {
       console.log('video')
 
     }else if(data.id.startsWith('btn-modal') || data.id.startsWith('btn-heading-accordion') || data.id.startsWith('btn-collapse')){
+      document.getElementById('accordion-carousel-styling').classList.add('hidden')
       document.getElementById("heading-text").innerHTML = data.querySelector('span').innerHTML
       document.getElementById('accordion-head-indicator-wrapper').classList.remove('hidden')
       document.getElementById('accordion-head-indicator-wrapper').classList.add('flex')
@@ -133,6 +136,7 @@ function updateStylingControls(data) {
       console.log('btn modal')
 
     }else if(data.id.startsWith('parent-modal')){
+      document.getElementById('accordion-carousel-styling').classList.add('hidden')
       document.getElementById('accordion-modal-type').classList.remove('hidden')
       document.getElementById('accordion-border-wave-section').classList.add('hidden')
       document.getElementById('accordion-font-styling').classList.add('hidden')
@@ -146,18 +150,28 @@ function updateStylingControls(data) {
       document.getElementById('border-color-field').value = data.dataset.borderColor;
 
     }else if(data.id.startsWith('body-accordion')){
+      document.getElementById('accordion-carousel-styling').classList.add('hidden')
       document.getElementById('accordion-modal-type').classList.add('hidden')
       document.getElementById('heading-text-wrapper').classList.add('hidden')
       document.getElementById('accordion-head-indicator-wrapper').classList.add('hidden')
       document.getElementById('accordion-border-wave-section').classList.add('hidden')
       document.getElementById('accordion-font-styling').classList.add('hidden')
 
-    }else if(data.id.startsWith('carousel-element')){
+    }else if(data.id.startsWith('carousel')){
+      document.getElementById('add-text-carousel').textContent = carouselSelect.dataset.text === "true" ? "Remove Text" : "Add Text"
+      document.getElementById('btn-text-position').textContent = carouselSelect.dataset.textPosition === "on image" ? "On Image" : "Below Image"
+      document.getElementById('btn-hide-next').textContent = carouselSelect.dataset.nextBtnHide === "true" ? "Unhide" : "Hide"
 
+      document.getElementById('accordion-head-indicator-wrapper').classList.add('hidden')
+      document.getElementById('heading-text-wrapper').classList.add('hidden')
+      document.getElementById('accordion-carousel-styling').classList.remove('hidden')
       document.getElementById('accordion-border-field').classList.add('hidden')
       document.getElementById('accordion-border-wave-section').classList.add('hidden')
       document.getElementById('bg-image-styling').classList.add('hidden')
       document.getElementById('accordion-font-styling').classList.remove('hidden')
+      document.getElementById('accordion-box-field').classList.remove('hidden')
+      document.getElementById('box-height-field').classList.remove('hidden')
+      document.getElementById('box-width-field').classList.remove('hidden')
       document.getElementById('accordion-padding').classList.add('hidden')
       
       let itemCarousel=""
@@ -200,9 +214,9 @@ function updateStylingControls(data) {
 
       let accordionCarouselStyling = document.getElementById('accordion-carousel-styling')
       accordionCarouselStyling.classList.remove('hidden')
-      
-      accordionCarouselStyling.querySelector('[id="carousel-item-wrapping"]').dataset.itemCount = data.querySelector('[id^="element-carousel-"]').dataset.itemCount
-      accordionCarouselStyling.querySelector('[id="carousel-item-wrapping"]').innerHTML = itemCarousel
+      console.log(data)
+      accordionCarouselStyling.querySelector('[id="edit-carousel-item-wrapping"]').dataset.itemCount = data.querySelector('[id^="element-carousel-"]').dataset.itemCount
+      accordionCarouselStyling.querySelector('[id="edit-carousel-item-wrapping"]').innerHTML = itemCarousel
       dropdownInitialized()
     }
 
@@ -377,7 +391,7 @@ function setListener(){
     })
   })
 
-  document.querySelectorAll('[id^="carousel-element-"]').forEach(carouselElement =>{
+  document.querySelectorAll('[id^="carousel-"]').forEach(carouselElement =>{
     carouselElement.addEventListener('click', function(e){
       carouselSelect = carouselElement
       editorFieldSelect=null
@@ -1494,7 +1508,7 @@ function colorBackgroundField(){
       fieldEditor = carouselSelect
     }
 
-    if(fieldEditor.id.startsWith('carousel-element')){
+    if(fieldEditor.id.startsWith('carousel')){
       fieldEditor.dataset.fieldBgColor = this.value;
       fieldEditor.querySelectorAll('[id^="item-carousel-"]').forEach(item =>{
         if(fieldEditor.dataset.textPosition === 'on image'){
@@ -1534,7 +1548,7 @@ function colorBackgroundField(){
       fieldEditor = carouselSelect
     }
     
-    if(fieldEditor.id.startsWith('carousel-element')){
+    if(fieldEditor.id.startsWith('carousel')){
       fieldEditor.querySelectorAll('[id^="item-carousel-"]').forEach(item =>{
         if(fieldEditor.dataset.textPosition ==="on image"){
           item.style.backgroundImage = `
@@ -2204,8 +2218,8 @@ document.getElementById('default-sidebar').addEventListener('click', function (e
       }
     })
     const btnHide = event.target
-    btnHide.textContent = btnHide.textContent == "Hide" ? "Unhide" : "Hide"
-    btnHide.dataset.hide = btnHide.dataset.hide == "unhide" ? "hide" : "unhide"
+    carouselSelect.dataset.nextBtnHide = carouselSelect.dataset.nextBtnHide == "true" ? "false" : "true"
+    btnHide.textContent = carouselSelect.dataset.nextBtnHide == "true" ? "Unhide" : "Hide"
   }
 
   if(event.target.id.startsWith("btn-text-position") && carouselSelect.dataset.text === 'true'){
@@ -2248,13 +2262,13 @@ document.getElementById('default-sidebar').addEventListener('click', function (e
     btnPosition.textContent = btnPosition.textContent == "On Image" ? "Below Image" : "On Image"
   }
 
-
   if(idParts[1] === 'item' && idParts[0] != 'add'){
     editCarouselItem = document.getElementById(`edit-${idParts.slice(1, idParts.length).join('-')}`);
     bodyItem = editCarouselItem.parentElement.parentElement
 
     actualField = document.getElementById(`${idParts.slice(1, idParts.length).join('-')}`)
     actualBodyItem = actualField.parentElement.parentElement
+    console.log("actual carousel", actualField)
   }
 
   if (idParts[0] === 'down') {
@@ -2516,7 +2530,7 @@ document.getElementById('webpage').addEventListener('click', function (event) {
       </div>
     `
     bodyDropdown=`
-      <div id="dropdown-body-${idPrefix}" data-accordion="open" class="w-25 z-30 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700">
+      <div id="dropdown-body-${idPrefix}" data-accordion="open" class="w-25 z-40 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700">
         <ul class="py-2 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownDefaultButton">
           <li>
               <a id="up-${idPrefix}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Move Up</a>
@@ -3366,41 +3380,29 @@ document.getElementById('webpage').addEventListener('click', function (event) {
       paddingSlideController = 'px-4'
     }
 
-    if(idParts.includes('accordion')){
-
-      carouselElement.style.width = '250px'
-      carouselElement.style.height = '150px'
-
-      dropdownBody = `
-        <div id="dropdown-${idPrefix}" data-accordion="open" class="absolute mt-2 left-0 w-30 z-30 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700">
+    dropdownBody = `
+       <div id="dropdown-${idPrefix}" data-accordion="open" class="absolute mt-2 left-0 w-30 z-40 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700">
           <ul class="py-2 text-sm text-gray-700 dark:text-gray-200">
             <li><a id="down-${idPrefix}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Move Down</a></li>
             <li><a id="up-${idPrefix}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Move Up</a></li>
-            <li><a id="add-image-${idPrefix}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Add Image</a></li>
-            <li><a id="add-text-${idPrefix}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Add Text</a></li>
           </ul>
           <ul class="py-2 text-sm text-gray-700 dark:text-gray-200 border-t border-gray-500">
             <li><a id="delete-${idPrefix}" class="cursor-pointer font-bold block text-red-700 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Delete</a></li>
           </ul>
         </div>
-      `
+    `
+    if(idParts.includes('accordion')){
+
+      carouselElement.style.width = '250px'
+      carouselElement.style.height = '150px'
+
       let idSection = `editor-container-section-${idParts.find(part => !isNaN(part))}`
       document.getElementById(idSection).insertAdjacentHTML('beforeend', dropdownBody)
 
       console.log('mini carousel')
 
     }else{
-      carouselElement.innerHTML += `
-        <div id="dropdown-${idPrefix}" data-accordion="open" class="absolute mt-2 left-0 w-30 z-30 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700">
-          <ul class="py-2 text-sm text-gray-700 dark:text-gray-200">
-            <li><a id="down-${idPrefix}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Move Down</a></li>
-            <li><a id="up-${idPrefix}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Move Up</a></li>
-          </ul>
-          <ul class="py-2 text-sm text-gray-700 dark:text-gray-200 border-t border-gray-500">
-            <li><a id="delete-${idPrefix}" class="cursor-pointer font-bold block text-red-700 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Delete</a></li>
-          </ul>
-        </div>
-      `
+      carouselElement.innerHTML += dropdownBody
     }
     
     carouselElement.id = idPrefix;

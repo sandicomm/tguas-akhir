@@ -126,6 +126,19 @@
                         <div id="heading-text" class="border-2 border-gray-300 text-sm rounded focus:ring-blue-500 focus:border-blue-500 w-full px-1 py-2" contenteditable="true"></div>
                     </div>
 
+                    <!-- ================================ HEAD INDICATOR ================================ -->
+                    <div id="accordion-head-indicator-wrapper" class="p-3 mt-4 justify-center items-center flex-col gap-2 w-full border border-gray-300 rounded-md hidden">
+                        <h2 class="text-white">Head Indicator</h2>
+                        <div class="flex justify-center items-center w-full">
+                            <select id="head-indicator-type" class="p-1 bg-white rounded m-1 w-full">
+                                <option value="default" class="text-black" selected>Default</option>
+                                <option value="question" class="text-black">?</option>
+                                <option value="icon" class="text-black">&#11163;</option>
+                                <option value="none" class="text-black">None</option>
+                            </select>
+                        </div>
+                    </div>
+
                     <!-- =============================== MODAL TYPE BODY ============================ -->
                     <div id="accordion-modal-type" class="p-3 mt-4 justify-center items-center flex-col gap-2 w-full border border-gray-300 rounded-md hidden">
                         <h2 class="text-white">Modal Type</h2>
@@ -164,21 +177,8 @@
                         </div>
                         <div class="w-full text-white">
                             <input type="file" id="bg-image-carousel" accept="image/*" class="hidden">
-                            <div id="carousel-item-wrapping" class="shadow-md shadow-white rounded-md p-2 flex flex-col max-h-[50dvh] overflow-y-auto">
+                            <div id="edit-carousel-item-wrapping" class="shadow-md shadow-white rounded-md p-2 flex flex-col max-h-[50dvh] overflow-y-auto">
                             </div>
-                        </div>
-                    </div>
-
-                    <!-- ================================ HEAD INDICATOR ================================ -->
-                    <div id="accordion-head-indicator-wrapper" class="p-3 mt-4 justify-center items-center flex-col gap-2 w-full border border-gray-300 rounded-md hidden">
-                        <h2 class="text-white">Head Indicator</h2>
-                        <div class="flex justify-center items-center w-full">
-                            <select id="head-indicator-type" class="p-1 bg-white rounded m-1 w-full">
-                                <option value="default" class="text-black" selected>Default</option>
-                                <option value="question" class="text-black">?</option>
-                                <option value="icon" class="text-black">&#11163;</option>
-                                <option value="none" class="text-black">None</option>
-                            </select>
                         </div>
                     </div>
 
@@ -288,21 +288,6 @@
                                         </td>
                                     </tr>     
                                 </table>
-                                <!-- <div id="flex-position-accordion" class="w-full flex flex-col justify-center items-start mt-3">
-                                    <label for="flex-field-position">Flex Position</label>     
-                                    <select id="flex-field-position" class="bg-transparent text-white rounded border-white m-1">
-                                        <option value="default" class="text-black" selected>Flex</option>
-                                        <option value="top" class="text-black">Top</option>
-                                        <option value="top-l" class="text-black">Top Left</option>
-                                        <option value="top-r" class="text-black">Top Right</option>
-                                        <option value="center" class="text-black">Center</option>
-                                        <option value="center-r" class="text-black">Center Right</option>
-                                        <option value="center-l" class="text-black">Center Left</option>
-                                        <option value="bottom" class="text-black">Bottom</option>
-                                        <option value="bottom-r" class="text-black">Bottom Right</option>
-                                        <option value="bottom-l" class="text-black">Bottom Left</option>
-                                    </select>
-                                </div> -->
                             </div>
                         </div>
                     </div>
