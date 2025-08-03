@@ -1,0 +1,5 @@
+.login-page{
+    background-image: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.5)), url('../assets/img/diabet-hand.jpg');
+    background-size: cover;
+    background-position: center;
+}

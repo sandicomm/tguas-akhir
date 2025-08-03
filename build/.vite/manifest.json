@@ -1,0 +1,21 @@
+{
+  "resources/assets/img/diabet-hand.jpg": {
+    "file": "assets/diabet-hand-cDb8ohwv.jpg",
+    "src": "resources/assets/img/diabet-hand.jpg"
+  },
+  "resources/assets/img/loading.gif": {
+    "file": "assets/loading-CAqQ0cjO.gif",
+    "src": "resources/assets/img/loading.gif"
+  },
+  "resources/css/app.css": {
+    "file": "assets/app-QjINRykm.css",
+    "src": "resources/css/app.css",
+    "isEntry": true
+  },
+  "resources/js/app.js": {
+    "file": "assets/app-CjMzrAXW.js",
+    "name": "app",
+    "src": "resources/js/app.js",
+    "isEntry": true
+  }
+}
