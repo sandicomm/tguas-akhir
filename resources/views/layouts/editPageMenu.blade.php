@@ -101,6 +101,17 @@
     <aside id="default-sidebar" :class="open ? 'translate-x-0' : '-translate-x-full'" class="fixed top-0 left-0 z-[80] sm:w-64 sm:h-screen w-full transition-transform duration-300 sm:translate-x-0 bg-gradient-to-t from-gray-800 to-indigo-600 border-e-2 border-gray-500 dark:bg-gray-800"
         aria-label="Sidebar">
         <div class="relative scroll-hidden h-full px-3 py-4 overflow-y-auto bg-gradient-to-t from-gray-800 to-indigo-600 border-e-2 border-gray-500 dark:bg-gray-800">
+            
+            <h3 id="indicator-page" class="text-center text-white mb-2 font-bold text-lg"></h3>
+
+            <div id="btn-page-swap" class="mb-3 bg-white rounded-md border border-gray-600 flex overflow-hidden text-center"
+            data-prolog-web="{{ route('webpage','prolog-web') }}"
+            data-prolog-emodul="{{ route('webpage','prolog-emodul') }}"
+            data-webpage="{{ route('webpage','web') }}"
+            >
+                
+            </div>
+ 
             <ul class="space-y-2 font-medium">
                 <li class="flex justify-between">
                     <x-nav-link href="{{ route('dashboard') }}">
@@ -121,9 +132,9 @@
                 <div id="accordion-collapse-section" data-accordion="collapse" class="">
 
                     <!-- ================================ HEADING TEXT ================================ -->
-                    <div id="heading-text-wrapper" class="px-2 flex-col gap-2 text-white w-full hidden">
-                        <h2>Heading Text</h2>
-                        <div id="heading-text" class="border-2 border-gray-300 text-sm rounded focus:ring-blue-500 focus:border-blue-500 w-full px-1 py-2" contenteditable="true"></div>
+                    <div id="heading-text-wrapper" class="px-2 flex-col gap-2 w-full hidden">
+                        <h2 class="text-white">Heading Text</h2>
+                        <div id="heading-text" class="bg-gray-300 border-2 border-gray-300 text-sm rounded focus:ring-blue-500 focus:border-blue-500 w-full px-1 py-2" contenteditable="true"></div>
                     </div>
 
                     <!-- ================================ HEAD INDICATOR ================================ -->
@@ -131,7 +142,8 @@
                         <h2 class="text-white">Head Indicator</h2>
                         <div class="flex justify-center items-center w-full">
                             <select id="head-indicator-type" class="p-1 bg-white rounded m-1 w-full">
-                                <option value="default" class="text-black" selected>Default</option>
+                                <option value="" class="text-black">-- Pilih Indicator --</option>
+                                <option value="default" class="text-black">Default</option>
                                 <option value="question" class="text-black">?</option>
                                 <option value="icon" class="text-black">&#11163;</option>
                                 <option value="none" class="text-black">None</option>
@@ -144,8 +156,21 @@
                         <h2 class="text-white">Modal Type</h2>
                         <div class="flex justify-center items-center w-full">
                             <select id="modal-type" class="p-1 bg-white rounded m-1 w-full">
-                                <option value="default" class="text-black" selected>Default</option>
+                                <option value="" class="text-black">-- Pilih Tipe --</option>
+                                <option value="default" class="text-black">Default</option>
                                 <option value="static" class="text-black">Static</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- =============================== ACCORDION TYPE ============================ -->
+                    <div id="accordion-accordion-type" class="p-3 mt-4 justify-center items-center flex-col gap-2 w-full border border-gray-300 rounded-md hidden">
+                        <h2 class="text-white">Accordion Type</h2>
+                        <div class="flex justify-center items-center w-full">
+                            <select id="accordion-type" class="p-1 bg-white rounded m-1 w-full">
+                                <option value="" class="text-black">-- Pilih Tipe --</option>
+                                <option value="collapse" class="text-black">Collapse</option>
+                                <option value="open" class="text-black">Open</option>
                             </select>
                         </div>
                     </div>
@@ -518,7 +543,7 @@
                                     <div class="flex justify-center items-center flex-col gap-2 text-white w-full">
                                         <input type="file" id="bg-image-input" accept="image/*" class="hidden">
                                         <label for="bg-image-input" class="bg-blue-500 text-white px-4 py-2 rounded cursor-pointer w-full text-center">Choose File</label>
-                                        <span id="file-name-display" class="ml-2 text-sm text-white">No image selected</span>
+                                        <span id="file-name-display" class="ml-2 text-sm text-white break-all">No image selected</span>
                                         <div id="preview-container" class="mt-3 flex justify-center">
                                             <img id="preview-image" src="" alt="Preview" class="w-1/2 h-auto rounded-lg hidden" />
                                         </div>
@@ -678,7 +703,7 @@
                     </div>
                 </div>
             </ul>
-            <div class=" w-full bg-white p-4">
+            <div class="w-full bg-white p-4">
                 <button id="btn-save" class="border-2 border-black px-1 rounded hover:bg-green-500 hover:text-white">Save</button>
             </div>
         </div>

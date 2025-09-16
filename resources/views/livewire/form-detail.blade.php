@@ -10,7 +10,6 @@
         <a href="{{ route('forms') }}" class="bg-gray-400 p-2 rounded shadow-sm text-white mb-4 lg:text-lg text-sm inline-block">
             Kembali ke Daftar Form
         </a>
-
         @if ($form)
             <script>
                 let formJs = @js($form);

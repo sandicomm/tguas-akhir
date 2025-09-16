@@ -6,6 +6,7 @@ let SECTION_MAX_ID
 let QUESTION_MAX_ID
 
 document.addEventListener('DOMContentLoaded', function(){
+
     formCopy = JSON.parse(JSON.stringify(formJs));
     SECTION_MAX_ID = sectionMaxID
     QUESTION_MAX_ID = questionMaxID

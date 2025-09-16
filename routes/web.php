@@ -19,7 +19,10 @@ Route::get('/comments', App\Livewire\Comments::class)->middleware(['auth', 'veri
 
 Route::get('/media', App\Livewire\MediaManager::class)->middleware(['auth', 'verified'])->name('media');
 Route::get('/emodul', App\Livewire\Emodul::class)->middleware(['auth', 'verified'])->name('emodul');
-Route::get('/webpage', App\Livewire\WebPage::class)->middleware(['auth', 'verified'])->name('web-page');
+Route::get('/webpage/{params}', App\Livewire\WebPage::class)->middleware(['auth', 'verified'])->name('webpage');
+
+Route::post('/webpage/store', [App\Livewire\WebPage::class, 'store'])->middleware(['auth', 'verified'])->name('webpage/store');
+
 Route::get('/export', function (){
     return view('exports.scoring');
 })->name('export');

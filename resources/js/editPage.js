@@ -2,15 +2,52 @@ import { Dropdown, Carousel, Modal } from 'flowbite';
 import { Accordion, initFlowbite } from 'flowbite';
 
 let editorCount = 0;
-let sectionCount = 0;
-let webPage=null
+let webpageDb, param
+let webpageDbRaw
+let webpageDbParentSection
 let editorFieldSelect
 let editCarouselItem
 let carouselSelect
 let accordionPartSelect
 let accordionSelect
-let sectionSelect
 let savedSelection = null;
+
+document.addEventListener('DOMContentLoaded', function(){
+  webpageDbRaw = JSON.parse(JSON.stringify(webpageJs));
+  param = JSON.parse(JSON.stringify(paramJs))
+
+  webpageDb = webpageDbRaw.filter(page => page.type !== 'parent-section')
+  webpageDbParentSection = webpageDbRaw.filter(page => page.type == 'parent-section')
+
+  console.log(webpageDb)
+  console.log(param, paramJs)
+  let btnSwap = document.getElementById('btn-page-swap')
+  let btnSwapPage
+  let btn1=`flex: 1;padding: 0.25rem;border-right: 1px solid #4b5563;font-size: 0.875rem;font-weight: 700;color: #1f2937;`
+  let btn2=`flex: 1;padding: 0.25rem;font-size: 0.875rem;font-weight: 700;color: #1f2937;`
+  
+  btnSwapPage = `
+    <a href="${ param === 'prolog-web' ? btnSwap.dataset.webpage : btnSwap.dataset.prologWeb }" id="btn-to-prolog-webpage" style="${btn1}">
+      ${ param === 'prolog-web' ? 'To Webpage' : 'To Prolog Webpage' }
+    </a>
+    <a href="${ param==='prolog-emodul' ? btnSwap.dataset.webpage : btnSwap.dataset.prologEmodul }" id="btn-to-prolog-emodul" style="${btn2}">
+      ${ param === 'prolog-emodul' ? 'To Webpage' : 'To Prolog Emodul' }
+    </a>
+  `
+  let indicatorPage
+  if(param === 'prolog-web'){
+    indicatorPage = 'Prolog Webpage'
+  }else if(param === 'prolog-emodul'){
+    indicatorPage = 'Prolog Emodul'
+  }else{
+    indicatorPage = 'Webpage'
+  }
+
+
+  btnSwap.innerHTML=btnSwapPage        
+  document.getElementById('indicator-page').innerHTML=indicatorPage        
+  loadWebpage()
+})
 
 function dropdownInitialized(){
   document.querySelectorAll('[data-dropdown-toggle]').forEach(toggleEl => {
@@ -60,36 +97,149 @@ function setPaddingMarginBoxBorder(computedField){
     document.getElementById('border-field-rounded-bottom-right').value = parseInt(computedField.borderBottomRightRadius);
 }
 
-function updateStylingControls(data) {
+function getRgbArray(str) {
+  // cocokkan angka dalam rgba atau rgb
+  const match = str.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+  if (match) {
+    return [parseInt(match[1]), parseInt(match[2]), parseInt(match[3])];
+  }
+  return null;
+}
+
+function rgbToHex(r, g, b) {
+  const toHex = (n) => {
+    const hex = Number(n).toString(16);
+    return hex.length === 1 ? "0" + hex : hex;
+  };
+  return "#" + toHex(r) + toHex(g) + toHex(b);
+}
+
+function updateStylingControls(data, field) {
     const computedField = window.getComputedStyle(data);
     setPaddingMarginBoxBorder(computedField)
     const idParts = data.id.split('-')
-
+    
     if(idParts[0] == 'webpage'){
+      document.getElementById('accordion-accordion-type').classList.add('hidden')
       document.getElementById('accordion-carousel-styling').classList.add('hidden')
       document.getElementById('accordion-font-styling').classList.add('hidden')
       document.getElementById('accordion-border-wave-section').classList.remove('hidden')
       document.getElementById('box-width-field').classList.add('hidden')
       document.getElementById('accordion-box-field').classList.remove('hidden')
       document.getElementById('accordion-head-indicator-wrapper').classList.add('hidden')
+      document.getElementById('heading-text-wrapper').classList.add('hidden')
       document.getElementById('accordion-modal-type').classList.add('hidden')
-      console.log('webpage')
+
+      let fieldColor= data.style.backgroundImage ?? data.style.backgroundColor
+      let borderColor= data.style.borderColor ?? ''
+
+      fieldColor = getRgbArray(fieldColor)
+
+      if(fieldColor){
+        fieldColor = rgbToHex(fieldColor[0],fieldColor[1],fieldColor[2])
+      }
+
+      borderColor = getRgbArray(borderColor)
+
+      if(borderColor){
+        borderColor = rgbToHex(borderColor[0],borderColor[1],borderColor[2])
+      }
+
+      document.getElementById('color-field-input').value = fieldColor
+      document.getElementById('border-color-field').value = borderColor;
+
+      console.log('webpage', fieldColor)
 
     }else if(idParts[0] == 'field'){
+      document.getElementById('accordion-accordion-type').classList.add('hidden')
       document.getElementById('accordion-carousel-styling').classList.add('hidden')
       document.getElementById('accordion-border-wave-section').classList.add('hidden')
-      document.getElementById('accordion-font-styling').classList.remove('hidden')
       document.getElementById('accordion-modal-type').classList.add('hidden')
       document.getElementById('heading-text-wrapper').classList.add('hidden')
+      document.getElementById('accordion-head-indicator-wrapper').classList.add('hidden')
+      document.getElementById('accordion-font-styling').classList.remove('hidden')
+      document.getElementById('font-order-list').classList.remove('hidden')
+      document.getElementById('font-unorder-list').classList.remove('hidden')
+      document.getElementById('accordion-border-field').classList.remove('hidden')
+      document.getElementById('accordion-padding').classList.remove('hidden')
+      document.getElementById('accordion-margin').classList.remove('hidden')
       document.getElementById('accordion-box-field').classList.remove('hidden')
       document.getElementById('box-height-field').classList.remove('hidden')
       document.getElementById('box-width-field').classList.remove('hidden')
       document.getElementById('accordion-box-field').classList.remove('hidden')
-      document.getElementById('accordion-head-indicator-wrapper').classList.add('hidden')
+      
+      let fontColor
+      if (field) {
+        fontColor = field.getAttribute('color') ?? field.closest('font')?.getAttribute('color') ?? '';
+        console.log(fontColor);
+      } else {
+        console.error("Variabel 'field' bernilai null atau tidak ditemukan.");
+      }
 
-      document.getElementById('font-color-input').value = data.dataset.fieldFontColor ?? data.dataset.fieldFontColor;
-      document.getElementById('color-field-input').value = data.dataset.fieldBgColor ?? data.dataset.fieldBgColor
-      document.getElementById('border-color-field').value = data.dataset.borderColor;
+      let fieldColor= data.style.backgroundImage || data.style.backgroundColor
+      let borderColor= data.style.borderColor
+
+      fieldColor = getRgbArray(fieldColor)
+
+      if(fieldColor){
+        fieldColor = rgbToHex(fieldColor[0],fieldColor[1],fieldColor[2])
+      }
+
+      borderColor = getRgbArray(borderColor)
+
+      if(borderColor){
+        borderColor = rgbToHex(borderColor[0],borderColor[1],borderColor[2])
+      }
+
+      document.getElementById('font-color-input').value = fontColor
+      document.getElementById('color-field-input').value = fieldColor
+      document.getElementById('border-color-field').value = borderColor
+
+      if(idParts[1] == 'head' && idParts[2] == 'modal'){
+        document.getElementById('accordion-box-field').classList.add('hidden')
+      }
+
+      console.log('field')
+
+    }else if(data.id == 'heading-text'){
+      document.getElementById('accordion-carousel-styling').classList.add('hidden')
+      document.getElementById('accordion-border-wave-section').classList.add('hidden')
+      document.getElementById('accordion-modal-type').classList.add('hidden')
+      document.getElementById('accordion-font-styling').classList.remove('hidden')
+      document.getElementById('accordion-border-field').classList.remove('hidden')
+      document.getElementById('accordion-padding').classList.remove('hidden')
+      document.getElementById('accordion-margin').classList.remove('hidden')
+      document.getElementById('accordion-box-field').classList.remove('hidden')
+      document.getElementById('box-height-field').classList.remove('hidden')
+      document.getElementById('box-width-field').classList.remove('hidden')
+      document.getElementById('accordion-box-field').classList.remove('hidden')
+      
+      let fontColor
+      if (field) {
+        fontColor = field.getAttribute('color') ?? field.closest('font')?.getAttribute('color') ?? '';
+        console.log(fontColor, field.closest('font'));
+      } else {
+
+        console.error("Variabel 'field' bernilai null atau tidak ditemukan.");
+      }
+      let fieldColor= data.style.backgroundImage || data.style.backgroundColor
+      let borderColor= data.style.borderColor
+
+      fieldColor = getRgbArray(fieldColor)
+
+      if(fieldColor){
+        fieldColor = rgbToHex(fieldColor[0],fieldColor[1],fieldColor[2])
+      }
+
+      borderColor = getRgbArray(borderColor)
+
+      if(borderColor){
+        borderColor = rgbToHex(borderColor[0],borderColor[1],borderColor[2])
+      }
+
+      document.getElementById('font-color-input').value = fontColor
+      document.getElementById('color-field-input').value = fieldColor
+      document.getElementById('border-color-field').value = borderColor
 
       if(idParts[1] == 'head' && idParts[2] == 'modal'){
         document.getElementById('accordion-box-field').classList.add('hidden')
@@ -98,10 +248,13 @@ function updateStylingControls(data) {
       console.log('field')
 
     }else if(data.id.startsWith('video')){
+      document.getElementById('accordion-accordion-type').classList.add('hidden')
       document.getElementById('accordion-carousel-styling').classList.add('hidden')
       document.getElementById('accordion-border-wave-section').classList.add('hidden')
       document.getElementById('accordion-modal-type').classList.add('hidden')
       document.getElementById('accordion-font-styling').classList.add('hidden')
+      document.getElementById('accordion-padding').classList.add('hidden')
+      document.getElementById('accordion-border-field').classList.add('hidden')
       document.getElementById('accordion-background').classList.add('hidden')
       document.getElementById('heading-text-wrapper').classList.add('hidden')
       document.getElementById('accordion-box-field').classList.remove('hidden')
@@ -111,7 +264,7 @@ function updateStylingControls(data) {
       document.getElementById('accordion-head-indicator-wrapper').classList.add('hidden')
       console.log('video')
 
-    }else if(data.id.startsWith('btn-modal') || data.id.startsWith('btn-heading-accordion') || data.id.startsWith('btn-collapse')){
+    }else if(data.id.startsWith('btn-modal') || data.id.startsWith('btn-heading-accordion')){
       document.getElementById('accordion-carousel-styling').classList.add('hidden')
       document.getElementById("heading-text").innerHTML = data.querySelector('span').innerHTML
       document.getElementById('accordion-head-indicator-wrapper').classList.remove('hidden')
@@ -121,47 +274,103 @@ function updateStylingControls(data) {
       document.getElementById('box-width-field').classList.remove('hidden')
       document.getElementById('box-height-field').classList.add('hidden')
       document.getElementById('accordion-font-styling').classList.remove('hidden')
+      document.getElementById('accordion-accordion-type').classList.remove('hidden')
       document.getElementById('accordion-background').classList.remove('hidden')
       document.getElementById('accordion-box-field').classList.remove('hidden')
+      document.getElementById('accordion-border-field').classList.remove('hidden')
       
       document.getElementById('font-order-list').classList.add('hidden')
       document.getElementById('font-unorder-list').classList.add('hidden')
 
       document.getElementById('heading-text-wrapper').classList.remove('hidden')
 
-      document.getElementById('font-color-input').value = data.dataset.fieldFontColor ?? data.dataset.fieldFontColor;
-      document.getElementById('color-field-input').value = data.dataset.fieldBgColor ?? data.dataset.fieldBgColor
-      document.getElementById('border-color-field').value = data.dataset.borderColor;
+      let fieldColor= data.style.backgroundImage || data.style.backgroundColor
+      let borderColor= data.style.borderColor
+
+      fieldColor = getRgbArray(fieldColor)
+      if(fieldColor){
+        fieldColor = rgbToHex(fieldColor[0],fieldColor[1],fieldColor[2])
+      }
+
+      borderColor = getRgbArray(borderColor)
+
+      if(borderColor){
+        borderColor = rgbToHex(borderColor[0],borderColor[1],borderColor[2])
+      }
+
+      document.getElementById('color-field-input').value = fieldColor
+      document.getElementById('border-color-field').value = borderColor;
 
       console.log('btn modal')
 
     }else if(data.id.startsWith('parent-modal')){
+      document.getElementById('accordion-accordion-type').classList.add('hidden')
       document.getElementById('accordion-carousel-styling').classList.add('hidden')
       document.getElementById('accordion-modal-type').classList.remove('hidden')
       document.getElementById('accordion-border-wave-section').classList.add('hidden')
       document.getElementById('accordion-font-styling').classList.add('hidden')
       document.getElementById('accordion-background').classList.remove('hidden')
+      document.getElementById('accordion-padding').classList.add('hidden')
+      document.getElementById('accordion-margin').classList.add('hidden')
+      document.getElementById('accordion-border-field').classList.add('hidden')
       document.getElementById('heading-text-wrapper').classList.add('hidden')
       document.getElementById('accordion-box-field').classList.add('hidden')
       document.getElementById('accordion-head-indicator-wrapper').classList.add('hidden')
       document.getElementById('accordion-head-indicator-wrapper').classList.remove('flex')
 
-      document.getElementById('color-field-input').value = data.dataset.fieldBgColor ?? data.dataset.fieldBgColor
-      document.getElementById('border-color-field').value = data.dataset.borderColor;
+      let fieldColor= data.style.backgroundImage || data.style.backgroundColor
+      let borderColor= data.style.borderColor
 
-    }else if(data.id.startsWith('body-accordion')){
+      fieldColor = getRgbArray(fieldColor)
+
+      if(fieldColor){
+        fieldColor = rgbToHex(fieldColor[0],fieldColor[1],fieldColor[2])
+      }
+
+      borderColor = getRgbArray(borderColor)
+
+      if(borderColor){
+        borderColor = rgbToHex(borderColor[0],borderColor[1],borderColor[2])
+      }
+
+      document.getElementById('color-field-input').value = fieldColor
+      document.getElementById('border-color-field').value = borderColor
+
+    }else if(data.id.startsWith('section-accordion')){
       document.getElementById('accordion-carousel-styling').classList.add('hidden')
       document.getElementById('accordion-modal-type').classList.add('hidden')
       document.getElementById('heading-text-wrapper').classList.add('hidden')
       document.getElementById('accordion-head-indicator-wrapper').classList.add('hidden')
       document.getElementById('accordion-border-wave-section').classList.add('hidden')
       document.getElementById('accordion-font-styling').classList.add('hidden')
+      document.getElementById('accordion-border-field').classList.remove('hidden')
+      document.getElementById('accordion-accordion-type').classList.remove('hidden')
 
+      let fieldColor= data.style.backgroundImage || data.style.backgroundColor
+      let borderColor= data.style.borderColor
+
+      fieldColor = getRgbArray(fieldColor)
+
+      if(fieldColor){
+        fieldColor = rgbToHex(fieldColor[0],fieldColor[1],fieldColor[2])
+      }
+
+      borderColor = getRgbArray(borderColor)
+
+      if(borderColor){
+        borderColor = rgbToHex(borderColor[0],borderColor[1],borderColor[2])
+      }
+
+      document.getElementById('color-field-input').value = fieldColor
+      document.getElementById('border-color-field').value = borderColor
+
+      console.log('section accordion set styling contorls')
     }else if(data.id.startsWith('carousel')){
       document.getElementById('add-text-carousel').textContent = carouselSelect.dataset.text === "true" ? "Remove Text" : "Add Text"
-      document.getElementById('btn-text-position').textContent = carouselSelect.dataset.textPosition === "on image" ? "On Image" : "Below Image"
+      document.getElementById('btn-text-position').textContent = carouselSelect.dataset.textPosition === "on-image" ? "On Image" : "Below Image"
       document.getElementById('btn-hide-next').textContent = carouselSelect.dataset.nextBtnHide === "true" ? "Unhide" : "Hide"
-
+      
+      document.getElementById('accordion-accordion-type').classList.add('hidden')
       document.getElementById('accordion-head-indicator-wrapper').classList.add('hidden')
       document.getElementById('heading-text-wrapper').classList.add('hidden')
       document.getElementById('accordion-carousel-styling').classList.remove('hidden')
@@ -174,18 +383,21 @@ function updateStylingControls(data) {
       document.getElementById('box-width-field').classList.remove('hidden')
       document.getElementById('accordion-padding').classList.add('hidden')
       
-      let itemCarousel=""
+      let accordionCarouselStyling = document.getElementById('accordion-carousel-styling')
+      accordionCarouselStyling.querySelector('[id="edit-carousel-item-wrapping"]').innerHTML=''
       let i =0
       data.querySelectorAll('[id^="item-carousel"]').forEach(item =>{
         i++
-        let style
-        if(carouselSelect.dataset.textPosition === 'on image'){
+        let style=''
+        if(carouselSelect.dataset.textPosition === 'on-image'){
           style = item.getAttribute('style')
+          
         }else{
-          style = `background-image:url("${item.querySelector('img').getAttribute('src')}");background-size:cover;background-position:center;`
+          style = `background-image:url(${item.querySelector('img').getAttribute('src')});background-size:cover;background-position:center;`
+          
         }
         let itemWrapped =`
-            <div id="edit-${item.id}" data-item-order="${item.dataset.itemOrder}" class="mb-2 relative h-auto aspect-[4/3]" style='${style}'>
+            <div id="edit-${item.id}" data-item-order="${item.dataset.itemOrder}" class="mb-2 relative h-auto aspect-[4/3]">
               <div type="button" class="absolute right-0 top-0 cursor-pointer" data-dropdown-toggle="dropdown-${item.id}" data-dropdown-placement="right-end">
                 <svg id="edit-accordion" class="w-6 h-6 text-gray-600 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
                   <path fill-rule="evenodd" d="M11.32 6.176H5c-1.105 0-2 .949-2 2.118v10.588C3 20.052 3.895 21 5 21h11c1.105 0 2-.948 2-2.118v-7.75l-3.914 4.144A2.46 2.46 0 0 1 12.81 16l-2.681.568c-1.75.37-3.292-1.263-2.942-3.115l.536-2.839c.097-.512.335-.983.684-1.352l2.914-3.086Z" clip-rule="evenodd"/>
@@ -203,20 +415,19 @@ function updateStylingControls(data) {
                   <li><a id="delete-${item.id}" class="cursor-pointer font-bold block text-red-700 px-4 py-2 hover:bg-gray-100">Delete</a></li>
                 </ul>
               </div>
-            </div>`
+            </div>
+            `
 
-        itemCarousel += itemWrapped
-        // console.log('item carousel:',itemWrapped)
+        accordionCarouselStyling.querySelector('[id="edit-carousel-item-wrapping"]').insertAdjacentHTML('beforeend', itemWrapped)
+        accordionCarouselStyling.querySelector('[id="edit-carousel-item-wrapping"]').querySelector(`#edit-${item.id}`).setAttribute('style', style)
       })
       
       let addItemCarousel = document.querySelector('[id^="add-item"]')
       addItemCarousel.id = `add-item-${data.id}`
 
-      let accordionCarouselStyling = document.getElementById('accordion-carousel-styling')
       accordionCarouselStyling.classList.remove('hidden')
       console.log(data)
       accordionCarouselStyling.querySelector('[id="edit-carousel-item-wrapping"]').dataset.itemCount = data.querySelector('[id^="element-carousel-"]').dataset.itemCount
-      accordionCarouselStyling.querySelector('[id="edit-carousel-item-wrapping"]').innerHTML = itemCarousel
       dropdownInitialized()
     }
 
@@ -334,8 +545,25 @@ function setListener(){
       editorFieldSelect = field
       accordionSelect =null
       carouselSelect = null
-      console.log('field change: ', editorFieldSelect)
-      updateStylingControls(editorFieldSelect);
+      console.log('field change: ', editorFieldSelect, event.target.closest('font') ?? event.target.innerHTML)
+      webpageDb.forEach(item=>{
+        if(item.id === field.id){
+          item.content = field.innerHTML
+          console.log(item.content)
+          return
+        }
+      })
+      console.log(event.target, editorFieldSelect)
+      updateStylingControls(editorFieldSelect ,event.target);
+    })
+    field.addEventListener('keyup', function (){
+      webpageDb.forEach(item=>{
+        if(item.id === field.id){
+          item.content = field.innerHTML
+          console.log(item.content)
+          return
+        }
+      })
     })
   })
 
@@ -369,28 +597,6 @@ function setListener(){
     })
   })
 
-  document.querySelectorAll('[id^="btn-collapse-"]').forEach(btnCollapse =>{
-    btnCollapse.addEventListener('click', function(){
-      editorFieldSelect = btnCollapse
-      accordionSelect =null
-      carouselSelect = null
-      updateStylingControls(editorFieldSelect)
-      console.log('btn collapse', editorFieldSelect)
-    })
-  })
-
-  document.querySelectorAll('[id^="element-collapse-"]').forEach(elementCollapse =>{
-    elementCollapse.addEventListener('click', function(e){
-      if(e.target.id.startsWith('element-collapse-')){
-        editorFieldSelect = elementCollapse
-        accordionSelect =null
-        carouselSelect = null
-        updateStylingControls(editorFieldSelect)
-        console.log('element collapse:', editorFieldSelect)
-      }
-    })
-  })
-
   document.querySelectorAll('[id^="carousel-"]').forEach(carouselElement =>{
     carouselElement.addEventListener('click', function(e){
       carouselSelect = carouselElement
@@ -400,7 +606,6 @@ function setListener(){
       console.log('carousel:', carouselSelect)
     })
   })
-
 
   document.querySelectorAll('input[type="file"][accept^="video"]').forEach(input => {
     input.addEventListener('change', function (e) {
@@ -419,24 +624,35 @@ function setListener(){
         // Hapus isi label lama (misal SVG)
         label.innerHTML = '';
         label.appendChild(video);
+        webpageDb.map(page=>{
+          if(page.id === e.target.id.split('-').slice(1).join('-')){
+            page.content = file.name
+            page.file = file
+          }
+        })
+        console.log(webpageDb)
       }
     });
   });
 
   document.querySelectorAll("[id^='btn-heading-accordion']").forEach(headAccordion => {
-    headAccordion.addEventListener('click', function(event){
-      const idParts = headAccordion.id.split('-')
-      if(event.target.id.startsWith('btn-heading-accordion') || event.target.parentElement.id.startsWith('btn-heading-accordion')){
-        editorFieldSelect = headAccordion
-        carouselSelect = null
-        accordionSelect = document.getElementById(idParts.slice(2,idParts.length-1).join('-'))
-        console.log('accordion heading clicked: ',editorFieldSelect, accordionSelect);
-        updateStylingControls(editorFieldSelect)
-      }
-    })
-  })
+    headAccordion.addEventListener('click', function(event) {
+      // cari elemen terdekat yang punya id prefix "btn-heading-accordion"
+      const btn = event.target.closest("[id^='btn-heading-accordion']");
+      if (!btn) return; // kalau klik di luar area
 
-  document.querySelectorAll("[id^='body-accordion-']").forEach(bodyAccordion => {
+      const idParts = btn.id.split('-');
+      editorFieldSelect = btn;
+      carouselSelect = null;
+      accordionSelect = document.getElementById(idParts.slice(2, -1).join('-'));
+
+      console.log('accordion heading clicked: ', editorFieldSelect, accordionSelect);
+      updateStylingControls(editorFieldSelect);
+    });
+  });
+
+
+  document.querySelectorAll("[id^='section-accordion-']").forEach(bodyAccordion => {
     bodyAccordion.addEventListener('click', function(event){
       event.stopPropagation()
       const idParts = bodyAccordion.id.split('-')
@@ -444,7 +660,7 @@ function setListener(){
       if(event.target.id.startsWith('body-accordion-') || event.target.parentElement.id.startsWith('body-accordion-')){
         editorFieldSelect = bodyAccordion
         carouselSelect = null
-        accordionSelect = document.getElementById(idParts.slice(1,idParts.length-1).join('-'))
+        accordionSelect = document.getElementById(idParts.slice(1,-2).join('-'))
         console.log('accordion body clicked: ',editorFieldSelect, accordionSelect, event.target);
         updateStylingControls(editorFieldSelect)
       }
@@ -459,6 +675,11 @@ function setListener(){
         savedSelection = range.cloneRange();
       }
     })
+  })
+
+  document.getElementById('heading-text').addEventListener('click', (event) => {
+    updateStylingControls(document.getElementById('heading-text') ,event.target)
+    console.log('headig')
   })
 
   document.getElementById('heading-text').addEventListener('mouseup', () => {
@@ -496,13 +717,134 @@ function applyListStyle() {
   });
 }
 
+function parseStyleObj(styleStr) {
+  try {
+   let clean = styleStr
+    return JSON.parse(clean);
+  } catch (e) {
+    console.log("❌ Gagal parse styleObj:", styleStr, e);
+    return {};
+  }
+}
+
+// ubah object balik jadi string
+function stringifyStyleObj(styleObj) {
+  return JSON.stringify(styleObj, null, 2); 
+}
+
+function updateStyle(editorFieldSelect, indicator, file, indicatorCarousel){
+  webpageDb.forEach(item=>{
+    let id
+    if(editorFieldSelect.id.startsWith('btn-modal-')){
+      id=editorFieldSelect.id.split('-').slice(1).join('-')
+    }else if(editorFieldSelect.id.startsWith('parent-modal-')){
+      id=`body-${editorFieldSelect.id.split('-').slice(1).join('-')}`
+    }else if(editorFieldSelect.parentElement.id.startsWith('item-carousel')){
+      id=editorFieldSelect.parentElement.id
+
+    }else{
+      id=editorFieldSelect.id
+    }
+    console.log(indicatorCarousel)
+    if(item.id === id){
+      if(indicator === 'bg-image'){
+        if(indicatorCarousel === 'on-image'){
+          item.file = file
+          let style = editorFieldSelect.getAttribute('style')
+          style = style.replace(/background-color:\s*[^;]+;/, '');
+          style = style.replace(/url\(['"]?.*?['"]?\)/, `url('{{ asset(storage/media/${file.name} }}')`);
+          
+          item.style = style
+          console.log
+
+        }else if(indicatorCarousel === 'below-image'){
+          let imgTextOnImage = webpageDb.find(field => field.id===`img-text-on-image-${item.id}`)
+          imgTextOnImage.file = file
+
+          console.log(editorFieldSelect)
+          let style = editorFieldSelect.getAttribute('style')
+          let match = style.match(/rgba\([^)]*\)/g);
+          let rgba = 'rgba(128,128,128,1)'
+          
+          if (match && match.length > 0) {
+            rgba = match[0];
+          }
+          item.style = `background-color: ${rgba};`;
+          
+          delete item.file
+
+        }else{
+          item.file=file
+          item.style = editorFieldSelect.getAttribute('style')
+        }
+
+      }else{
+        if(item.type === "carousel") {
+          // khusus carousel
+          let styleObj = parseStyleObj(item.style);
+          styleObj.css = editorFieldSelect.getAttribute('style'); // update css
+          item.style = stringifyStyleObj(styleObj);
+          
+        }else{
+          console.log('style update: ',item.id, item.style,editorFieldSelect, editorFieldSelect.getAttribute('style'))
+          item.style = editorFieldSelect.getAttribute('style')
+
+        }
+      }
+        return
+    }
+  })
+  console.log(webpageDb)
+}
+
+function updateContent(editorFieldSelect, value){
+  let id
+  if(editorFieldSelect.id.startsWith('btn-modal-')){
+    id=editorFieldSelect.id.split('-').slice(1).join('-')
+  }else if(editorFieldSelect.id.startsWith('parent-modal-')){
+    id=`body-${editorFieldSelect.id.split('-').slice(1).join('-')}`
+  }else if(accordionSelect && value){
+    id=accordionSelect.id
+  }else{
+    id=editorFieldSelect.id
+  }
+
+  if(id.startsWith('btn-heading-accordion')){
+    webpageDb.forEach(item=>{
+      if(item.type === 'head-accordion' && item.id.includes(id.split('-').slice(0,-1).join('-'))){
+        item.content = document.getElementById(item.id).querySelector('span').outerHTML
+      }
+    })
+    
+  }else if(id.startsWith('accordion-')){
+    webpageDb.forEach(item=>{
+      if(item.type === 'accordion' && item.id === id){
+        let contentObj = parseStyleObj(item.content)
+        contentObj.headType = value
+        item.content = stringifyStyleObj(contentObj)
+      }
+    })
+    console.log('accordion berubah tipe indicator')
+
+  }else{
+    webpageDb.forEach(item=>{
+      if(item.id === id){
+        item.content = editorFieldSelect.innerHTML
+        return
+      }
+    })
+  }
+  console.log(webpageDb, id)
+}
 
 // ===================== FIELD =========================
 // ------- Font Styling --------
 function fontStylingField(){
   document.getElementById('heading-text').addEventListener('keyup', function () {
     console.log(this.textContent)
+    console.log(editorFieldSelect)
     editorFieldSelect.querySelector('span').innerHTML = this.innerHTML;
+    updateContent(editorFieldSelect)
   });
 
   document.getElementById('font-color-input').addEventListener('change', function () {
@@ -564,7 +906,7 @@ function fontStylingField(){
       if(!fontField.id.startsWith('field-')){
         editorFieldSelect.querySelector('span').innerHTML = fontField.innerHTML;
       }
-
+      updateContent(editorFieldSelect)
     } else {
       console.log('Tidak ada seleksi tersimpan');
     }
@@ -629,7 +971,7 @@ function fontStylingField(){
       if(!fontField.id.startsWith('field-')){
         editorFieldSelect.querySelector('span').innerHTML = fontField.innerHTML;
       }
-
+      updateContent(editorFieldSelect)
     } else {
       console.log('Tidak ada seleksi tersimpan');
     }
@@ -700,7 +1042,7 @@ function fontStylingField(){
       if(!fontField.id.startsWith('field-')){
         editorFieldSelect.querySelector('span').innerHTML = fontField.innerHTML;
       }
-
+      updateContent(editorFieldSelect)
     } else {
       console.log('Tidak ada seleksi tersimpan');
     }
@@ -755,7 +1097,7 @@ function fontStylingField(){
       if(!fontField.id.startsWith('field-')){
         editorFieldSelect.querySelector('span').innerHTML = fontField.innerHTML;
       }
-
+      updateContent(editorFieldSelect)
     } else {
       console.log('Tidak ada seleksi tersimpan');
     }
@@ -807,7 +1149,7 @@ function fontStylingField(){
       if(!fontField.id.startsWith('field-')){
         editorFieldSelect.querySelector('span').innerHTML = fontField.innerHTML;
       }
-
+      updateContent(editorFieldSelect)
     } else {
       console.log('Tidak ada seleksi tersimpan');
     }
@@ -852,7 +1194,9 @@ function fontStylingField(){
       if(!fontField.id.startsWith('field-')){
         editorFieldSelect.querySelector('span').innerHTML = fontField.innerHTML;
       }
-    
+
+      updateContent(editorFieldSelect)
+
     } else {
       console.log('Tidak ada seleksi tersimpan');
     }
@@ -891,13 +1235,18 @@ function fontStylingField(){
         console.log('select all')
       }
 
+      if(!fontField.id.startsWith('field-')){
+        editorFieldSelect.querySelector('span').innerHTML = fontField.innerHTML;
+      }
+
+      updateContent(editorFieldSelect)
+
     }else{
       console.log('not range')
     }
 
-    if(!fontField.id.startsWith('field-')){
-      editorFieldSelect.querySelector('span').innerHTML = fontField.innerHTML;
-    }
+    
+
   })
   
   document.getElementById('font-right').addEventListener('click', function () {
@@ -931,14 +1280,17 @@ function fontStylingField(){
   
         console.log('select all')
       }
+      
+      if(!fontField.id.startsWith('field-')){
+        editorFieldSelect.querySelector('span').innerHTML = fontField.innerHTML;
+      }
+
+      updateContent(editorFieldSelect)
 
     }else{
        console.log('not range')
     }
 
-    if(!fontField.id.startsWith('field-')){
-      editorFieldSelect.querySelector('span').innerHTML = fontField.innerHTML;
-    }
   })
   
   document.getElementById('font-center').addEventListener('click', function () {
@@ -975,12 +1327,14 @@ function fontStylingField(){
         console.log('select all')
       }
 
+      if(!fontField.id.startsWith('field-')){
+        editorFieldSelect.querySelector('span').innerHTML = fontField.innerHTML;
+      }
+      
+      updateContent(editorFieldSelect)
+
     }else{
        console.log('not range')
-    }
-
-    if(!fontField.id.startsWith('field-')){
-      editorFieldSelect.querySelector('span').innerHTML = fontField.innerHTML;
     }
   })
   
@@ -1018,14 +1372,17 @@ function fontStylingField(){
         selection.removeAllRanges();
         console.log('select all')
       }
+      
+      if(!fontField.id.startsWith('field-')){
+        editorFieldSelect.querySelector('span').innerHTML = fontField.innerHTML;
+      }
+
+      updateContent(editorFieldSelect)
 
     }else{
        console.log('not range')
     }
 
-    if(!fontField.id.startsWith('field-')){
-      editorFieldSelect.querySelector('span').innerHTML = fontField.innerHTML;
-    }
   })
 
   document.getElementById('font-order-list').addEventListener('click', function () {
@@ -1049,6 +1406,7 @@ function fontStylingField(){
         ol.remove();
       }
     });
+    updateContent(editorFieldSelect)
   });
 
   document.getElementById('font-unorder-list').addEventListener('click', function () {
@@ -1072,6 +1430,7 @@ function fontStylingField(){
         ul.remove();
       }
     });
+    updateContent(editorFieldSelect)
   });
 }
 // -------- Box Field Styling -----------
@@ -1083,201 +1442,81 @@ function widthHeightField(){
         console.log('video')
       }else if(accordionSelect){
         accordionSelect.style.width=`${this.value}px`
-        console.log('no accordion')
-      }else if(editorFieldSelect.id.startsWith('btn-collapse-') || editorFieldSelect.id.startsWith('element-collapse-')){
-        editorFieldSelect.parentElement.parentElement.style.width=`${this.value}px`
-        console.log('collapse')
+        console.log('accordion', accordionSelect)
+        updateStyle(accordionSelect)
       }else{
         console.log('another', editorFieldSelect.id)
         editorFieldSelect.style.width=`${this.value}px`
       }
+
+      updateStyle(editorFieldSelect)
+      
     }else if(carouselSelect){
       carouselSelect.style.width=`${this.value}px`
+      updateStyle(carouselSelect)
     }
   })
 
   document.getElementById('height-field').addEventListener('keyup', function(){
     if(editorFieldSelect){
       editorFieldSelect.style.minHeight=`${this.value}px`
+      updateStyle(editorFieldSelect)
     }else if(carouselSelect){
       carouselSelect.style.height=`${this.value}px`
+      
+      updateStyle(carouselSelect)
     }
+    
   })
 
-  // document.getElementById('flex-field-position').addEventListener('change', function(e){
-  //   editorFieldSelect.style.display="flex"
-    
-  //   let fieldInner = editorFieldSelect.innerHTML
-  //   let fieldEditor
-
-  //   if(editorFieldSelect.id.startsWith('field-') || editorFieldSelect.id.startsWith('webpage-section-')){
-  //     console.log('hella')
-  //     fieldEditor = editorFieldSelect
-  //   }else{
-  //     console.log('hello: ', editorFieldSelect)
-  //     fieldEditor = accordionPartSelect.querySelector('span')
-  //     fieldEditor.style.display="flex"
-  //   }
-
-  //   if(!editorFieldSelect.querySelector('[id="flex-wrapper"]')){
-  //     console.log('span')
-
-  //     if(editorFieldSelect.id.startsWith('webpage-section-')){
-  //       const sectionNumber = editorFieldSelect.id.split('-')[2];
-  //       const editorContainer = document.getElementById(`editor-container-section-${sectionNumber}`);
-
-  //       // Buat wrapper span
-  //       const wrapperSpan = document.createElement('span');
-  //       wrapperSpan.classList.add('break-all');
-  //       wrapperSpan.id="flex-wrapper"
-
-  //       // Buat wrapper div
-  //       const wrapperDiv = document.createElement('div');
-
-  //       // Pindahkan isi editorContainer ke wrapperDiv (atau editorContainer itu sendiri)
-  //       wrapperDiv.appendChild(editorContainer); // Ini akan memindahkan elemen, bukan clone
-
-  //       // Masukkan ke wrapperSpan
-  //       wrapperSpan.appendChild(wrapperDiv);
-
-  //       // Kosongkan isi dulu jika ingin menggantikan
-        
-
-  //       // Tambahkan ke editorFieldSelect
-  //       editorFieldSelect.appendChild(wrapperSpan);
-
-  //       console.log('flex pos section');
-  //     }else{
-  //       editorFieldSelect.innerHTML= `<span id="flex-wrapper" class="break-all"><div>${fieldInner}</div></span>`
-  //       console.log('flex pos field')
-  //     }
-  //   }
-
-  //   console.log('field editor: ',fieldEditor)
-
-  //   if(e.target.value == 'top'){
-  //     fieldEditor.dataset.fieldFlexPosition = 'top'
-  //     fieldEditor.style.justifyContent="start"
-  //     fieldEditor.style.flexDirection="column"
-  //     fieldEditor.style.alignItems="center"
-
-  //   }else if(e.target.value == 'top-l'){
-  //     fieldEditor.dataset.fieldFlexPosition = 'top-l'
-  //     fieldEditor.style.justifyContent="start"
-  //     fieldEditor.style.flexDirection="column"
-  //     fieldEditor.style.alignItems="start"
-
-  //   }else if(e.target.value == 'top-r'){
-  //     fieldEditor.dataset.fieldFlexPosition = 'top-r'
-  //     fieldEditor.style.justifyContent="start"
-  //     fieldEditor.style.flexDirection="column"
-  //     fieldEditor.style.alignItems="end"
-
-  //   }else if(e.target.value == 'center'){
-  //     fieldEditor.dataset.fieldFlexPosition = 'center'
-  //     fieldEditor.style.justifyContent="center"
-  //     fieldEditor.style.flexDirection="column"
-  //     fieldEditor.style.alignItems="center"
-
-  //   }else if(e.target.value == 'center-l'){
-  //     fieldEditor.dataset.fieldFlexPosition = 'center-l'
-  //     fieldEditor.style.justifyContent="center"
-  //     fieldEditor.style.flexDirection="column"
-  //     fieldEditor.style.alignItems="start"
-
-  //   }else if(e.target.value == 'center-r'){
-  //     fieldEditor.dataset.fieldFlexPosition = 'center-r'
-  //     fieldEditor.style.justifyContent="center"
-  //     fieldEditor.style.flexDirection="column"
-  //     fieldEditor.style.alignItems="end"
-
-  //   }else if(e.target.value == 'bottom'){
-  //     fieldEditor.dataset.fieldFlexPosition = 'bottom'
-  //     fieldEditor.style.justifyContent="end"
-  //     fieldEditor.style.flexDirection="column"
-  //     fieldEditor.style.alignItems="center"
-
-  //   }else if(e.target.value == 'bottom-l'){
-  //     fieldEditor.dataset.fieldFlexPosition = 'bottom-l'
-  //     fieldEditor.style.justifyContent="end"
-  //     fieldEditor.style.flexDirection="column"
-  //     fieldEditor.style.alignItems="start"
-
-  //   }else if(e.target.value == 'bottom-r'){
-  //     fieldEditor.dataset.fieldFlexPosition = 'bottom-r'
-  //     fieldEditor.style.justifyContent="end"
-  //     fieldEditor.style.flexDirection="column"
-  //     fieldEditor.style.alignItems="end"
-
-  //   }else if(e.target.value == 'default'){
-  //     fieldEditor.dataset.fieldFlexPosition = 'deafult'
-  //     fieldEditor.style.justifyContent=""
-  //     fieldEditor.style.flexDirection=""
-  //     fieldEditor.style.alignItems=""
-  //     fieldEditor.style.display="block"
-      
-  //     if(editorFieldSelect.querySelector('[id="flex-wrapper"]')){
-  //       const span = editorFieldSelect.querySelector('[id="flex-wrapper"]');
-  
-  //       if (span) {
-  //         // Ambil anak-anak span
-  //         const children = Array.from(span.childNodes); // bisa node apapun (div, text, dsb)
-  //         span.remove(); // hapus elemen wrapper
-
-  //         children.forEach(child => {
-  //           if (fieldEditor.id.startsWith('webpage-section-')) {
-  //             fieldEditor.appendChild(child); // tambahkan di akhir
-  //           } else {
-  //             fieldEditor.innerHTML = ""; // kosongkan dulu
-  //             fieldEditor.appendChild(child);
-  //           }
-  //         });
-  //       }
-  //     }
-  //   }
-    
-
-  //   // accordionPartSelect.querySelector('span').innerHTML = document.getElementById('heading-text').innerHTML;
-  // })
 }
 // -------- Border -----------
 function borderField(){
   document.getElementById('border-field').addEventListener('change', function(){
     if(editorFieldSelect.id === 'heading-text'){
       accordionPartSelect.style.borderWidth=`${this.value}px`
+       updateStyle(accordionPartSelect)
     }else{
       editorFieldSelect.style.borderWidth=`${this.value}px`
+      updateStyle(editorFieldSelect)
     }
 
     document.getElementById('border-field-left').value=this.value
     document.getElementById('border-field-right').value=this.value
     document.getElementById('border-field-top').value=this.value
     document.getElementById('border-field-bottom').value=this.value
+
   })
 
   document.getElementById('border-color-field').addEventListener('change', function(){
     if(editorFieldSelect.id === 'heading-text'){
       accordionPartSelect.setAttribute('data-border-color', this.value)
       accordionPartSelect.style.borderColor=`${this.value}`
+      updateStyle(accordionPartSelect)
     }else{
       editorFieldSelect.setAttribute('data-border-color', this.value)
       editorFieldSelect.style.borderColor=`${this.value}`
+      updateStyle(editorFieldSelect)
     }
   })
 
   document.getElementById('border-field-top').addEventListener('change', function(){
     if(editorFieldSelect.id === 'heading-text'){
       accordionPartSelect.style.borderTopWidth=`${this.value}px`
+      updateStyle(accordionPartSelect)
     }else{
       editorFieldSelect.style.borderTopWidth=`${this.value}px`
+      updateStyle(editorFieldSelect)
     }
   })
 
   document.getElementById('border-field-right').addEventListener('change', function(){
     if(editorFieldSelect.id === 'heading-text'){
       accordionPartSelect.style.borderRightWidth=`${this.value}px`
+      updateStyle(accordionPartSelect)
     }else{
       editorFieldSelect.style.borderRightWidth=`${this.value}px`
+      updateStyle(editorFieldSelect)
     }
   })
 
@@ -1292,16 +1531,20 @@ function borderField(){
   document.getElementById('border-field-bottom').addEventListener('change', function(){
     if(editorFieldSelect.id === 'heading-text'){
       accordionPartSelect.style.borderBottomWidth=`${this.value}px`
+      updateStyle(accordionPartSelect)
     }else{
       editorFieldSelect.style.borderBottomWidth=`${this.value}px`
+      updateStyle(editorFieldSelect)
     }
   })
 
   document.getElementById('border-field-rounded').addEventListener('change', function(){
     if(editorFieldSelect.id === 'heading-text'){
       accordionPartSelect.style.borderRadius=`${this.value}px`
+      updateStyle(accordionPartSelect)
     }else{
       editorFieldSelect.style.borderRadius=`${this.value}px`
+      updateStyle(editorFieldSelect)
     }
 
     document.getElementById('border-field-rounded-top-left').value=this.value
@@ -1313,32 +1556,40 @@ function borderField(){
   document.getElementById('border-field-rounded-top-right').addEventListener('change', function(){
    if(editorFieldSelect.id === 'heading-text'){
       accordionPartSelect.style.borderTopRightRadius=`${this.value}px`
+      updateStyle(accordionPartSelect)
     }else{
       editorFieldSelect.style.borderTopRightRadius=`${this.value}px`
+      updateStyle(editorFieldSelect)
     }
   })
 
   document.getElementById('border-field-rounded-top-left').addEventListener('change', function(){
     if(editorFieldSelect.id === 'heading-text'){
       accordionPartSelect.style.borderTopLeftRadius=`${this.value}px`
+      updateStyle(accordionPartSelect)
     }else{
       editorFieldSelect.style.borderTopLeftRadius=`${this.value}px`
+      updateStyle(editorFieldSelect)
     }
   })
 
   document.getElementById('border-field-rounded-bottom-right').addEventListener('change', function(){
     if(editorFieldSelect.id === 'heading-text'){
       accordionPartSelect.style.borderBottomRightRadius=`${this.value}px`
+      updateStyle(accordionPartSelect)
     }else{
       editorFieldSelect.style.borderBottomRightRadius=`${this.value}px`
+      updateStyle(editorFieldSelect)
     }
   })
 
   document.getElementById('border-field-rounded-bottom-left').addEventListener('change', function(){
     if(editorFieldSelect.id === 'heading-text'){
       accordionPartSelect.style.borderBottomLeftRadius=`${this.value}px`
+      updateStyle(accordionPartSelect)
     }else{
       editorFieldSelect.style.borderBottomLeftRadius=`${this.value}px`
+      updateStyle(editorFieldSelect)
     }
   })
 }
@@ -1370,11 +1621,15 @@ function paddingMarginField(){
       accordionPartSelect.style.paddingRight=`${this.value}px`
       accordionPartSelect.style.paddingTop=`${this.value}px`
       accordionPartSelect.style.paddingBottom=`${this.value}px`
+      updateStyle(accordionPartSelect)
+
     }else{
       editorFieldSelect.style.paddingLeft=`${this.value}px`
       editorFieldSelect.style.paddingRight=`${this.value}px`
       editorFieldSelect.style.paddingTop=`${this.value}px`
       editorFieldSelect.style.paddingBottom=`${this.value}px`
+      updateStyle(editorFieldSelect)
+
     }
 
     document.getElementById('padding-field-left').value=this.value
@@ -1386,32 +1641,40 @@ function paddingMarginField(){
   document.getElementById('padding-field-left').addEventListener('keyup', function(){
     if(editorFieldSelect.id === 'heading-text'){
       accordionPartSelect.style.paddingLeft=`${this.value}px`
+      updateStyle(accordionPartSelect)
     }else{
       editorFieldSelect.style.paddingLeft=`${this.value}px`
+      updateStyle(editorFieldSelect)
     }
   })
 
   document.getElementById('padding-field-right').addEventListener('keyup', function(){
     if(editorFieldSelect.id === 'heading-text'){
       accordionPartSelect.style.paddingRight=`${this.value}px`
+      updateStyle(accordionPartSelect)
     }else{
       editorFieldSelect.style.paddingRight=`${this.value}px`
+      updateStyle(editorFieldSelect)
     }
   })
 
   document.getElementById('padding-field-top').addEventListener('keyup', function(){
     if(editorFieldSelect.id === 'heading-text'){
       accordionPartSelect.style.paddingTop=`${this.value}px`
+      updateStyle(accordionPartSelect)
     }else{
       editorFieldSelect.style.paddingTop=`${this.value}px`
+      updateStyle(editorFieldSelect)
     }
   })
 
   document.getElementById('padding-field-bottom').addEventListener('keyup', function(){
     if(editorFieldSelect.id === 'heading-text'){
       accordionPartSelect.style.paddingBottom=`${this.value}px`
+      updateStyle(accordionPartSelect)
     }else{
       editorFieldSelect.style.paddingBottom=`${this.value}px`
+      updateStyle(editorFieldSelect)
     }
   })
 
@@ -1423,17 +1686,20 @@ function paddingMarginField(){
         accordionPartSelect.parentElement.style.marginRight=`${this.value}px`
         accordionPartSelect.parentElement.style.marginTop=`${this.value}px`
         accordionPartSelect.parentElement.style.marginBottom=`${this.value}px`
+        updateStyle(accordionPartSelect)
       }else{
         editorFieldSelect.style.marginLeft=`${this.value}px`
         editorFieldSelect.style.marginRight=`${this.value}px`
         editorFieldSelect.style.marginTop=`${this.value}px`
         editorFieldSelect.style.marginBottom=`${this.value}px`
+        updateStyle(editorFieldSelect)
       }
     }else if(carouselSelect){
       carouselSelect.style.marginLeft=`${this.value}px`
       carouselSelect.style.marginRight=`${this.value}px`
       carouselSelect.style.marginTop=`${this.value}px`
       carouselSelect.style.marginBottom=`${this.value}px`
+      updateStyle(carouselSelect)
     }
 
     document.getElementById('margin-field-left').value=this.value
@@ -1446,11 +1712,14 @@ function paddingMarginField(){
     if(editorFieldSelect){
       if(editorFieldSelect.id === 'heading-text'){
         accordionPartSelect.style.marginLeft=`${this.value}px`
+        updateStyle(accordionPartSelect)
       }else{
         editorFieldSelect.style.marginLeft=`${this.value}px`
+        updateStyle(editorFieldSelect)
       }
     }else if(carouselSelect){
-      carouselSelect.style.marginLeft=`${this.value}px`      
+      carouselSelect.style.marginLeft=`${this.value}px`  
+      updateStyle(carouselSelect)    
     }
   })
 
@@ -1458,11 +1727,14 @@ function paddingMarginField(){
     if(editorFieldSelect){
       if(editorFieldSelect.id === 'heading-text'){
         accordionPartSelect.style.marginRight=`${this.value}px`
+        updateStyle(accordionPartSelect)
       }else{
         editorFieldSelect.style.marginRight=`${this.value}px`
+        updateStyle(editorFieldSelect)
       }
     }else if(carouselSelect){
       carouselSelect.style.marginRight=`${this.value}px`
+      updateStyle(carouselSelect)
     }
   })
 
@@ -1470,11 +1742,14 @@ function paddingMarginField(){
     if(editorFieldSelect){
       if(editorFieldSelect.id === 'heading-text'){
         accordionPartSelect.style.marginTop=`${this.value}px`
+        updateStyle(accordionPartSelect)
       }else{
         editorFieldSelect.style.marginTop=`${this.value}px`
+        updateStyle(editorFieldSelect)
       }
     }else if(carouselSelect){
       carouselSelect.style.marginTop=`${this.value}px`
+      updateStyle(carouselSelect)
     }
   })
 
@@ -1482,11 +1757,14 @@ function paddingMarginField(){
     if(editorFieldSelect){
       if(editorFieldSelect.id === 'heading-text'){
         accordionPartSelect.style.marginBottom=`${this.value}px`
+        updateStyle(accordionPartSelect)
       }else{
         editorFieldSelect.style.marginBottom=`${this.value}px`
+        updateStyle(editorFieldSelect)
       }
     }else if(carouselSelect){
       carouselSelect.style.marginBottom=`${this.value}px`
+      updateStyle(carouselSelect)
     }
   })
 }
@@ -1511,24 +1789,28 @@ function colorBackgroundField(){
     if(fieldEditor.id.startsWith('carousel')){
       fieldEditor.dataset.fieldBgColor = this.value;
       fieldEditor.querySelectorAll('[id^="item-carousel-"]').forEach(item =>{
-        if(fieldEditor.dataset.textPosition === 'on image'){
+        if(fieldEditor.dataset.textPosition === 'on-image'){
           item.style.backgroundImage = `linear-gradient(rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${alpha}), rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${alpha})), url(${item.style.backgroundImage.split('url(')[1].split(')')[0]})`;
+          updateStyle(item)
         }else{
           item.children[1].style.backgroundColor=`rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${alpha})`;
+          updateStyle(item.children[1])
         }
       })
 
-      if(fieldEditor.dataset.textPosition === 'on image'){
+      if(fieldEditor.dataset.textPosition === 'on-image'){
         document.querySelectorAll('[id^="edit-item-carousel-"]').forEach(item =>{
           item.style.backgroundImage = `linear-gradient(rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${alpha}), rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${alpha})), url(${item.style.backgroundImage.split('url(')[1].split(')')[0]})`;
         })
       }
+      console.log('tipe 2')
     }else{
       if(fieldEditor.style.backgroundImage){
         fieldEditor.style.backgroundImage = `linear-gradient(rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${alpha}), rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${alpha})), url(${fieldEditor.style.backgroundImage.split('url(')[1].split(')')[0]})`;
       }else{
         fieldEditor.style.backgroundColor=`rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${alpha})`;
       }
+      updateStyle(fieldEditor)
     }
   })
 
@@ -1550,17 +1832,19 @@ function colorBackgroundField(){
     
     if(fieldEditor.id.startsWith('carousel')){
       fieldEditor.querySelectorAll('[id^="item-carousel-"]').forEach(item =>{
-        if(fieldEditor.dataset.textPosition ==="on image"){
+        if(fieldEditor.dataset.textPosition ==="on-image"){
           item.style.backgroundImage = `
               linear-gradient(rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${this.value}), 
               rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${this.value})), 
               url(${item.style.backgroundImage.split('url(')[1].split(')')[0]})`;
-
+            
+          updateStyle(item)
         }else{
           item.children[1].style.backgroundColor=`rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${this.value})`;
+          updateStyle(item.children[1])
         }
       })
-      if(fieldEditor.dataset.textPosition === "on image"){
+      if(fieldEditor.dataset.textPosition === "on-image"){
         document.querySelectorAll('[id^="edit-item-carousel-"]').forEach(item =>{
           item.style.backgroundImage = `linear-gradient(rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${this.value}), rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${this.value})), url(${item.style.backgroundImage.split('url(')[1].split(')')[0]})`;
         })
@@ -1568,10 +1852,16 @@ function colorBackgroundField(){
 
     }else{
       if(fieldEditor.style.backgroundImage){
-        fieldEditor.style.backgroundImage = `linear-gradient(rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${this.value}), rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${this.value})), url(${fieldEditor.style.backgroundImage.split('url(')[1].split(')')[0]})`;
+        let urlPart = fieldEditor.style.backgroundImage.split('url(')[1].split(')')[0].trim();
+
+        // hilangkan ' atau " di awal/akhir
+        urlPart = urlPart.replace(/^["]|["]$/g, "'");
+        console.log(urlPart)
+        fieldEditor.style.backgroundImage = `linear-gradient(rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${this.value}), rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${this.value})), url(${urlPart})`;
       }else{
         fieldEditor.style.backgroundColor=`rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${this.value})`;
       }
+      updateStyle(fieldEditor)
     }
 
   })
@@ -1606,33 +1896,47 @@ function colorBackgroundField(){
         previewImageField.src = e.target.result;
         previewImageField.classList.remove('hidden');
 
+        fieldEditor.style.backgroundSize = 'cover';
+        fieldEditor.style.backgroundPosition = 'center';
+        console.log(fieldEditor.style.backgroundPosition)
+
         if (fieldEditor.style.backgroundColor) {
           const rgb = fieldEditor.style.backgroundColor;
-          fieldEditor.style.backgroundImage = `linear-gradient(${rgb}, ${rgb}), url('${e.target.result}')`;
+          fieldEditor.style.backgroundImage = `linear-gradient(${rgb}, ${rgb}), url(${e.target.result})`;
         } else if (fieldEditor.style.backgroundImage.includes('linear-gradient')) {
           const rgba = fieldEditor.style.backgroundImage.split('linear-gradient(')[1].split(')')[0];
-          fieldEditor.style.backgroundImage = `linear-gradient(${rgba}), url("${e.target.result}")`;
+          fieldEditor.style.backgroundImage = `linear-gradient(${rgba}), url(${e.target.result})`;
+
+          let style = fieldEditor.getAttribute('style')
+          style = style.replace(
+            /background-image\s*:[^;]+;/,
+            `background-image: linear-gradient(${rgba})), url(${e.target.result});`
+          );
+
+          fieldEditor.setAttribute('style', style);
+          // console.log(fieldEditor.getAttribute('style'), 'bg-image')
         } else {
           fieldEditor.style.backgroundImage = `url('${e.target.result}')`;
         }
 
         document.getElementById('btn-reset-bg-image').parentElement.classList.remove('hidden')
-
-        fieldEditor.style.backgroundSize = 'cover';
-        fieldEditor.style.backgroundPosition = 'center';
+        updateStyle(fieldEditor,'bg-image', file)
       };
+      
       reader.readAsDataURL(file);
     } else {
       previewImageField.src = '';
       previewImageField.classList.add('hidden');
       alert('Please select a valid image file.');
     }
+    this.value=''
   });
 
   document.getElementById('bg-image-carousel').addEventListener('change', function (e) {
     const file = this.files[0];
     const maxFileSize = 500 * 1024; // 500 KB
-    
+    let carousel=''
+
     if (file && file.type.startsWith('image/')) {
       // Tampilkan nama file pendek
       let fileName = file.name;
@@ -1658,7 +1962,7 @@ function colorBackgroundField(){
 
       const reader = new FileReader();
       reader.onload = function (e) {
-        const imgUrl = `url(${e.target.result})`;
+        const imgUrl = `url("${e.target.result}")`;
 
         // Default/fallback rgba
         let rgba = 'rgba(0, 0, 0, 0.0), rgba(0, 0, 0, 0.0)';
@@ -1679,17 +1983,28 @@ function colorBackgroundField(){
         const bgValue = `linear-gradient(${rgba})), ${imgUrl}`;
 
         // Terapkan ke keduanya
-        [editCarouselItem, carouselItem].forEach(el => {
-          el.setAttribute('style', `background-image:${bgValue};background-size:cover;background-position:center;`)
-        });
+        console.log('car')
+        carousel = document.getElementById(carouselItem.id.split('-').slice(1,-1).join('-'))
+        if(carousel.dataset.textPosition === 'on-image'){
+          [editCarouselItem, carouselItem].forEach(el => {
+            el.setAttribute('style', `background-image:${bgValue};background-size:cover;background-position:center;`)
+          });
 
-        console.log('Updated backgroundImage:', bgValue);
+        }else{
+          carouselItem.querySelector('img').src = e.target.result
+          // document.getElementById(editCarouselItem.id).setAttribute('style', `background-image:${bgValue};background-size:cover;background-position:center;`)
+          document.getElementById(editCarouselItem.id).setAttribute('style', `background-image:${bgValue};background-size:cover;background-position:center;`)
+        }
+        console.log(carousel)
+        updateStyle(carouselItem,'bg-image', file, carousel.dataset.textPosition)
+        carousel.click(); 
       };
 
       reader.readAsDataURL(file);
     } else {
       alert('Please select a valid image file.');
     }
+     this.value = "";
   });
 
   document.querySelectorAll('[name="bg-image-size"]').forEach(bgImageSize =>{
@@ -1711,6 +2026,7 @@ function colorBackgroundField(){
         fieldEditor.style.backgroundSize = 'cover'
         fieldEditor.style.backgroundRepeat = 'no-repeat'
       }
+      updateStyle(fieldEditor)
     })
   })
 
@@ -1765,6 +2081,13 @@ function borderWave() {
   let idWave = null;
   let currentWaveColor = document.getElementById('border-wave-color').value; // Default warna awal
 
+  const sanitizeSVG = (svgText) => {
+    // Buang semua tag <script> dan atribut event (onload, onclick, dll.)
+    return svgText
+      .replace(/<script.*?>.*?<\/script>/gi, '')
+      .replace(/\son\w+=".*?"/gi, '');
+  }
+
   const applyColorToSVG = (svg, color) => {
     if (!svg) return;
     svg.querySelectorAll('path').forEach(path => {
@@ -1776,7 +2099,7 @@ function borderWave() {
     let svg;
 
     if (waveId) {
-      svg = document.querySelector(`#type-${waveId}`);
+      svg = document.getElementById(waveId);
     } else {
       const svgText = sanitizeSVG(document.getElementById('border-wave-svg').value);
       const wrapper = document.createElement('div');
@@ -1789,19 +2112,22 @@ function borderWave() {
     const svgClone = svg.cloneNode(true);
     svgClone.setAttribute('style', `z-index: 9; ${position}: 0; position: absolute;`);
     svgClone.setAttribute('class', '');
-
+///masalahnya disini
     if (position === 'top') {
-      flipPathVertically(svgClone);
+      flipPathVertically(svgClone,position);
     }
 
     applyColorToSVG(svgClone, currentWaveColor);
     return svgClone;
   };
 
-  function flipPathVertically(svgElement) {
+  function flipPathVertically(svgElement, position) {
     const viewBox = svgElement.getAttribute('viewBox'); // contoh: "0 0 1440 320"
     if (!viewBox) return;
 
+    if(position){
+      svgElement.setAttribute('style', `z-index: 9; ${position}: 0; position: absolute;`);
+    }
     const height = parseFloat(viewBox.split(' ')[3]); // ambil tinggi viewBox
     const paths = svgElement.querySelectorAll('path');
 
@@ -1838,27 +2164,52 @@ function borderWave() {
         svg.remove()
       }
     });
-
+    svgClone.id = `border-wave-${position}-section-${editorFieldSelect.id.split('-')[2]}`;
     // Tambahkan SVG baru dengan warna yang sesuai
     editorFieldSelect.appendChild(svgClone);
+
+    const existingIndex = webpageDb.findIndex(page => 
+      page.id.startsWith('border-wave-') 
+      && page.id.split('-').find(part => !isNaN(part)) 
+      === svgClone.id.split('-').find(part => !isNaN(part))
+    );
+
+    if (existingIndex !== -1) {
+      // kalau sudah ada → update style
+      webpageDb[existingIndex].style = svgClone.outerHTML;
+      webpageDb[existingIndex].id = svgClone.id;
+    } else {
+      // kalau belum ada → push baru
+      webpageDb.push({
+        id: svgClone.id,
+        type: 'border-wave',
+        style: svgClone.outerHTML,
+      });
+    }
+    console.log(webpageDb)
   };
 
   // Event saat tipe wave diklik
   document.querySelectorAll("[id^='border-wave-type-']").forEach(tipe => {
     tipe.addEventListener('click', function () {
-      idWave = this.id.split('-')[3];
+      idWave = tipe.querySelector('[id^="type-"]').id;
 
       const selectedWavePosition = document.querySelector('input[name="border-wave-position"]:checked');
       const position = selectedWavePosition ? selectedWavePosition.value : 'bottom';
 
       updateSectionWithWave(idWave, position);
+
     });
   });
 
   // Event saat posisi wave (radio) diganti
   document.querySelectorAll("[name='border-wave-position']").forEach(radio => {
     radio.addEventListener('change', function () {
-        updateSectionWithWave(idWave, this.value);
+        const borderWave = editorFieldSelect.querySelector('[id^="border-wave-"]')
+        // console.log(borderWave.getAttribute('style').includes(this.value))
+        if(!borderWave.getAttribute('style').includes(this.value)){
+          flipPathVertically(borderWave, this.value);
+        }
     });
   });
 
@@ -1869,25 +2220,26 @@ function borderWave() {
       if(!svg.id.startsWith('btn')){
         console.log(svg)
         applyColorToSVG(svg, currentWaveColor);
+
+        webpageDb.map(page=>{
+          if(page.id === svg.id){
+            page.style= svg.outerHTML
+          }
+        })
+        console.log(webpageDb)
       }
     });
   });
 
-  const sanitizeSVG = (svgText) => {
-    // Buang semua tag <script> dan atribut event (onload, onclick, dll.)
-    return svgText
-      .replace(/<script.*?>.*?<\/script>/gi, '')
-      .replace(/\son\w+=".*?"/gi, '');
-  }
-
   document.getElementById('apply-border-wave-svg').addEventListener('click', function () {
-    idWave = null; // Reset idWave saat menggunakan SVG kustom
     const svgText = sanitizeSVG(document.getElementById('border-wave-svg').value);
     editorFieldSelect.querySelectorAll('svg').forEach(svg => svg.remove());
 
     const wrapper = document.createElement('div');
     wrapper.innerHTML = svgText;
+
     const svgElement = wrapper.querySelector('svg');
+    svgElement.id = `border-wave-bottom-section-${editorFieldSelect.id.split('-')[2]}`
 
     const position = document.querySelector('input[name="border-wave-position"]:checked')?.value || 'bottom';
 
@@ -1897,10 +2249,20 @@ function borderWave() {
       svgElement.style[position] = '0';
 
       if (position === 'top') {
-        flipPathVertically(svgElement);
+        svgElement.id = `border-wave-top-section-${editorFieldSelect.id.split('-')[2]}`
+        flipPathVertically(svgElement)
       }
+
       applyColorToSVG(svgElement, currentWaveColor);
       editorFieldSelect.appendChild(svgElement);
+
+      webpageDb.map(page=>{
+        if(page.id == svgElement.id){
+          page.style=svgElement.outerHTML
+        }
+      })
+      console.log(webpageDb)
+
     } else {
       alert('SVG tidak valid!');
     }
@@ -1910,69 +2272,86 @@ function borderWave() {
 // ======================= ACCORDION ==========================
 function accordionStyling(){
   document.getElementById('head-indicator-type').addEventListener('change', function(){
-    if(accordionSelect){
-      accordionSelect.querySelectorAll('[id^="btn-heading-"]').forEach(head =>{
-        let spanHead = head.querySelector('span')
-        if(spanHead.nextElementSibling){
-          spanHead.nextElementSibling.remove()
+    let indicatorType='none'
+    if(this.value !== ''){
+      if(accordionSelect){
+        accordionSelect.querySelectorAll('[id^="btn-heading-"]').forEach(head =>{
+          let spanHead = head.querySelector('span')
+          let indicator=''
+          if(spanHead.nextElementSibling){
+            spanHead.nextElementSibling.remove()
+          }
+          
+          if(this.value === 'default'){
+            indicator =`
+              <svg data-accordion-icon class="w-3 h-3 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
+                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5 5 1 1 5"/>
+              </svg>
+            `
+            indicatorType = 'default'
+  
+          }else if(this.value === 'icon'){
+            indicator =`<div data-accordion-icon >&#11163;</div>`
+            indicatorType = 'icon'
+  
+          }else if(this.value === 'question'){
+            indicator = `<div class="btn-cta">
+                          <p>?</p>
+                        </div>`
+            indicatorType = 'question'
+  
+          }
+    
+          if(this.value !== 'none'){
+            spanHead.insertAdjacentHTML('afterend', indicator)
+          }
+          accordionSelect.dataset.typeIndicator = indicatorType
+    
+          if(this.value !== 'question'){
+            setTimeout(() => {
+                try {
+                    initFlowbite();
+                } catch (error) {
+                    console.error('❌ Gagal menginisialisasi Accordion:', error);
+                }
+            }, 50);  
+          }
+        })
+      }else{
+        let indicator=''
+  
+        if (editorFieldSelect.children.length > 1) {
+          editorFieldSelect.children[1].remove()
         }
-        let indicator 
+        
         
         if(this.value === 'default'){
           indicator =`
-            <svg data-accordion-icon class="w-3 h-3 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
+            <svg class="w-3 h-3 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
               <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5 5 1 1 5"/>
             </svg>
           `
+          indicatorType = 'default'
+          
         }else if(this.value === 'icon'){
-          indicator =`<div data-accordion-icon >&#11163;</div>`
+          indicator =`<div>&#11163;</div>`
+          indicatorType = 'icon'
+          
         }else if(this.value === 'question'){
           indicator = `<div class="btn-cta">
                         <p>?</p>
                       </div>`
+          indicatorType = 'question'
+  
         }
   
         if(this.value !== 'none'){
-          spanHead.insertAdjacentHTML('afterend', indicator)
+          console.log(editorFieldSelect)
+          editorFieldSelect.insertAdjacentHTML('beforeend', indicator)
         }
-  
-        if(this.value !== 'question'){
-        setTimeout(() => {
-            try {
-                initFlowbite();
-            } catch (error) {
-                console.error('❌ Gagal menginisialisasi Accordion:', error);
-            }
-        }, 50);  
+        editorFieldSelect.dataset.typeIndicator=indicatorType
       }
-      })
-    }else{
-      if (editorFieldSelect.childNodes.length > 1) {
-        const node = editorFieldSelect.childNodes[editorFieldSelect.childNodes.length -1];
-        if (node.nodeType === Node.ELEMENT_NODE) {
-          editorFieldSelect.removeChild(node);
-        }
-      }
-      
-      let indicator 
-      
-      if(this.value === 'default'){
-        indicator =`
-          <svg class="w-3 h-3 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
-            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5 5 1 1 5"/>
-          </svg>
-        `
-      }else if(this.value === 'icon'){
-        indicator =`<div>&#11163;</div>`
-      }else if(this.value === 'question'){
-        indicator = `<div class="btn-cta">
-                      <p>?</p>
-                    </div>`
-      }
-
-      if(this.value !== 'none'){
-        editorFieldSelect.insertAdjacentHTML('beforeend', indicator)
-      }
+      updateContent(editorFieldSelect, this.value)
     }
   })
 }
@@ -1980,11 +2359,58 @@ function accordionStyling(){
 // ======================== BODY MODAL ========================
 function modalTypeStyling(){
   document.getElementById('modal-type').addEventListener('change', function(){
+    let id = `body-${editorFieldSelect.parentElement.id.split('-').slice(1).join('-')}`
     if(this.value === 'default'){
       editorFieldSelect.parentElement.removeAttribute('data-modal-backdrop')
-    }else{
+      webpageDb.map(page=>{
+        if(page.id === id){
+          page.content = 'modal-default'
+        }
+      })
+    }else if(this.value === 'static'){
       editorFieldSelect.parentElement.setAttribute('data-modal-backdrop', 'static')
+      webpageDb.map(page=>{
+        if(page.id === id){
+          page.content = 'modal-static'
+        }
+      })
     }
+    setTimeout(() => {
+      try {
+          // Panggil initFlowbite setelah inisialisasi accordion spesifik ini
+          // dan setelah ada sedikit penundaan
+          initFlowbite();
+      } catch (error) {
+          console.error('❌ Gagal menginisialisasi Modal:', error);
+      }
+    }, 100);  
+  })
+}
+
+// ======================== ACCORDION TYPE ====================
+function accordionTypeStyling(){
+  document.getElementById('accordion-type').addEventListener('change', function(){
+    let id = accordionSelect.id
+    if(this.value === 'collapse'){
+      accordionSelect.querySelector('[id^="parent-"]').setAttribute('data-accordion', 'collapse')
+      webpageDb.map(page=>{
+        if(page.id === id){
+          let contentObj = parseStyleObj(page.content);
+          contentObj.accordionType="collapse"
+          page.content = stringifyStyleObj(contentObj)
+        }
+      })
+    }else if(this.value === 'open'){
+      accordionSelect.querySelector('[id^="parent-"]').setAttribute('data-accordion', 'open')
+      webpageDb.map(page=>{
+        if(page.id === id){
+          let contentObj = parseStyleObj(page.content);
+          contentObj.accordionType="open"
+          page.content = stringifyStyleObj(contentObj)
+        }
+      })
+    }
+    console.log(webpageDb)
     setTimeout(() => {
       try {
           // Panggil initFlowbite setelah inisialisasi accordion spesifik ini
@@ -1999,85 +2425,874 @@ function modalTypeStyling(){
 
 // ======================== INITIALIZED =======================
 
-const collapseHandlers = new Map();
+function loadWebpage(){
+  console.log(webpageDb)
 
-function collapseInitialized() {
-  document.querySelectorAll('[data-target^="#element-collapse-"]').forEach(btn => {
-    const existingHandler = collapseHandlers.get(btn);
+  const createSection = (idPrefix,order,count,style)=>{
+    let section=``
+    let dropdownSection = `
+            <ul class="py-2 text-sm text-gray-700 dark:text-gray-200 border-0 border-b-1 border-gray-500 " aria-labelledby="dropdownDefaultButton">
+              <li>
+                  <a id="add-${idPrefix}" class="font-bold block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Section</a>
+              </li>
+              <li>
+                  <a id="up-${idPrefix}" class="font-bold block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Move Up</a>
+              </li>
+              <li>
+                  <a id="down-${idPrefix}" class="font-bold block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Move Down</a>
+              </li>
+              <li>
+                  <a id="delete-${idPrefix}" class="font-bold block text-red-700 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Delete Section</a>
+              </li>
+            </ul>`
+    let dropdownElement = `
+             <li>
+                  <a id="add-field-element-${idPrefix}" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Field</a>
+              </li>
+              <li>
+                  <a id="add-video-element-${idPrefix}" class=" block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Video</a>
+              </li>
+              <li>
+                  <a id="add-modal-element-${idPrefix}" class=" block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Modal</a>
+              </li>
+              <li>
+                  <a id="add-accordion-element-${idPrefix}" class=" block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Accordion</a>
+              </li>
+              <li>
+                  <a id="add-carousel-element-${idPrefix}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Carousel</a>
+              </li>`
 
-    // Hapus handler lama jika ada
-    if (existingHandler) {
-      btn.removeEventListener('click', existingHandler);
+    if(param.includes('prolog') || idPrefix.includes('footer')){
+      dropdownSection = ``
+      dropdownElement=`
+         <li>
+            <a id="add-field-element-${idPrefix}" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Field</a>
+        </li>`
     }
 
-    // Buat handler baru
-    const handler = function (e) {
-      if (btn.id === e.target.id) {
-        e.preventDefault();
-        const targetSelector = this.dataset.target;
-        const target = document.querySelector(targetSelector);
-        if (target) {
-          target.classList.toggle('hidden');
-          console.log('toggle hidden:', target);
-        }
-      }
-    };
+    section=`
+      <div id="webpage-${idPrefix}" data-element-order="${order}" class="bg-gray-200 flex flex-col justify-center items-center border border-gray-700" style="${style}">
+        <div class="absolute right-1 top-1 z-30 cursor-pointer" data-dropdown-toggle="dropdown-${idPrefix}" data-dropdown-placement="right-end">
+          <svg id="btn-add-section-elemen" class="w-7 h-7 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+              <path fill-rule="evenodd" d="M11.32 6.176H5c-1.105 0-2 .949-2 2.118v10.588C3 20.052 3.895 21 5 21h11c1.105 0 2-.948 2-2.118v-7.75l-3.914 4.144A2.46 2.46 0 0 1 12.81 16l-2.681.568c-1.75.37-3.292-1.263-2.942-3.115l.536-2.839c.097-.512.335-.983.684-1.352l2.914-3.086Z" clip-rule="evenodd"/>
+              <path fill-rule="evenodd" d="M19.846 4.318a2.148 2.148 0 0 0-.437-.692 2.014 2.014 0 0 0-.654-.463 1.92 1.92 0 0 0-1.544 0 2.014 2.014 0 0 0-.654.463l-.546.578 2.852 3.02.546-.579a2.14 2.14 0 0 0 .437-.692 2.244 2.244 0 0 0 0-1.635ZM17.45 8.721 14.597 5.7 9.82 10.76a.54.54 0 0 0-.137.27l-.536 2.84c-.07.37.239.696.588.622l2.682-.567a.492.492 0 0 0 .255-.145l4.778-5.06Z" clip-rule="evenodd"/>
+          </svg>                  
+        </div>
+  
+        <div id="dropdown-${idPrefix}" data-accordion="open" class="z-50 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700">
+          ${dropdownSection}
+          <ul class="py-2 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownDefaultButton">
+              ${dropdownElement}
+          </ul>
+        </div>
+    
+        <div id="editor-container-${idPrefix}" data-element-count="${count}" class="p-8 w-full flex flex-col flex-1" style="justify-content:start;align-items:center;"></div>
+      </div>   
+   `
+   return section
+  }
+  const createSectionFooter = (idPrefix,order,count,style)=>{
+    let section=`
+      <div id="webpage-${idPrefix}" data-element-order="${order}" class="bg-gray-200 flex flex-col justify-center items-center border border-gray-700" style="${style}">
+        <div class="absolute right-1 top-1 z-30 cursor-pointer" data-dropdown-toggle="dropdown-${idPrefix}" data-dropdown-placement="right-end">
+          <svg id="btn-add-section-elemen" class="w-7 h-7 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+              <path fill-rule="evenodd" d="M11.32 6.176H5c-1.105 0-2 .949-2 2.118v10.588C3 20.052 3.895 21 5 21h11c1.105 0 2-.948 2-2.118v-7.75l-3.914 4.144A2.46 2.46 0 0 1 12.81 16l-2.681.568c-1.75.37-3.292-1.263-2.942-3.115l.536-2.839c.097-.512.335-.983.684-1.352l2.914-3.086Z" clip-rule="evenodd"/>
+              <path fill-rule="evenodd" d="M19.846 4.318a2.148 2.148 0 0 0-.437-.692 2.014 2.014 0 0 0-.654-.463 1.92 1.92 0 0 0-1.544 0 2.014 2.014 0 0 0-.654.463l-.546.578 2.852 3.02.546-.579a2.14 2.14 0 0 0 .437-.692 2.244 2.244 0 0 0 0-1.635ZM17.45 8.721 14.597 5.7 9.82 10.76a.54.54 0 0 0-.137.27l-.536 2.84c-.07.37.239.696.588.622l2.682-.567a.492.492 0 0 0 .255-.145l4.778-5.06Z" clip-rule="evenodd"/>
+          </svg>                  
+        </div>
+  
+        <div id="dropdown-${idPrefix}" data-accordion="open" class="z-50 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700">
+          <ul class="py-2 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownDefaultButton">
+              <li>
+                <a id="add-field-element-${idPrefix}" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Field</a>
+              </li>
+          </ul>
+        </div>
+    
+        <div id="editor-container-${idPrefix}" data-element-count="${count}" class="p-5 w-full flex flex-col flex-1" style="justify-content:start;align-items:center;"></div>
+        <div class="bg-white text-center p-2 w-full text-sm">Copyright © 2024 Smart Health Diabetes. All Right Reserved</div>
+      </div>   
+   `
+   return section
+  }
+  const createSectionAccordion = (section) => `
+    <div id="${section.id}" data-element-order="${section.element_order}" style="${section.style}" class="relative w-full flex flex-col justify-center items-center border border-gray-400">
+      <div type="button" class="absolute right-[-1.3rem] top-0 z-10 cursor-pointer" data-dropdown-toggle="dropdown-body-${section.id.split('-').slice(1).join('-')}" data-dropdown-placement="right-end">
+        <svg id="edit-accordion" class="w-5 h-5 text-gray-600 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+            <path fill-rule="evenodd" d="M11.32 6.176H5c-1.105 0-2 .949-2 2.118v10.588C3 20.052 3.895 21 5 21h11c1.105 0 2-.948 2-2.118v-7.75l-3.914 4.144A2.46 2.46 0 0 1 12.81 16l-2.681.568c-1.75.37-3.292-1.263-2.942-3.115l.536-2.839c.097-.512.335-.983.684-1.352l2.914-3.086Z" clip-rule="evenodd"/>
+            <path fill-rule="evenodd" d="M19.846 4.318a2.148 2.148 0 0 0-.437-.692 2.014 2.014 0 0 0-.654-.463 1.92 1.92 0 0 0-1.544 0 2.014 2.014 0 0 0-.654.463l-.546.578 2.852 3.02.546-.579a2.14 2.14 0 0 0 .437-.692 2.244 2.244 0 0 0 0-1.635ZM17.45 8.721 14.597 5.7 9.82 10.76a.54.54 0 0 0-.137.27l-.536 2.84c-.07.37.239.696.588.622l2.682-.567a.492.492 0 0 0 .255-.145l4.778-5.06Z" clip-rule="evenodd"/>
+        </svg>    
+      </div>
 
-    // Simpan dan pasang handler
-    collapseHandlers.set(btn, handler);
-    btn.addEventListener('click', handler);
-  });
-}
-
-if(!webPage){
-  sectionCount = 1
-  let firstSection = `
-      <div id="webpage-section-1" data-section-order="1" class="bg-gray-200 relative flex flex-col justify-center items-center border border-gray-700" style="min-height:100dvh;">     
-        <div class="absolute right-1 top-1 z-30 cursor-pointer" data-dropdown-toggle="dropdown-section-1" data-dropdown-placement="right-end">
-            <svg id="btn-add-section-elemen" class="w-7 h-7 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+      <div id="wrapper-${section.id}" data-element-count="${section.element_count}" class="flex justify-start items-center flex-col">
+        <!-- Body Accordion -->
+        
+      </div>
+    </div>  
+  `
+  const createField = (page) =>{
+    let field=''
+    if(page){
+      field = `
+        <div data-element-order="${page.element_order}" style="z-index:10;position:relative;display:flex;justify-content:center;align-items:center;flex-direction:column;">
+          <div type="button" class="absolute right-[-1.3rem] top-0 z-30 cursor-pointer" data-dropdown-toggle="dropdown-body-${page.id}" data-dropdown-placement="right-end">
+            <svg id="edit-accordion" class="w-5 h-5 text-gray-600 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
                 <path fill-rule="evenodd" d="M11.32 6.176H5c-1.105 0-2 .949-2 2.118v10.588C3 20.052 3.895 21 5 21h11c1.105 0 2-.948 2-2.118v-7.75l-3.914 4.144A2.46 2.46 0 0 1 12.81 16l-2.681.568c-1.75.37-3.292-1.263-2.942-3.115l.536-2.839c.097-.512.335-.983.684-1.352l2.914-3.086Z" clip-rule="evenodd"/>
                 <path fill-rule="evenodd" d="M19.846 4.318a2.148 2.148 0 0 0-.437-.692 2.014 2.014 0 0 0-.654-.463 1.92 1.92 0 0 0-1.544 0 2.014 2.014 0 0 0-.654.463l-.546.578 2.852 3.02.546-.579a2.14 2.14 0 0 0 .437-.692 2.244 2.244 0 0 0 0-1.635ZM17.45 8.721 14.597 5.7 9.82 10.76a.54.54 0 0 0-.137.27l-.536 2.84c-.07.37.239.696.588.622l2.682-.567a.492.492 0 0 0 .255-.145l4.778-5.06Z" clip-rule="evenodd"/>
-            </svg>                  
+            </svg>    
+          </div>
+          <div id="${page.id}" contenteditable="true" style="ol{list-style-type:decimal;}ul{list-style-type:disc;};${page.style}" class="border border-b-1 border-gray-500 p-1 max-w-[100%] break-all scroll-hidden overflow-scroll">${page.content ?? 'no centent'}</div>
+        </div>
+      `
+    }
+    return field
+  }
+  const createDropdownField = (idPrefix)=>`
+    <div id="dropdown-body-${idPrefix}" data-accordion="open" class="w-25 z-40 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700">
+      <ul class="py-2 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownDefaultButton">
+        <li>
+            <a id="up-${idPrefix}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Move Up</a>
+        </li>
+        <li>
+            <a id="down-${idPrefix}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Move Down</a>
+        </li>
+        <li>
+            <a id="delete-${idPrefix}" class="cursor-pointer text-red-600 block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-red-400">Delete</a>
+        </li>
+      </ul>
+    </div>
+  `
+  const createVideo = (page) => `
+    <div id="${page.id}" data-element-order="${page.element_order}" style="${page.style}" class="border border-b-1 border-gray-500 max-w-[100%] cursor-pointer relative">
+      <input type="file" id="input-${page.id}" accept="video/*" class="hidden">
+      <div type="button" class="absolute right-[-1.3rem] top-0 z-30 cursor-pointer" data-dropdown-toggle="dropdown-${page.id}" data-dropdown-placement="right-end">
+        <svg id="edit-video" class="w-5 h-5 text-gray-600 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+          <path fill-rule="evenodd" d="M11.32 6.176H5c-1.105 0-2 .949-2 2.118v10.588C3 20.052 3.895 21 5 21h11c1.105 0 2-.948 2-2.118v-7.75l-3.914 4.144A2.46 2.46 0 0 1 12.81 16l-2.681.568c-1.75.37-3.292-1.263-2.942-3.115l.536-2.839c.097-.512.335-.983.684-1.352l2.914-3.086Z" clip-rule="evenodd"/>
+          <path fill-rule="evenodd" d="M19.846 4.318a2.148 2.148 0 0 0-.437-.692 2.014 2.014 0 0 0-.654-.463 1.92 1.92 0 0 0-1.544 0 2.014 2.014 0 0 0-.654.463l-.546.578 2.852 3.02.546-.579a2.14 2.14 0 0 0 .437-.692 2.244 2.244 0 0 0 0-1.635ZM17.45 8.721 14.597 5.7 9.82 10.76a.54.54 0 0 0-.137.27l-.536 2.84c-.07.37.239.696.588.622l2.682-.567a.492.492 0 0 0 .255-.145l4.778-5.06Z" clip-rule="evenodd"/>
+        </svg>
+      </div>
+
+      <label id="label-input-${page.id}" for="input-${page.id}" class="w-full h-auto hover:bg-gray-300 flex justify-center items-center">
+      ${
+          page.content
+            ? `<video src="${page.content}"></video>`
+            :`<svg class="w-12 h-12 text-gray-500 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 4H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V5a1 1 0 0 0-1-1Zm0 0-4 4m5 0H4m1 0 4-4m1 4 4-4m-4 7v6l4-3-4-3Z"/>
+              </svg>`
+      }
+      </label>
+    </div>
+  `
+  const createDropdownVideo = (idPrefix) => `
+    <div id="dropdown-${idPrefix}" data-accordion="open" class="w-20 z-30 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700">
+      <ul class="py-2 text-sm text-gray-700 dark:text-gray-200">
+        <li><label for="input-${idPrefix}" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Set Video</label></li>
+        <li><a id="down-${idPrefix}" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Move Down</a></li>
+        <li><a id="up-${idPrefix}" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Move Up</a></li>
+      </ul>
+      <ul class="py-2 text-sm text-gray-700 dark:text-gray-200">
+        <li><a id="delete-${idPrefix}" class="block px-4 py-2 font-extrabold text-red-600 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-red-400">Delete</a></li>
+      </ul>
+    </div>
+  `
+  const createBtnModal = (page) =>`
+    <div id="${page.id}" data-element-order="${page.element_order}" class="z-10 flex justify-center items-center flex-col">
+      <div id="wrapper-${page.id}" class="relative flex justify-center items-center inline-flex gap-2">
+        <div type="button" class="absolute right-[-1.7rem] top-[-0.3rem] z-10 cursor-pointer" data-dropdown-toggle="dropdown-btn-${page.id}" data-dropdown-placement="right-end">
+          <svg id="edit-accordion" class="w-6 h-6 text-gray-600 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+              <path fill-rule="evenodd" d="M11.32 6.176H5c-1.105 0-2 .949-2 2.118v10.588C3 20.052 3.895 21 5 21h11c1.105 0 2-.948 2-2.118v-7.75l-3.914 4.144A2.46 2.46 0 0 1 12.81 16l-2.681.568c-1.75.37-3.292-1.263-2.942-3.115l.536-2.839c.097-.512.335-.983.684-1.352l2.914-3.086Z" clip-rule="evenodd"/>
+              <path fill-rule="evenodd" d="M19.846 4.318a2.148 2.148 0 0 0-.437-.692 2.014 2.014 0 0 0-.654-.463 1.92 1.92 0 0 0-1.544 0 2.014 2.014 0 0 0-.654.463l-.546.578 2.852 3.02.546-.579a2.14 2.14 0 0 0 .437-.692 2.244 2.244 0 0 0 0-1.635ZM17.45 8.721 14.597 5.7 9.82 10.76a.54.54 0 0 0-.137.27l-.536 2.84c-.07.37.239.696.588.622l2.682-.567a.492.492 0 0 0 .255-.145l4.778-5.06Z" clip-rule="evenodd"/>
+          </svg>                  
         </div>
 
-        <div id="dropdown-section-1" data-accordion="open" class="z-50 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700">
-            <ul class="py-2 text-sm text-gray-700 dark:text-gray-200 border-0 border-b-1 border-gray-500 " aria-labelledby="dropdownDefaultButton">
-                <li>
-                    <a id="add-section-1" class="font-bold block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Section</a>
-                </li>
-                <li>
-                    <a id="delete-section-1" class="font-bold block text-red-700 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Delete Section</a>
-                </li>
-            </ul>
-            <ul class="py-2 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownDefaultButton">
-                <li>
-                    <a id="add-field-element-section-1" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Field</a>
-                </li>
-                <li>
-                    <a id="add-video-element-section-1" class=" block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Video</a>
-                </li>
-                <li>
-                    <a id="add-modal-element-section-1" class=" block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Modal</a>
-                </li>
-                <li>
-                    <a id="add-accordion-element-section-1" class=" block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Accordion</a>
-                </li>
-                <li>
-                    <a id="add-collapse-element-section-1" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Collapse Button</a>
-                </li>
-                <li>
-                    <a id="add-carousel-element-section-1" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Carousel</a>
-                </li>
-            </ul>
-        </div>
-        
-        <div id="editor-container-section-1" class="p-8 w-full flex flex-col flex-1" style="justify-content:start;align-items:center;"></div>
+        <button id="btn-${page.id}" style="${page.style}" data-modal-target="element-${page.id}" data-modal-toggle="element-${page.id}" class="flex justify-between items-center bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 break-all">
+          ${page.content ?? `<span class="w-full">Button Modal</span>`}
+        </button>
+      </div>
     </div>
-  `;
-  document.getElementById('webpage').insertAdjacentHTML('beforeend', firstSection)
-  editorFieldSelect = document.querySelector(`[id^='webpage-section-1-']`);
-}else{
-  sectionCount = webPage.length
+  `
+  const createBodyModal=(page, fieldHead)=>`
+    <div id="element-${page.id.split('-').slice(1).join('-')}" data-modal-backdrop="${page.content === 'modal-default' ? '' : 'static'}" tabindex="-1" aria-hidden="true" class="fixed z-[80] top-0 right-0 w-full sm:w-[calc(100%-18rem)] h-full hidden flex justify-center items-center">
+        <div id="dropdown-body-${page.id.split('-').slice(1).join('-')}" data-accordion="open" class="w-25 z-50 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700">
+          <ul class="py-2 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownDefaultButton">
+            <li>
+                <a id="add-field-${page.id.split('-').slice(1).join('-')}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Field</a>
+            </li>
+            <li>
+                <a id="add-video-${page.id.split('-').slice(1).join('-')}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Video</a>
+            </li>
+          </ul>
+        </div>
+
+          <div id="parent-${page.id.split('-').slice(1).join('-')}" style="${page.style}" class="relative bg-white rounded-md w-full max-w-2xl max-h-full">
+            <!-- Modal content -->
+            <div class="shadow-sm">
+              <!-- Modal header -->
+              <div class="flex items-center justify-between p-4 md:p-5 border-b-2 rounded-t border-gray-200">
+                  <div id="${fieldHead.id}" style="${fieldHead.style}" class="border border-gray-400 break-all scroll-hidden overflow-scroll p-1" contenteditable="true">
+                     ${fieldHead.content}
+                  </div>
+              </div>
+
+              <!-- Modal body -->
+              <div type="button" class="absolute right-[-1.7rem] top-[-0.3rem] z-10 cursor-pointer" data-dropdown-toggle="dropdown-body-${page.id.split('-').slice(1).join('-')}" data-dropdown-placement="right-end">
+               <svg id="edit-accordion" class="w-6 h-6 text-gray-600 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+                   <path fill-rule="evenodd" d="M11.32 6.176H5c-1.105 0-2 .949-2 2.118v10.588C3 20.052 3.895 21 5 21h11c1.105 0 2-.948 2-2.118v-7.75l-3.914 4.144A2.46 2.46 0 0 1 12.81 16l-2.681.568c-1.75.37-3.292-1.263-2.942-3.115l.536-2.839c.097-.512.335-.983.684-1.352l2.914-3.086Z" clip-rule="evenodd"/>
+                   <path fill-rule="evenodd" d="M19.846 4.318a2.148 2.148 0 0 0-.437-.692 2.014 2.014 0 0 0-.654-.463 1.92 1.92 0 0 0-1.544 0 2.014 2.014 0 0 0-.654.463l-.546.578 2.852 3.02.546-.579a2.14 2.14 0 0 0 .437-.692 2.244 2.244 0 0 0 0-1.635ZM17.45 8.721 14.597 5.7 9.82 10.76a.54.54 0 0 0-.137.27l-.536 2.84c-.07.37.239.696.588.622l2.682-.567a.492.492 0 0 0 .255-.145l4.778-5.06Z" clip-rule="evenodd"/>
+               </svg>                  
+              </div>
+
+              <div id="body-${page.id.split('-').slice(1).join('-')}" class="flex flex-col justify-center items-center relative p-3" data-element-count="${page.element_count}">
+
+              </div>
+
+              <div class="flex items-center p-2 border-t-2 border-gray-200 rounded-b">
+                <button id="btn-footer-${page.id.split('-').slice(1).join('-')}" data-modal-hide="element-${page.id.split('-').slice(1).join('-')}" type="button" class="w-full py-2.5 px-5 text-gray-200 bg-gray-700 rounded-lg" contenteditable="true">Close</button>
+              </div>
+            </div>
+          </div>
+        </div>
+  `
+  const createDropdownModal = (idPrefix)=>`
+        <div id="dropdown-btn-${idPrefix}" data-accordion="open" class="absolute mt-2 left-0 w-20 z-50 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700">
+          <ul class="py-2 text-sm text-gray-700 dark:text-gray-200">
+            <li><a id="down-btn-${idPrefix}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Move Down</a></li>
+            <li><a id="up-btn-${idPrefix}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Move Up</a></li>
+          </ul>
+          <ul class="py-2 text-sm text-gray-700 dark:text-gray-200 border-t border-gray-500">
+            <li><a id="delete-btn-${idPrefix}" class="cursor-pointer font-bold block text-red-700 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Delete</a></li>
+          </ul>
+        </div>
+  `
+  //--- ACCORDION ---
+  const createItemAccordion = (itemId, item, accordionEl)=>{
+    let indicator=''
+    if(parseStyleObj(accordionEl.content).headType === 'question'){
+      indicator = `<div class="btn-cta">
+                    <p>?</p>
+                  </div>`
+    }else if(parseStyleObj(accordionEl.content).headType === 'icon'){
+      indicator = `<div data-accordion-icon>⮛</div>`
+    }else if(parseStyleObj(accordionEl.content).headType === 'none'){
+      indicator = ``
+    }else{
+      indicator = `<svg data-accordion-icon class="w-3 h-3 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
+                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5 5 1 1 5"/>
+                  </svg>`
+    }
+
+    return`
+        <div id="${itemId}" class="relative z-10" data-element-order="${item.element_order}">
+          <div type="button" class="absolute right-0 top-0 z-10 cursor-pointer" data-dropdown-toggle="dropdown-head-${itemId}" data-dropdown-placement="right-end">
+            <svg id="edit-accordion" class="w-5 h-5 text-gray-600 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+                <path fill-rule="evenodd" d="M11.32 6.176H5c-1.105 0-2 .949-2 2.118v10.588C3 20.052 3.895 21 5 21h11c1.105 0 2-.948 2-2.118v-7.75l-3.914 4.144A2.46 2.46 0 0 1 12.81 16l-2.681.568c-1.75.37-3.292-1.263-2.942-3.115l.536-2.839c.097-.512.335-.983.684-1.352l2.914-3.086Z" clip-rule="evenodd"/>
+                <path fill-rule="evenodd" d="M19.846 4.318a2.148 2.148 0 0 0-.437-.692 2.014 2.014 0 0 0-.654-.463 1.92 1.92 0 0 0-1.544 0 2.014 2.014 0 0 0-.654.463l-.546.578 2.852 3.02.546-.579a2.14 2.14 0 0 0 .437-.692 2.244 2.244 0 0 0 0-1.635ZM17.45 8.721 14.597 5.7 9.82 10.76a.54.54 0 0 0-.137.27l-.536 2.84c-.07.37.239.696.588.622l2.682-.567a.492.492 0 0 0 .255-.145l4.778-5.06Z" clip-rule="evenodd"/>
+            </svg>    
+          </div>
+    
+          <h2 id="heading-${itemId}">
+            <button type="button" id="btn-heading-${itemId}" style="${item.style}"
+            class="flex items-center justify-between w-full p-5 break-all font-medium text-left text-gray-500 border border-gray-400"
+            data-accordion-target="#body-${itemId}"
+            aria-expanded="false"
+            aria-controls="body-${itemId}">
+            ${item.content}
+            ${indicator}
+            </button>
+          </h2>
+    
+          <div id="body-${itemId}" data-element-count="${item.element_count}" class="z-30 hidden relative flex flex-col justify-center items-center">
+             
+          </div>
+        </div>
+    `
+
+  }
+  const createAccordion = (accordion)=>`
+    <div id="${accordion.id}" class="relative cursor-pointer" data-element-order="${accordion.element_order}" data-type-indicator="${parseStyleObj(accordion.content).headType}" style="${accordion.style}">
+      <div type="button" class="absolute right-[-1.7rem] top-[-0.3rem] z-10 cursor-pointer" data-dropdown-toggle="dropdown-${accordion.id}" data-dropdown-placement="right-end">
+        <svg id="edit-accordion" class="w-6 h-6 text-gray-600 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+            <path fill-rule="evenodd" d="M11.32 6.176H5c-1.105 0-2 .949-2 2.118v10.588C3 20.052 3.895 21 5 21h11c1.105 0 2-.948 2-2.118v-7.75l-3.914 4.144A2.46 2.46 0 0 1 12.81 16l-2.681.568c-1.75.37-3.292-1.263-2.942-3.115l.536-2.839c.097-.512.335-.983.684-1.352l2.914-3.086Z" clip-rule="evenodd"/>
+            <path fill-rule="evenodd" d="M19.846 4.318a2.148 2.148 0 0 0-.437-.692 2.014 2.014 0 0 0-.654-.463 1.92 1.92 0 0 0-1.544 0 2.014 2.014 0 0 0-.654.463l-.546.578 2.852 3.02.546-.579a2.14 2.14 0 0 0 .437-.692 2.244 2.244 0 0 0 0-1.635ZM17.45 8.721 14.597 5.7 9.82 10.76a.54.54 0 0 0-.137.27l-.536 2.84c-.07.37.239.696.588.622l2.682-.567a.492.492 0 0 0 .255-.145l4.778-5.06Z" clip-rule="evenodd"/>
+        </svg>                  
+      </div>
+      <div id="parent-${accordion.id}" data-item-accordion="${accordion.element_count}" data-accordion="${parseStyleObj(accordion.content).accordionType}">
+    
+      </div>
+    </div>
+  `
+
+  const createDropdownHeadAccordion = (idPrefix)=>`
+        <div id="dropdown-head-${idPrefix}" data-accordion="open" class="absolute mt-2 left-0 w-20 z-30 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700">
+          <ul class="py-2 text-sm text-gray-700 dark:text-gray-200">
+            <li><a id="down-head-${idPrefix}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Move Down</a></li>
+            <li><a id="up-head-${idPrefix}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Move Up</a></li>
+          </ul>
+          <ul class="py-2 text-sm text-gray-700 dark:text-gray-200 border-t border-gray-500">
+            <li><a id="delete-head-${idPrefix}" class="cursor-pointer font-bold block text-red-700 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Delete</a></li>
+          </ul>
+        </div> 
+  `
+  const createDropdownSectionAccordion = (idPrefix,idParts)=>{
+    let bodyDropdown =``
+    if(idParts[2] === 'in' || idParts[4] === 'in'){
+      bodyDropdown =`
+      <div id="dropdown-body-${idPrefix.split('-').slice(1).join('-')}" data-accordion="open" class="absolute mt-2 left-0 w-25 z-30 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700">
+        <ul class="py-2 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownDefaultButton">
+          <li>
+            <a id="add-section-${idPrefix.split('-').slice(1).join('-')}" class="font-bold cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Add Section</a>
+          </li>
+          <li>
+            <a id="up-section-${idPrefix.split('-').slice(1).join('-')}" class="font-bold cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Move Up</a>
+          </li>
+          <li>
+            <a id="down-section-${idPrefix.split('-').slice(1).join('-')}" class="font-bold cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Move Down</a>
+          </li>
+          <li>
+            <a id="delete-section-${idPrefix.split('-').slice(1).join('-')}" class="text-red-600 font-bold cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-red-400">Delete Section</a>
+          </li>
+          <hr>
+          <li>
+            <a id="add-field-${idPrefix.split('-').slice(1).join('-')}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Field</a>
+          </li>
+          <li>
+            <a id="add-video-${idPrefix.split('-').slice(1).join('-')}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Video</a>
+          </li>
+          <li>
+            <a id="add-carousel-${idPrefix.split('-').slice(1).join('-')}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Carousel</a>
+          </li>
+        </ul>
+      </div> 
+        `
+    }else{
+      bodyDropdown =`
+      <div id="dropdown-body-${idPrefix.split('-').slice(1).join('-')}" data-accordion="open" class="absolute mt-2 left-0 w-25 z-30 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700">
+        <ul class="py-2 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownDefaultButton">
+          <li>
+              <a id="add-section-${idPrefix.split('-').slice(1).join('-')}" class="font-bold cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Add Section</a>
+          </li>
+          <li>
+              <a id="up-section-${idPrefix.split('-').slice(1).join('-')}" class="font-bold cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Move Up</a>
+          </li>
+          <li>
+              <a id="down-section-${idPrefix.split('-').slice(1).join('-')}" class="font-bold cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Move Down</a>
+          </li>
+          <li>
+              <a id="delete-section-${idPrefix.split('-').slice(1).join('-')}" class="text-red-600 font-bold cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-red-400">Delete Section</a>
+          </li>
+          <hr>
+          <li>
+              <a id="add-field-${idPrefix.split('-').slice(1).join('-')}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Field</a>
+          </li>
+          <li>
+              <a id="add-video-${idPrefix.split('-').slice(1).join('-')}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Video</a>
+          </li>
+          <li>
+              <a id="add-modal-${idPrefix.split('-').slice(1).join('-')}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Modal</a>
+          </li>
+          <li>
+              <a id="add-accordion-in-${idPrefix.split('-').slice(1).join('-')}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Accordion</a>
+          </li>
+          <li>
+              <a id="add-carousel-${idPrefix.split('-').slice(1).join('-')}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Carousel</a>
+          </li>
+        </ul>
+      </div> 
+      `
+    }
+    return bodyDropdown
+  }
+  const createBodyDropdownAccordion =(idPrefix, idParts)=>`
+      <div id="dropdown-${idPrefix}" data-accordion="open" class="absolute mt-2 left-0 w-20 z-30 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700">
+        <ul class="py-2 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownDefaultButton">
+            <li>
+                <a id="down-${idPrefix}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Move Down</a>
+            </li>
+            <li>
+                <a id="up-${idPrefix}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Move Up</a>
+            </li>
+            <li>
+                <a id="add-accordion-head-${idPrefix}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Add Item</a>
+            </li>
+        </ul>
+        <ul class="py-2 text-sm text-gray-700 dark:text-gray-200 border-0 border-t-1 border-gray-500 " aria-labelledby="dropdownDefaultButton">
+          <li>
+              <a id="delete-${idPrefix}" class="cursor-pointer font-bold block text-red-700 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white cursor-pointer">Delete</a>
+          </li>
+        </ul>
+      </div>
+  `
+  //--- CAROUSEL ---
+  const createCarousel = (carousel, childElements,editorContainer) => {
+    let dataSet = parseStyleObj(carousel.content)
+    return`
+      <div id="${carousel.id}" data-element-order="${carousel.element_order}" data-text-position="${dataSet.dataTextPosition}" data-text="${dataSet.dataText}" data-next-btn-hide="${dataSet.dataNextBtnHide}" data-carousel="static" class="flex justify-center items-center flex-col" style="${parseStyleObj(carousel.style).css}">
+        <div type="button" class="absolute right-[-1.7rem] top-[-0.3rem] z-0 cursor-pointer" data-dropdown-toggle="dropdown-${carousel.id}" data-dropdown-placement="right-end">
+          <svg id="edit-accordion" class="w-6 h-6 text-gray-600 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+            <path fill-rule="evenodd" d="M11.32 6.176H5c-1.105 0-2 .949-2 2.118v10.588C3 20.052 3.895 21 5 21h11c1.105 0 2-.948 2-2.118v-7.75l-3.914 4.144A2.46 2.46 0 0 1 12.81 16l-2.681.568c-1.75.37-3.292-1.263-2.942-3.115l.536-2.839c.097-.512.335-.983.684-1.352l2.914-3.086Z" clip-rule="evenodd"/>
+            <path fill-rule="evenodd" d="M19.846 4.318a2.148 2.148 0 0 0-.437-.692 2.014 2.014 0 0 0-.654-.463 1.92 1.92 0 0 0-1.544 0 2.014 2.014 0 0 0-.654.463l-.546.578 2.852 3.02.546-.579a2.14 2.14 0 0 0 .437-.692 2.244 2.244 0 0 0 0-1.635ZM17.45 8.721 14.597 5.7 9.82 10.76a.54.54 0 0 0-.137.27l-.536 2.84c-.07.37.239.696.588.622l2.682-.567a.492.492 0 0 0 .255-.145l4.778-5.06Z" clip-rule="evenodd"/>
+          </svg>                  
+        </div>
+
+        <div id="element-${carousel.id}" data-item-count="${carousel.element_count}" class="relative w-full h-full" data-carousel="static">
+          <!-- Carousel wrapper -->
+          <div id="wrapper-item-${carousel.id}" class="relative w-full h-full overflow-hidden rounded-lg text-black">
+              <!-- createCarouselItem --!>
+              ${createCarouselItem(carousel, childElements, editorContainer, dataSet.dataTextPosition, dataSet.dataText)}
+          </div>
+          <!-- slideIndicator --!>
+          ${slideIndicator(carousel, childElements)}
+          <!-- Slider controls -->
+          <button id="slider-prev-btn" type="button" style="${parseStyleObj(carousel.style).paddingSlideController}" class="absolute top-0 start-0 z-30 flex items-center justify-center h-full cursor-pointer group focus:outline-none" data-carousel-prev>
+              <span style="${parseStyleObj(carousel.style).slideControlWrapperSize}" class="${dataSet.dataNextBtnHide === 'false' ? '':'hidden'} inline-flex items-center justify-center rounded-full bg-gray-400/30 group-hover:bg-gray-400/50 group-focus:ring-4 group-focus:ring-gray-300 group-focus:outline-none">
+                  <svg style="${parseStyleObj(carousel.style).svgControlerSlideSize}" class="text-gray-500 rtl:rotate-180" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10">
+                      <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 1 1 5l4 4"/>
+                  </svg>
+                  <span class="sr-only">Previous</span>
+              </span>
+          </button>
+          <button id="slider-next-btn" type="button" style="${parseStyleObj(carousel.style).paddingSlideController}" class="absolute top-0 end-0 z-30 flex items-center justify-center h-full cursor-pointer group focus:outline-none" data-carousel-next>
+              <span style="${parseStyleObj(carousel.style).slideControlWrapperSize}" class="${dataSet.dataNextBtnHide === 'false' ? '':'hidden'} inline-flex items-center justify-center rounded-full bg-gray-400/30 group-hover:bg-gray-400/50 group-focus:ring-4 group-focus:ring-gray-300 group-focus:outline-none">
+                  <svg class=" text-gray-500 rtl:rotate-180" aria-hidden="true" style="${parseStyleObj(carousel.style).svgControlerSlideSize}" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10">
+                      <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 9 4-4-4-4"/>
+                  </svg>
+                  <span class="sr-only">Next</span>
+              </span>
+          </button>
+        </div>
+      </div>
+    `
+  }
+  const createCarouselItem = (carousel, childElements,editorContainer, textPosition, textStatus) => {
+    let item=``
+
+    childElements.forEach(el=>{
+      if(el.id.startsWith('item') && el.id.includes(carousel.id)){
+        let field= childElements.filter(field=>field.id === `field-${el.id}`)
+        let textImage=''
+
+        if(textStatus === 'true' ){
+          editorContainer.insertAdjacentHTML('afterend', createDropdownField(field[0].id))
+          if(textPosition === 'on-image'){
+            textImage = createField(field[0])
+
+          }else if(textPosition === 'below-image'){
+            let imgTxt = childElements.filter(img=>img.id === `img-text-on-image-${el.id}`)
+            textImage = `
+              <div style="width:100%;height:30%;">
+                <img id="${imgTxt[0].id}" src="${imgTxt[0].content}" style="width:100%;">"
+              </div>
+              <div class="flex justify-center items-start h-full w-full px-9 py-5" style="${el.style}">
+                ${createField(field[0])}
+              </div>
+              `
+            console.log(imgTxt, `img-text-on-image-${el.id}`)
+          }
+        }
+  
+        if(el.id.includes(carousel.id) && el.id.startsWith('item-carousel')){
+          let style=''
+          if(textPosition === 'on-image'){
+            style = el.style
+          }else{
+            style = 'flex-direction:column;'
+          }
+          item += `
+            <div id="${el.id}" data-item-order="${el.element_order}" class="duration-700 ease-in-out flex justify-center items-center" style="${style}" data-carousel-item>
+            ${textImage}
+            </div>
+          `
+        }
+      }
+    })
+    return item
+  }
+  const slideIndicator = (carousel, childElements)=>{
+    let itemCarouselLength = childElements.filter(el => el.id.includes(carousel.id) && el.type === 'item-carousel').length
+    console.log('length item carousel', itemCarouselLength)
+    let slide=``
+    for(let i=0;i <= itemCarouselLength-1;i++){
+      let indicator = i
+      slide += `
+      <button type="button" style="${parseStyleObj(carousel.style).indicatorSize}}" class="rounded-full" aria-current="true" aria-label="Slide ${indicator+1}" data-carousel-slide-to="${i}"></button>
+      `
+    }
+    
+    return `
+    <div style="${parseStyleObj(carousel.style).bottomIndicatorPosition}" id="slide-indicator-${carousel.id}" class="absolute z-30 flex -translate-x-1/2 left-1/2 space-x-3 rtl:space-x-reverse">
+      ${slide}
+    </div>`
+  }
+  const  createDropdownCarousel = (idPrefix)=> `
+    <div id="dropdown-${idPrefix}" data-accordion="open" class="absolute mt-2 left-0 w-30 z-40 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700">
+      <ul class="py-2 text-sm text-gray-700 dark:text-gray-200">
+        <li><a id="down-${idPrefix}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Move Down</a></li>
+        <li><a id="up-${idPrefix}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Move Up</a></li>
+      </ul>
+      <ul class="py-2 text-sm text-gray-700 dark:text-gray-200 border-t border-gray-500">
+        <li><a id="delete-${idPrefix}" class="cursor-pointer font-bold block text-red-700 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Delete</a></li>
+      </ul>
+    </div>
+  `
+  const  createBtnProlog = (element)=> {
+    return `
+    <a id="${element.id}" class="cursor-pointer" style="transition: opacity 0.1s, box-shadow 0.2s;${element.style}" 
+      onmouseover="this.style.opacity='0.85'; this.style.boxShadow='0 0 0 4px rgba(255, 255, 255, 0.8)';" 
+      onmouseout="this.style.opacity='1'; this.style.boxShadow='none';"
+      contenteditable="true">
+        ${element.content}
+    </a>
+  `
+  }
+  
+  if(webpageDb.length == 0){
+    let idPrefix = `section-1`
+    if(param.includes('prolog-web')){
+      idPrefix = `section-prolog-web-1`
+    }else if(param.includes('prolog-emodul')){
+      idPrefix = `section-prolog-emodul-1`
+    }
+
+    const webpage = document.getElementById('webpage')
+    webpage.insertAdjacentHTML('beforeend', createSection(idPrefix, 1, 0, 'min-height:100dvh;position:relative;'))
+    webpage.dataset.elementCount = 1
+
+    if(param.includes('prolog-web')){
+      webpageDb.push({
+          id: 'webpage-section-prolog-web-1',
+          type: 'section',
+          style: 'min-height:100dvh;position:relative;',
+          element_order: '1',
+          element_count: '0'
+      })
+    }else if(param.includes('prolog-emodul')){
+      webpageDb.push({
+          id: 'webpage-section-prolog-emodul-1',
+          type: 'section',
+          style: 'min-height:100dvh;position:relative;',
+          element_order: '1',
+          element_count: '0'
+      })
+    }else{
+      webpageDb.push({
+          id: 'webpage-section-1',
+          type: 'section',
+          style: 'min-height:100dvh;position:relative;',
+          element_order: '1',
+          element_count: '0'
+      })
+
+    }
+
+    console.log('hallw',webpageDb)
+  }else{
+    const webpage = document.getElementById('webpage')
+
+    function getSectionNumber(id) {
+      return parseInt(id.split('-').find(part => !isNaN(part)), 10) || Infinity;
+    }
+
+    // 1. Ambil semua section dan sort berdasarkan element_order
+    let sections = webpageDb
+      .filter(page => page.type === "section" && !page.id.includes('footer'))
+      .sort((a, b) => a.element_order - b.element_order);
+
+    // 2. Loop per section
+    sections.forEach(section => {
+      let idPrefix = section.id.split('-').slice(1).join('-');
+
+      // Cetak section
+      webpage.insertAdjacentHTML(
+        'beforeend',
+        createSection(idPrefix, section.element_order, section.element_count, section.style)
+      );
+
+      // Update element count
+      webpage.dataset.elementCount = webpageDbParentSection
+        .filter(p => p.type === 'parent-section')[0]?.element_count ?? 0;
+
+      // 3. Cari elemen lain yang belong ke section ini
+      let sectionNum = getSectionNumber(section.id);
+
+      let childElements = webpageDb.filter(page => {
+        return page.type !== "section" && getSectionNumber(page.id) === sectionNum;
+      });
+
+      function appendTo(selector, html, container=document) {
+        const el = container.querySelector(selector);
+        if (el) el.insertAdjacentHTML('beforeend', html);
+      }
+
+      function renderAccordion(accordionEl, childElements, editorContainer) {
+        const id = accordionEl.id;
+
+        // buat accordion + dropdown body
+        if(accordionEl.id.startsWith('accordion-in-accordion')){
+          console.log(`in accordion #wrapper-section-${id.split('-').slice(2,-1).join('-')}`)
+          editorContainer.querySelector(`#wrapper-section-${id.split('-').slice(2,-1).join('-')}`).insertAdjacentHTML('beforeend', createAccordion(accordionEl));
+        }else{
+          console.log(accordionEl.id)
+          editorContainer.insertAdjacentHTML('beforeend', createAccordion(accordionEl));
+        }
+        editorContainer.insertAdjacentHTML('afterend', createBodyDropdownAccordion(id, id.split('-')));
+
+        // group children sekali saja
+        const grouped = {
+          head: [],
+          section: [],
+          field: [],
+          nestedAccordion: [],
+          other: []
+        };
+
+        childElements.forEach(el => {
+          if (!el.id.includes(id)) return;
+
+          const isNested = id.startsWith("accordion-in-accordion");
+          const isNestedEl = el.id.includes("accordion-in-accordion");
+
+          if (el.id.startsWith("btn-heading")) {
+            if (isNested === isNestedEl) grouped.head.push(el);
+          } else if (el.id.startsWith("section-accordion")) {
+            if (isNested === isNestedEl) grouped.section.push(el);
+          } else if (!el.id.startsWith("btn-heading") && !el.id.startsWith("section-accordion") && (accordionEl.id !== el.id)) {
+            grouped.field.push(el);
+          } else {
+            grouped.other.push(el);
+          }
+        });
+
+        // render head
+        console.log(parseStyleObj(accordionEl.content))
+        grouped.head.sort((a, b) => a.element_order - b.element_order)
+          .forEach(head => {
+            appendTo(`#parent-${id}`, createItemAccordion(head.id.split('-').slice(2).join('-'), head, accordionEl));
+            editorContainer.insertAdjacentHTML('afterend', createDropdownHeadAccordion(head.id.split('-').slice(2).join('-')));
+          });
+
+        // render section
+        grouped.section.sort((a, b) => a.element_order - b.element_order)
+          .forEach(section => {
+            appendTo(`#body-${section.id.split('-').slice(1,-1).join('-')}`, createSectionAccordion(section));
+            editorContainer.insertAdjacentHTML('afterend', createDropdownSectionAccordion(section.id, section.id.split('-')));
+          });
+
+        // render field
+        grouped.field.sort((a,b)=>a.element_order-b.element_order).forEach(field=>{
+        let html, dropdown;
+        switch (field.type) {
+          case 'button-modal':
+            html = createBtnModal(field);
+            dropdown = createDropdownModal(field.id);
+            appendTo(`#wrapper-section-${field.id.split('-').slice(1,-1).join('-')}`, html);
+            break;
+          case 'video':
+            html = createVideo(field);
+            dropdown = createDropdownVideo(field.id);
+            appendTo(`#wrapper-section-${field.id.split('-').slice(1,-1).join('-')}`, html);
+            break;
+          case 'field':
+            html = createField(field);
+            dropdown = createDropdownField(field.id);
+            appendTo(`#wrapper-section-${field.id.split('-').slice(1,-1).join('-')}`, html);
+            break;
+          case 'carousel':
+            html = createCarousel(field, childElements, editorContainer)
+            dropdown = createDropdownCarousel(field.id, field.id.split('-'))
+            appendTo(`#wrapper-section-${field.id.split('-').slice(1,-1).join('-')}`, html)
+            console.log(`#wrapper-section-${field.id.split('-').slice(1,-1).join('-')}`)
+            break;
+          case 'accordion':
+            renderAccordion(field, childElements,editorContainer);
+            break;
+        }
+        if (dropdown) editorContainer.insertAdjacentHTML('afterend', dropdown);
+      });
+
+        // init accordion
+        setTimeout(() => {
+          try {
+            const accordionElement = document.getElementById(id);
+            if (accordionElement) {
+              new Accordion(accordionElement, {
+                alwaysOpen: false,
+                activeClasses: 'bg-gray-100 text-gray-900',
+                inactiveClasses: 'text-gray-500'
+              });
+              console.log('✅ Accordion berhasil diinisialisasi:', id);
+            }
+            initFlowbite();
+          } catch (error) {
+            console.error('❌ Gagal inisialisasi accordion', error);
+          }
+        }, 100);
+      }
+
+      const renderers = {
+        field(page, sectionAppend) {
+          let element, dropdown;
+          if (page.id.startsWith('field-modal-')) {
+            element = createField(page);
+            dropdown = createDropdownField(page.id);
+            appendTo(`#body-${page.id.split('-').slice(1, -1).join('-')}`, element, sectionAppend);
+            appendTo(`#body-${page.id.split('-').slice(1, -1).join('-')}`, dropdown, sectionAppend.parentElement);
+            return true; // stop, biar gak render ulang di bawah
+            
+          } else if (page.id.startsWith('field-element-')) {
+            element = createField(page);
+            dropdown = createDropdownField(page.id);
+
+          }
+          return { element, dropdown };
+        },
+
+        video(page, sectionAppend) {
+          let element, dropdown;
+          if (page.id.startsWith('video-modal')) {
+            element = createVideo(page);
+            dropdown = createDropdownVideo(page.id);
+            appendTo(`#body-${page.id.split('-').slice(1, -1).join('-')}`, element);
+            sectionAppend.insertAdjacentHTML('afterend', dropdown);
+            return true
+          } else if(page.id.startsWith('video-element')) {
+            element = createVideo(page);
+            dropdown = createDropdownVideo(page.id);
+          }
+          return { element, dropdown };
+        },
+
+        'button-modal'(page) {
+          if (!page.id.startsWith('modal-accordion') ) {
+            return {
+              element: createBtnModal(page),
+              dropdown: createDropdownModal(page.id)
+            }
+          }
+          return null; // kasus "modal-accordion" di-handle dalam renderAccordion
+        },
+
+        'btn-prolog'(page) {
+          console.log('btn-prolog')
+          if (!page.id.startsWith('modal-accordion') ) {
+            return {
+              element: createBtnProlog(page),
+            }
+          }
+          return null; // kasus "modal-accordion" di-handle dalam renderAccordion
+        },
+
+        'body-modal'(page, sectionAppend) {
+          const fieldHead = childElements.find(field => field.id === `field-head-${page.id.split('-').slice(1).join('-')}`)
+          
+          sectionAppend.insertAdjacentHTML('beforeend', createBodyModal(page, fieldHead))
+          sectionAppend.insertAdjacentHTML('beforeend', createDropdownModal(page.id))
+          
+          return true;
+
+        },
+
+        accordion(page, sectionAppend, editorContainer, childElements) {
+          // langsung delegasikan ke renderer accordion khusus (yang refactor panjang kemarin)
+          if(!page.id.startsWith('accordion-in-accordion')){
+            renderAccordion(page, childElements, editorContainer);
+          }
+          return true;
+        },
+
+        carousel(page, sectionAppend, editorContainer, childElements){
+          const id = page.id;
+
+          // buat accordion + dropdown body
+          if(!id.startsWith('carousel-accordion')){
+            editorContainer.insertAdjacentHTML('beforeend', createCarousel(page,childElements,editorContainer));
+            editorContainer.insertAdjacentHTML('afterend', createDropdownCarousel(id, id.split('-')));
+
+          }
+          return true
+        }
+      };
+
+      childElements.sort((a, b) => {
+        // kalau a.btn-prolog dan b bukan → a taruh di bawah
+        if (a.type === "btn-prolog" && b.type !== "btn-prolog") return 1;
+        // kalau b.btn-prolog dan a bukan → b taruh di bawah
+        if (b.type === "btn-prolog" && a.type !== "btn-prolog") return -1;
+
+        // kalau dua-duanya sama (sama-sama btn-prolog atau sama-sama bukan)
+        // urutkan berdasarkan element_order biasa
+        return a.element_order - b.element_order;
+      });
+      childElements.forEach(page => {
+        if(!page.id.includes('footer')){
+          console.log(page)
+          let sectionAppend=''
+          if(param.includes('prolog-web')){
+            sectionAppend = document.querySelector(`#webpage-section-prolog-web-${sectionNum}`);
+            
+          }else if(param.includes('prolog-emodul')){
+            sectionAppend = document.querySelector(`#webpage-section-prolog-emodul-${sectionNum}`);
+            
+          }else{
+            sectionAppend = document.querySelector(`#webpage-section-${sectionNum}`);
+  
+          }
+          const editorContainer = sectionAppend.querySelector('[id^="editor-container-"]');
+          
+          const renderer = renderers[page.type];
+          if (!renderer) return; // skip kalau gak ada handler
+  
+          const result = renderer(page, sectionAppend, editorContainer, childElements);
+      
+          if (result === true) return; // sudah di-handle sepenuhnya di dalam renderer
+          
+          if (result && result.element) {
+            console.log('render', result)
+            editorContainer.insertAdjacentHTML('beforeend', result.element);
+            if (result.dropdown) sectionAppend.insertAdjacentHTML('beforeend', result.dropdown);
+          }
+        }
+      });
+    });
+
+    //====================== FOOTER =========================
+    let sectionsFooter = webpageDb
+      .filter(page => page.type === "section" && page.id.includes('footer'))
+
+    // 2. Loop per section
+    sectionsFooter.forEach(section => {
+      let idPrefix = section.id.split('-').slice(1).join('-');
+
+      // Cetak section
+      webpage.insertAdjacentHTML(
+        'beforeend',
+        createSectionFooter(idPrefix, section.element_order, section.element_count, section.style)
+      );
+
+      let childElements = webpageDb.filter(page => {
+        return page.type !== "section" && page.id.includes('footer');
+      });
+
+      childElements.sort((a, b) => a.element_order - b.element_order);
+      childElements.forEach(page => {
+        let sectionAppend = document.querySelector(`#webpage-section-footer`);
+
+        const editorContainer = sectionAppend.querySelector('[id^="editor-container-"]');
+        editorContainer.insertAdjacentHTML('beforeend', createField(page));
+        sectionAppend.insertAdjacentHTML('afterend', createDropdownField(page.id));
+          
+      })
+    });
+
+  }
+  setListener()
+
+  setTimeout(() => {
+      try {
+        initFlowbite();
+      } catch (error) {
+          console.error('❌ Gagal menginisialisasi Modal:', error);
+      }
+    }, 100); 
 }
 
 document.getElementById('default-sidebar').addEventListener('click', function (event) {
@@ -2105,6 +3320,7 @@ document.getElementById('default-sidebar').addEventListener('click', function (e
     slideIndicator.insertAdjacentHTML('beforeend', `
       <button type="button"
         class="${lastIndicator.classList} rounded-full"
+        style="${lastIndicator.getAttribute('style')}"
         aria-current="false"
         aria-label="Slide ${newIndex + 1}"
         data-carousel-slide-to="${newIndex}">
@@ -2117,7 +3333,7 @@ document.getElementById('default-sidebar').addEventListener('click', function (e
 
     const itemCarousel = itemCarouselWrapper.querySelector(`[id^="item-${idSuffix}"]`)
     let rgba
-    if(carouselSelect.dataset.textPosition === 'on image'){
+    if(carouselSelect.dataset.textPosition === 'on-image'){
       rgba = itemCarousel.style.backgroundImage.split('rgba(')[1].split(')')[0]
     }else{
       rgba = 0,0,0,0.0
@@ -2127,42 +3343,80 @@ document.getElementById('default-sidebar').addEventListener('click', function (e
     
     let itemContent =''
     let classList = itemCarousel.classList
+    let styleItem
     if(carouselSelect.dataset.text === "true"){
-      if(carouselSelect.dataset.textPosition === "on image"){
+      let style
+      if(carouselSelect.dataset.textPosition === "on-image"){
         itemContent = `
         <div id="field-${newItemId}" class="border border-b-1 border-gray-500 p-1 max-w-[100%] break-all scroll-hidden overflow-scroll" style="ol{list-style-type:decimal;}ul{list-style-type:disc;}" contenteditable="true"></div>
         `
+        style = `background-image: linear-gradient(rgba(${rgba})), url(/assets/img/almond1DefaultImageCarousel.jpg); background-size: cover; background-position: center;`
+        styleItem=style
+        webpageDb.push({
+          id: newItemId,
+          type:'item-carousel',
+          element_order:newItemCount,
+          style:style,
+        })
+
         console.log('on image')
+
       }else{
         let copyItem = itemCarousel.cloneNode(true)
-        copyItem.querySelector('img').setAttribute('src', '/assets/img/almond1.jpg')
+        copyItem.querySelector('img').setAttribute('src', '/assets/img/almond1DefaultImageCarousel.jpg')
         copyItem.children[1].innerHTML = `
         <div id="field-${newItemId}" class="border border-b-1 border-gray-500 p-1 max-w-[100%] break-all scroll-hidden overflow-scroll" style="ol{list-style-type:decimal;}ul{list-style-type:disc;}" contenteditable="true"></div>
         `
         itemContent= copyItem.innerHTML
         classList = copyItem.classList
+        
+        style=copyItem.children[1].getAttribute('style')
+        styleItem=style
+
+        console.log(copyItem.children[1])
+        webpageDb.push({
+          id: newItemId,
+          type:'item-carousel',
+          element_order:newItemCount,
+          style:style,
+        },
+        {
+          id: `img-text-on-image-${newItemId}`,
+          type:'img-carousel',
+          content:'/assets/img/almond1DefaultImageCarousel.jpg',
+        })
+
       }
+      webpageDb.push({
+        id:`field-${newItemId}`,
+        type:'field',
+      })
+      setListener()
+    }else{
+      styleItem = `background-image: linear-gradient(rgba(${rgba})), url(/assets/img/almond1DefaultImageCarousel.jpg); background-size: cover; background-position: center;`
     }
 
-    let style
-    if(carouselSelect.dataset.textPosition === "on image"){
-      style = `style="background-image: linear-gradient(rgba(${rgba})), url(/assets/img/almond1.jpg); background-size: cover; background-position: center;"`
-    }else{
-      style=''
-    }
+    webpageDb.map(field =>{
+      if(field.id === idSuffix){
+        field.element_count = newItemCount
+      }
+    })
     
     let newItem = `
     <div id="${newItemId}"
       data-item-order="${newItemCount}"
       class="${classList}"
-      ${style}
+      style="${styleItem}"
       data-carousel-item>
       ${itemContent}
     </div>
     `
+
     itemCarouselWrapper.children[0].insertAdjacentHTML('beforeend', newItem);
 
+    console.log(webpageDb)
     updateStylingControls(carouselSelect);
+
     if(carouselSelect.dataset.text === "true"){
       setListener()
     }
@@ -2177,10 +3431,11 @@ document.getElementById('default-sidebar').addEventListener('click', function (e
 
   if (event.target.id.startsWith("add-text-carousel")) {
     const btnAddText = event.target
+    console.log(webpageDb)
 
     if(carouselSelect.dataset.text === 'false' ){
       carouselSelect.querySelectorAll('[id^="item-carousel-"]').forEach(item=>{
-        if(carouselSelect.dataset.textPosition === 'on image'){
+        if(carouselSelect.dataset.textPosition === 'on-image'){
           item.innerHTML=`
           <div id="field-${item.id}" class="border border-b-1 border-gray-500 p-1 max-w-[100%] break-all scroll-hidden overflow-scroll" style="ol{list-style-type:decimal;}ul{list-style-type:disc;}" contenteditable="true"></div>
           `
@@ -2190,21 +3445,51 @@ document.getElementById('default-sidebar').addEventListener('click', function (e
           console.log('resset caraousel')
           item.innerHTML =item.querySelector('[id^="field-"]').outerHTML
         }
+        webpageDb.push({
+          id:`field-${item.id}`,
+          type:'field',
+          style: `ol{list-style-type:decimal;}ul{list-style-type:disc;}`
+        })
       })
-        carouselSelect.dataset.text = "true"
+
+      carouselSelect.dataset.text = "true"
+      console.log(webpageDb)
+      setListener()
+
     }else{
       carouselSelect.querySelectorAll('[id^="item-carousel-"]').forEach(item=>{
-        if(carouselSelect.dataset.textPosition !== 'on image'){
-          let img = item.querySelector('img').getAttribute('src') 
+        let img
+        if(carouselSelect.dataset.textPosition !== 'on-image'){
+          img = item.querySelector('img').getAttribute('src') 
           item.setAttribute('style', `background-image:linear-gradient(rgba(0,0,0,0.0)), url("${img}");background-size:cover;background-position:center;`)
         }
         item.innerHTML =''
+        if(carouselSelect.dataset.textPosition === 'below-image'){
+          webpageDb.map(field =>{
+            if(field.id === item.id){
+              field.file = webpageDb.find(img => img.id === `img-text-on-image-${field.id}`).file
+              field.style= `background-image:linear-gradient(rgba(0,0,0,0.0)), url("${img}");background-size:cover;background-position:center;`
+            }
+          })
+        }
+        webpageDb=webpageDb.filter(field => field.id !== `field-${item.id}` && field.id !== `img-text-on-image-${item.id}`)
       })
-      carouselSelect.dataset.textPosition = 'on image'
+      
+      carouselSelect.dataset.textPosition = 'on-image'
+      document.getElementById('btn-text-position').textContent = 'On Image'
       carouselSelect.dataset.text = "false"
     }
 
     btnAddText.dataset.text = btnAddText.dataset.text == "add" ? "remove" : "add"
+    webpageDb.map(field=>{
+      if(field.id === carouselSelect.id){
+        let content=parseStyleObj(field.content)
+        content.dataTextPosition = carouselSelect.dataset.textPosition
+        content.dataText=carouselSelect.dataset.text
+        field.content = stringifyStyleObj(content)
+      }
+    })
+    console.log(webpageDb)
     btnAddText.textContent = btnAddText.textContent == "Add Text" ? "Remove Text" : "Add Text"
     setListener()
   }
@@ -2219,22 +3504,49 @@ document.getElementById('default-sidebar').addEventListener('click', function (e
     })
     const btnHide = event.target
     carouselSelect.dataset.nextBtnHide = carouselSelect.dataset.nextBtnHide == "true" ? "false" : "true"
+    webpageDb.map(field=>{
+      if(field.id === carouselSelect.id){
+        let content=parseStyleObj(field.content)
+        content.dataNextBtnHide = carouselSelect.dataset.nextBtnHide
+        field.content = stringifyStyleObj(content)
+      }
+    })
+    console.log(webpageDb)
     btnHide.textContent = carouselSelect.dataset.nextBtnHide == "true" ? "Unhide" : "Hide"
   }
 
   if(event.target.id.startsWith("btn-text-position") && carouselSelect.dataset.text === 'true'){
+    let carouselId
     carouselSelect.querySelectorAll('[id^="item-carousel-"]').forEach(item=>{
+      carouselId = item.id.split('-').slice(1,-1).join('-')
       let img
       const imgWrapper = document.createElement('div')
       const newImg = document.createElement('img')
 
-      if(carouselSelect.dataset.textPosition === "on image"){
+      if(carouselSelect.dataset.textPosition === "on-image"){
         img = item.getAttribute('style')  
         
-        item.setAttribute('style', '')
+        let style = item.getAttribute('style')
+        let match = style.match(/rgba\([^)]*\)/g);
+        let rgba
+
+        if (match && match.length > 0) {
+          // ambil warna pertama
+          rgba = match[0];
+
+          // kalau warnanya transparan penuh (rgba(0,0,0,0) atau rgba(0,0,0,0.0))
+          if (/rgba\(0,\s*0,\s*0,\s*0(\.0+)?\)/.test(rgba)) {
+            rgba = "rgba(128,128,128,1)"; // ganti jadi abu-abu
+          }
+        }
+
+        item.style = `background-color: ${rgba};`;
+
+        item.setAttribute('style', ``)
         let rawUrl = img.split('url(')[1].split(')')[0]
         let imgUrl = rawUrl.replace(/^['"]|['"]$/g, '');
 
+        imgWrapper.id = `img-text-on-image-${item.id}`
         imgWrapper.setAttribute('style', 'height:30%;width:100%;')
         newImg.setAttribute('src', imgUrl)
         newImg.setAttribute('style', 'width;100%;')
@@ -2242,22 +3554,71 @@ document.getElementById('default-sidebar').addEventListener('click', function (e
         imgWrapper.appendChild(newImg)
         let newText = `
           ${imgWrapper.outerHTML}
-          <div class="flex justify-center items-start h-full bg-gray-400 w-full px-9 py-5">
+          <div class="flex justify-center items-start h-full w-full px-9 py-5" style="background-color: ${rgba};">
             ${item.querySelector('[id^="field-"]').outerHTML}
           </div>
         `
         item.innerHTML =''
         item.insertAdjacentHTML('beforeend', newText)
         item.classList.add('flex-col')
+        let carouselItem = webpageDb.find(field => field.id === item.id)
+
+        webpageDb.map(field=>{
+          if(field.id === item.id){
+            field.style = `background-color: ${rgba};`
+          }
+        })
+
+        if(carouselItem.file){
+          webpageDb.push({
+            id:`img-text-on-image-${item.id}`,
+            type:'img-carousel',
+            file: carouselItem.file
+          })
+          console.log('item: ', carouselItem)
+          delete carouselItem.file
+        }else{
+          webpageDb.push({
+            id:`img-text-on-image-${item.id}`,
+            type:'img-carousel',
+            content: imgUrl
+          })
+          console.log('item: ', carouselItem)
+        }
 
       }else{
-        img = item.querySelector('img').getAttribute('src') 
+        let imgField = item.querySelector('img')
+        img = imgField.getAttribute('src') 
         item.setAttribute('style', `background-image:linear-gradient(rgba(0,0,0,0.0)), url("${img}");background-size:cover;background-position:center;`)
         item.innerHTML =item.querySelector('[id^="field-"]').outerHTML
+
+        webpageDb.map(field =>{
+          if(field.id === item.id){
+            field.file = webpageDb.find(img => img.id === `img-text-on-image-${field.id}`).file
+          }
+        })
+
+        webpageDb = webpageDb.filter(field=>field.id !== imgField.parentElement.id)
+        webpageDb.map(field => {
+          if(field.id === item.id){
+            field.style = `background-image:linear-gradient(rgba(0,0,0,0.0)), url("...");background-size:cover;background-position:center;`
+          }
+        })
+
       }
+
+      setListener()
     })
 
-    carouselSelect.dataset.textPosition = carouselSelect.dataset.textPosition == 'on image' ? 'below image' : 'on image' 
+    carouselSelect.dataset.textPosition = carouselSelect.dataset.textPosition == 'on-image' ? 'below-image' : 'on-image' 
+    webpageDb.map(field=>{
+      if(field.id === carouselSelect.id){
+        let content=parseStyleObj(field.content)
+        content.dataTextPosition = carouselSelect.dataset.textPosition
+        field.content = stringifyStyleObj(content)
+      }
+    })
+    console.log(webpageDb)
     const btnPosition = event.target
     btnPosition.textContent = btnPosition.textContent == "On Image" ? "Below Image" : "On Image"
   }
@@ -2277,7 +3638,7 @@ document.getElementById('default-sidebar').addEventListener('click', function (e
     if (nextField) {
       // Tukar dataset
       [actualField.dataset.itemOrder, nextField.dataset.itemOrder] = 
-        [nextField.dataset.itemOrder, actualField.dataset.itemOrder];
+      [nextField.dataset.itemOrder, actualField.dataset.itemOrder];
 
       // Pindahkan elemen
       nextField.insertAdjacentElement('afterend', actualField);
@@ -2291,7 +3652,17 @@ document.getElementById('default-sidebar').addEventListener('click', function (e
       );
 
       oldCarousel.innerHTML = cleanClone.innerHTML;
-
+      
+      webpageDb.map(item=>{
+        if(item.id == actualField.id){
+          item.element_order = actualField.dataset.itemOrder
+          console.log(item)
+        }else if(item.id == nextField.id){
+          item.element_order = nextField.dataset.itemOrder
+          console.log(item)
+        }
+      })
+      console.log(webpageDb)
       // Update style
       updateStylingControls(carouselSelect);
     }
@@ -2325,6 +3696,16 @@ document.getElementById('default-sidebar').addEventListener('click', function (e
       oldCarousel.innerHTML = cleanCarousel.innerHTML
       updateStylingControls(carouselSelect)
 
+      webpageDb.map(item=>{
+        if(item.id == actualField.id){
+          item.element_order = actualField.dataset.itemOrder
+          console.log(item)
+        }else if(item.id == prevField.id){
+          item.element_order = prevField.dataset.itemOrder
+          console.log(item)
+        }
+      })
+      console.log(webpageDb)
     }
     setTimeout(() => {
       try {
@@ -2336,17 +3717,42 @@ document.getElementById('default-sidebar').addEventListener('click', function (e
 
   }else if (idParts[0] === 'delete') {
     const indicatorWrapper = document.getElementById(`slide-indicator-${idParts.slice(2, -1).join('-')}`);
-    const targetOrder = parseInt(actualField.dataset.itemOrder);
+    // Ambil semua item carousel
+    const items = Array.from(actualField.parentElement.querySelectorAll("[data-item-order]"));
 
-    // Hapus indikator yang sesuai dan update urutan slide-to lainnya
+    // Urutkan berdasarkan itemOrder
+    const sortedItems = items
+      .map((el) => parseInt(el.dataset.itemOrder))
+      .sort((a, b) => a - b);
+
+    // Buat mapping itemOrder -> index
+    const orderToIndex = {};
+    sortedItems.forEach((order, idx) => {
+      orderToIndex[order] = idx;
+    });
+
+    console.log("Mapping:", orderToIndex);
+
+    // Sekarang update indikator
+    const targetOrder = parseInt(actualField.dataset.itemOrder);
+    const targetIndex = orderToIndex[targetOrder];
+
     Array.from(indicatorWrapper.children).forEach((indicator) => {
       const slideTo = parseInt(indicator.dataset.carouselSlideTo);
-      if (slideTo === targetOrder-1) {
+
+      if (slideTo === targetIndex) {
         indicator.remove();
-        console.log('indicator remove', slideTo, targetOrder)
-      } else if (slideTo > targetOrder-1) {
+        console.log("indicator remove", slideTo, targetOrder);
+      } else if (slideTo > targetIndex) {
         indicator.dataset.carouselSlideTo = slideTo - 1;
-        console.log('indicator no remove', slideTo, targetOrder)
+        console.log("indicator no remove", slideTo, targetOrder);
+      } else {
+        console.log(
+          "test indicator remove",
+          slideTo,
+          targetOrder,
+          slideTo > targetIndex
+        );
       }
     });
 
@@ -2357,7 +3763,15 @@ document.getElementById('default-sidebar').addEventListener('click', function (e
     }
 
     editCarouselItem.remove();
+    webpageDb.map(field => {
+      if(field.id === actualField.id.split('-').slice(1,-1).join('-')){
+        field.element_count = actualBodyItem.dataset.itemCount
+      }
+    })
+    webpageDb = webpageDb.filter(field => !field.id.includes(actualField.id))
+    
     actualField.remove();
+    console.log(webpageDb)
 
     setTimeout(() => {
       try {
@@ -2373,162 +3787,263 @@ document.getElementById('default-sidebar').addEventListener('click', function (e
 document.getElementById('webpage').addEventListener('click', function (event) {
   const idParts = event.target.id.split('-')
   const id = event.target.id
-  console.log(event.target,id)
   // =================== ADD ELEMENT ==========================
 
   if (id.startsWith('add-section-')) {
     const idParts = event.target.id.split('-');
-    console.log(`add-section webpage-${idParts.slice(1,3).join('-')}`, sectionCount)
-    sectionCount++;
+    const idPrefix = `${idParts.slice(2, idParts.length-1).join('-')}`
 
-    const section = document.getElementById(`webpage-${idParts.slice(1,3).join('-')}`)
-    let sectionOrder = parseInt(section.dataset.sectionOrder)
-
-     let newSection =`
-        <div id="webpage-section-${sectionCount}" data-section-order="${sectionOrder+1}" class="bg-gray-200 relative flex flex-col justify-center items-center border border-gray-700" style="min-height:100dvh;">
-          <div class="absolute right-1 top-1 z-50 cursor-pointer" data-dropdown-toggle="dropdown-section-${sectionCount}" data-dropdown-placement="right-end">
-              <svg class="w-7 h-7 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
-                  <path fill-rule="evenodd" d="M11.32 6.176H5c-1.105 0-2 .949-2 2.118v10.588C3 20.052 3.895 21 5 21h11c1.105 0 2-.948 2-2.118v-7.75l-3.914 4.144A2.46 2.46 0 0 1 12.81 16l-2.681.568c-1.75.37-3.292-1.263-2.942-3.115l.536-2.839c.097-.512.335-.983.684-1.352l2.914-3.086Z" clip-rule="evenodd"/>
-                  <path fill-rule="evenodd" d="M19.846 4.318a2.148 2.148 0 0 0-.437-.692 2.014 2.014 0 0 0-.654-.463 1.92 1.92 0 0 0-1.544 0 2.014 2.014 0 0 0-.654.463l-.546.578 2.852 3.02.546-.579a2.14 2.14 0 0 0 .437-.692 2.244 2.244 0 0 0 0-1.635ZM17.45 8.721 14.597 5.7 9.82 10.76a.54.54 0 0 0-.137.27l-.536 2.84c-.07.37.239.696.588.622l2.682-.567a.492.492 0 0 0 .255-.145l4.778-5.06Z" clip-rule="evenodd"/>
-              </svg>                  
+    let newSection
+    
+    if(idParts[2] === 'accordion'){
+      let elementCollapse = document.getElementById(`body-${idPrefix}`)
+      let elementCount = parseInt(elementCollapse.dataset.elementCount)+1
+      elementCollapse.dataset.elementCount = elementCount
+      
+      let svg = `
+        <svg id="edit-accordion" class="w-5 h-5 text-gray-600 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+            <path fill-rule="evenodd" d="M11.32 6.176H5c-1.105 0-2 .949-2 2.118v10.588C3 20.052 3.895 21 5 21h11c1.105 0 2-.948 2-2.118v-7.75l-3.914 4.144A2.46 2.46 0 0 1 12.81 16l-2.681.568c-1.75.37-3.292-1.263-2.942-3.115l.536-2.839c.097-.512.335-.983.684-1.352l2.914-3.086Z" clip-rule="evenodd"/>
+            <path fill-rule="evenodd" d="M19.846 4.318a2.148 2.148 0 0 0-.437-.692 2.014 2.014 0 0 0-.654-.463 1.92 1.92 0 0 0-1.544 0 2.014 2.014 0 0 0-.654.463l-.546.578 2.852 3.02.546-.579a2.14 2.14 0 0 0 .437-.692 2.244 2.244 0 0 0 0-1.635ZM17.45 8.721 14.597 5.7 9.82 10.76a.54.54 0 0 0-.137.27l-.536 2.84c-.07.37.239.696.588.622l2.682-.567a.492.492 0 0 0 .255-.145l4.778-5.06Z" clip-rule="evenodd"/>
+        </svg>  
+      `
+      let newSection=`
+        <div id="section-${idPrefix}-${elementCount}" data-element-order="${elementCount}" class="relative w-full flex flex-col justify-center items-center border border-gray-400">
+          <div type="button" class="absolute right-[-1.3rem] top-0 z-10 cursor-pointer" data-dropdown-toggle="dropdown-body-${idPrefix}-${elementCount}" data-dropdown-placement="right-end">
+            ${svg}
           </div>
 
-          <div id="dropdown-section-${sectionCount}" data-accordion="open" class="z-50 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700">
-            <ul class="py-2 text-sm text-gray-700 dark:text-gray-200 border-0 border-b-1 border-gray-500 " aria-labelledby="dropdownDefaultButton">
-                <li>
-                    <a id="add-section-${sectionCount}" class="font-bold block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Section</a>
-                </li>
-                <li>
-                    <a id="delete-section-${sectionCount}" class="font-bold block text-red-700 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Delete Section</a>
-                </li>
-            </ul>
-            <ul class="py-2 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownDefaultButton">
-                <li>
-                    <a id="add-field-element-section-${sectionCount}" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Field</a>
-                </li>
-                <li>
-                    <a id="add-video-element-section-${sectionCount}" class=" block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Video</a>
-                </li>
-                <li>
-                    <a id="add-modal-element-section-${sectionCount}" class=" block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Modal</a>
-                </li>
-                <li>
-                    <a id="add-accordion-element-section-${sectionCount}" class=" block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Accordion</a>
-                </li>
-                <li>
-                    <a id="add-collapse-element-section-${sectionCount}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Collapse Button</a>
-                </li>
-                <li>
-                    <a id="add-carousel-element-section-${sectionCount}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Carousel</a>
-                </li>
-            </ul>
+          <!-- Body Collapse -->
+          <div id="wrapper-section-${idPrefix}-${elementCount}" data-element-count="1" class="flex justify-start items-center flex-col">
+            <div data-element-order="1" style="position:relative;display:flex;justify-content:center;align-items:center;flex-direction:column;">
+              <div type="button" class="absolute right-[-1.3rem] top-0 z-10 cursor-pointer" data-dropdown-toggle="dropdown-field-${idPrefix}-${elementCount}-1" data-dropdown-placement="right-end">
+                ${svg}    
+              </div>
+              <div id="field-${idPrefix}-${elementCount}-1" style="ol{list-style-type:decimal;}ul{list-style-type:disc;}" class="border border-b-1 border-gray-500 px-1 max-w-[100%] break-all scroll-hidden overflow-scroll" contenteditable="true">
+                text
+              </div>
+            </div>  
+          </div>
         </div>
-          
-          <div id="editor-container-section-${sectionCount}" class="p-8 w-full flex flex-col flex-1" style="justify-content:start;align-items:center;"></div>
+      `
+
+      event.target.parentElement.parentElement.parentElement.classList.add('hidden')
+
+      let newDropdown=event.target.parentElement.parentElement.parentElement.cloneNode(true)
+      newDropdown.id=`dropdown-body-${idPrefix}-${elementCount}`
+      newDropdown.querySelectorAll('[id]').forEach(element => {
+        console.log('element select', element)
+        let newId = element.id.split('-')
+        if(newId[2] === 'in'){
+          element.id = `${newId.slice(0,2).join('-')}-in-${idPrefix}-${elementCount}`
+        }else{
+          element.id = `${newId.slice(0,2).join('-')}-${idPrefix}-${elementCount}`
+        }
+      })
+
+      let fieldDropdown = `
+        <div id="dropdown-field-${idPrefix}-${elementCount}-1" data-accordion="open" class="absolute mt-2 left-0 w-25 z-30 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700">
+          <ul class="py-2 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownDefaultButton">
+              <li>
+                  <a id="up-field-${idPrefix}-${elementCount}-1" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Move Up</a>
+              </li>
+              <li>
+                  <a id="down-field-${idPrefix}-${elementCount}-1" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Move Down</a>
+              </li>
+              <li>
+                  <a id="delete-field-${idPrefix}-${elementCount}-1" class="cursor-pointer text-red-600 block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-red-400">Delete</a>
+              </li>
+          </ul>
         </div>
-    `
-    document.querySelectorAll("[id^='webpage-section-']").forEach(section=>{
-      if(section.dataset.sectionOrder > sectionOrder){
-        section.dataset.sectionOrder = parseInt(section.dataset.sectionOrder) + 1
-        console.log('update order', section)
-      }else{
-        console.log('no update order: ',section)
+      `
 
-      }
-    })
+      document.getElementById(`webpage-section-${idParts.find(part => !isNaN(part))}`).insertAdjacentHTML('beforeend',fieldDropdown)
+      document.getElementById(`webpage-section-${idParts.find(part => !isNaN(part))}`).appendChild(newDropdown)
+      
+      document.getElementById(`body-${idPrefix}`).insertAdjacentHTML('beforeend', newSection)
 
-    document.getElementById(`webpage-${idParts.slice(1,3).join('-')}`).insertAdjacentHTML('afterend', newSection)
+      webpageDb.push ({
+        id: `section-${idPrefix}-${elementCount}`,
+        type: 'section-accordion',
+        element_order: `${elementCount}`,
+        element_count: '1'
+      },
+      {
+        id: `field-${idPrefix}-${elementCount}-1`,
+        type: 'field',
+        style: 'ol{list-style-type:decimal;}ul{list-style-type:disc;}',
+        element_order: 1,
+        content: 'test'
+      })
+
+      webpageDb.map(page =>{
+        if(page.id === `btn-heading-${idPrefix}`){
+          page.element_count = elementCount
+        }
+      })
+
+    }else{
+      const webpage = document.getElementById(`webpage`)
+      let elementCount = parseInt(webpage.getAttribute('data-element-count'))
+      elementCount += 1
+      webpage.dataset.elementCount = elementCount
+      
+      webpageDb.push ({
+          id: `webpage-section-${elementCount}`,
+          type: 'section',
+          style: 'min-height:100dvh;position:relative;background-color:rgba(231,231,231,1);',
+          element_order: `${elementCount}`,
+          element_count: '0'
+      })
+
+      newSection =`
+          <div id="webpage-section-${elementCount}" data-element-order="${elementCount}" class="bg-gray-200 flex flex-col justify-center items-center border border-gray-700" style="position:relative;min-height:100dvh;">
+            <div class="absolute right-1 top-1 z-50 cursor-pointer" data-dropdown-toggle="dropdown-section-${elementCount}" data-dropdown-placement="right-end">
+                <svg class="w-7 h-7 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+                    <path fill-rule="evenodd" d="M11.32 6.176H5c-1.105 0-2 .949-2 2.118v10.588C3 20.052 3.895 21 5 21h11c1.105 0 2-.948 2-2.118v-7.75l-3.914 4.144A2.46 2.46 0 0 1 12.81 16l-2.681.568c-1.75.37-3.292-1.263-2.942-3.115l.536-2.839c.097-.512.335-.983.684-1.352l2.914-3.086Z" clip-rule="evenodd"/>
+                    <path fill-rule="evenodd" d="M19.846 4.318a2.148 2.148 0 0 0-.437-.692 2.014 2.014 0 0 0-.654-.463 1.92 1.92 0 0 0-1.544 0 2.014 2.014 0 0 0-.654.463l-.546.578 2.852 3.02.546-.579a2.14 2.14 0 0 0 .437-.692 2.244 2.244 0 0 0 0-1.635ZM17.45 8.721 14.597 5.7 9.82 10.76a.54.54 0 0 0-.137.27l-.536 2.84c-.07.37.239.696.588.622l2.682-.567a.492.492 0 0 0 .255-.145l4.778-5.06Z" clip-rule="evenodd"/>
+                </svg>                  
+            </div>
+            <div id="dropdown-section-${elementCount}" data-accordion="open" class="z-50 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700">
+              <ul class="py-2 text-sm text-gray-700 dark:text-gray-200 border-0 border-b-1 border-gray-500 " aria-labelledby="dropdownDefaultButton">
+                  <li>
+                      <a id="add-section-${elementCount}" class="font-bold block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Section</a>
+                  </li>
+                  <li>
+                      <a id="up-section-${elementCount}" class="font-bold block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Move Up</a>
+                  </li>
+                  <li>
+                      <a id="down-section-${elementCount}" class="font-bold block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Move Down</a>
+                  </li>
+                  <li>
+                      <a id="delete-section-${elementCount}" class="font-bold block text-red-700 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Delete Section</a>
+                  </li>
+              </ul>
+              <ul class="py-2 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownDefaultButton">
+                  <li>
+                      <a id="add-field-element-section-${elementCount}" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Field</a>
+                  </li>
+                  <li>
+                      <a id="add-video-element-section-${elementCount}" class=" block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Video</a>
+                  </li>
+                  <li>
+                      <a id="add-modal-element-section-${elementCount}" class=" block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Modal</a>
+                  </li>
+                  <li>
+                      <a id="add-accordion-element-section-${elementCount}" class=" block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Accordion</a>
+                  </li>
+                  <li>
+                      <a id="add-carousel-element-section-${elementCount}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Carousel</a>
+                  </li>
+              </ul>
+            </div>
+            
+            <div id="editor-container-section-${elementCount}" data-element-count="0" class="p-5 w-full flex flex-col flex-1" style="justify-content:start;align-items:center;"></div>
+          </div>
+      `
+
+      webpage.insertAdjacentHTML('beforeend', newSection)
+
+      webpageDbParentSection[0].element_count = elementCount
+      
+      console.log(webpageDbParentSection)
+    }
+    console.log(webpageDb)
     
-    dropdownInitialized()
+    setTimeout(() => {
+        try {
+          initFlowbite();
+        } catch (error) {
+            console.error('❌ Gagal menginisialisasi Dropdown:', error);
+        }
+    }, 100);  
     setListener()
   }
 
-  if(id.startsWith('delete-section-')) {
-    const sectionId = event.target.id.split('-')[2];
-    const sectionElement = document.querySelector(`[id="webpage-section-${sectionId}"]`);
-    
-    if (sectionElement && sectionId !== '1') {
-      if(sectionElement.dataset.sectionOrder >= sectionCount){
-        sectionCount--;
-      }
-      sectionElement.remove();
-    }
-  }
-
   if (id.startsWith('add-field-')) {
+    console.log('test ad field')
     const idParts = event.target.id.split('-');
+    let idAppendField, idPrefix, fieldNumber, bodyAppend, bodyDropdown
 
-    let sectionNumber, idAppendField, idPrefix, fieldNumber
-    let bodyAppend, idSection, bodyDropdown
-    let orderField, wrapperInnerHtml
-
-    const wrapper = document.createElement('div')
-    const editorField = document.createElement('div');
+    const createFieldHTML = (idPrefix,fieldNumber)=>
+      `<div data-element-order="${fieldNumber}" style="position:relative;display:flex;justify-content:center;align-items:center;flex-direction:column;">
+        <div type="button" class="absolute right-[-1.3rem] top-0 z-30 cursor-pointer" data-dropdown-toggle="dropdown-body-${idPrefix}" data-dropdown-placement="right-end">
+          <svg id="edit-accordion" class="w-5 h-5 text-gray-600 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+              <path fill-rule="evenodd" d="M11.32 6.176H5c-1.105 0-2 .949-2 2.118v10.588C3 20.052 3.895 21 5 21h11c1.105 0 2-.948 2-2.118v-7.75l-3.914 4.144A2.46 2.46 0 0 1 12.81 16l-2.681.568c-1.75.37-3.292-1.263-2.942-3.115l.536-2.839c.097-.512.335-.983.684-1.352l2.914-3.086Z" clip-rule="evenodd"/>
+              <path fill-rule="evenodd" d="M19.846 4.318a2.148 2.148 0 0 0-.437-.692 2.014 2.014 0 0 0-.654-.463 1.92 1.92 0 0 0-1.544 0 2.014 2.014 0 0 0-.654.463l-.546.578 2.852 3.02.546-.579a2.14 2.14 0 0 0 .437-.692 2.244 2.244 0 0 0 0-1.635ZM17.45 8.721 14.597 5.7 9.82 10.76a.54.54 0 0 0-.137.27l-.536 2.84c-.07.37.239.696.588.622l2.682-.567a.492.492 0 0 0 .255-.145l4.778-5.06Z" clip-rule="evenodd"/>
+          </svg>    
+        </div>
+        <div id="${idPrefix}" contenteditable="true" style="ol{list-style-type:decimal;}ul{list-style-type:disc;}" class="border border-b-1 border-gray-500 p-1 max-w-[100%] break-all scroll-hidden overflow-scroll"></div>
+      </div>`
 
     if(idParts[2] === 'accordion'){
       console.log('field accordion')
-
-      idAppendField = `body-${idParts.slice(2,idParts.length).join('-')}`
+      idAppendField = `wrapper-section-${idParts.slice(2,idParts.length).join('-')}`
 
       bodyAppend = document.getElementById(idAppendField)
-      fieldNumber = parseInt(bodyAppend.getAttribute('data-field-count'))
+      fieldNumber = parseInt(bodyAppend.getAttribute('data-element-count'))
       fieldNumber++
 
-      orderField = fieldNumber
-      bodyAppend.dataset.fieldCount = fieldNumber
+      bodyAppend.dataset.elementCount = fieldNumber
     
       idPrefix = `field-${idParts.slice(2, idParts.length).join('-')}-${fieldNumber}`
-      
-    }else if(idParts[2]==='collapse'){
-      console.log('field collapse')
 
-      idAppendField = `element-${idParts.slice(2,idParts.length).join('-')}`
-
-      bodyAppend = document.getElementById(idAppendField)
-      fieldNumber = parseInt(bodyAppend.getAttribute('data-field-count'))
-      fieldNumber++
-
-      orderField = fieldNumber
-      bodyAppend.dataset.fieldCount = fieldNumber
-    
-      idPrefix = `${idParts.slice(1, idParts.length).join('-')}-${fieldNumber}`
-      
     }else if(idParts[2] === 'modal'){
       console.log('field modal')
 
       idAppendField = `body-${idParts.slice(2,idParts.length).join('-')}`
 
       bodyAppend = document.getElementById(idAppendField)
-      fieldNumber = parseInt(bodyAppend.getAttribute('data-field-count'))
+      fieldNumber = parseInt(bodyAppend.getAttribute('data-element-count'))
       fieldNumber++
 
-      orderField = fieldNumber
-      bodyAppend.dataset.fieldCount = fieldNumber
+      bodyAppend.dataset.elementCount = fieldNumber
     
       idPrefix = `${idParts.slice(1, idParts.length).join('-')}-${fieldNumber}`
 
     }else{
       console.log('field biasa')
 
-      sectionNumber = idParts[4];
-      editorCount++
+      if(param.includes('prolog-web')){
+        idAppendField = `editor-container-section-prolog-web-${idParts[6]}`
+        bodyAppend = document.getElementById(idAppendField)
+  
+        fieldNumber = parseInt(bodyAppend.dataset.elementCount)
+        fieldNumber+=1
+        bodyAppend.dataset.elementCount = fieldNumber
+        idPrefix = `field-${idParts.slice(2, idParts.length).join('-')}-${fieldNumber}`
+        
+      }else if(param.includes('prolog-emodul')){
+        idAppendField = `editor-container-section-prolog-emodul-${idParts[6]}`
+        bodyAppend = document.getElementById(idAppendField)
+  
+        fieldNumber = bodyAppend.dataset.elementCount
+        fieldNumber++
+        bodyAppend.dataset.elementCount = fieldNumber
+  
+        idPrefix = `field-${idParts.slice(2, idParts.length).join('-')}-${fieldNumber}`
 
-      orderField = editorCount
+      }else if(idParts.includes('footer')){
+        idAppendField = `editor-container-section-footer`
+        bodyAppend = document.getElementById(idAppendField)
+  
+        fieldNumber = bodyAppend.dataset.elementCount
+        fieldNumber++
+        bodyAppend.dataset.elementCount = fieldNumber
+  
+        idPrefix = `field-${idParts.slice(2, idParts.length).join('-')}-${fieldNumber}`
 
-      idPrefix = `field-${idParts.slice(2, idParts.length).join('-')}-${editorCount}`
-
-      idAppendField = `editor-container-section-${sectionNumber}`
-      
+      }else{
+        idAppendField = `editor-container-section-${idParts[4]}`
+        bodyAppend = document.getElementById(idAppendField)
+  
+        fieldNumber = bodyAppend.dataset.elementCount
+        fieldNumber++
+        bodyAppend.dataset.elementCount = fieldNumber
+  
+        idPrefix = `field-${idParts.slice(2, idParts.length).join('-')}-${fieldNumber}`
+      }
     }
 
-    wrapperInnerHtml = `
-      <div type="button" class="absolute right-[-1.3rem] top-0 z-30 cursor-pointer" data-dropdown-toggle="dropdown-body-${idPrefix}" data-dropdown-placement="right-end">
-        <svg id="edit-accordion" class="w-5 h-5 text-gray-600 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
-            <path fill-rule="evenodd" d="M11.32 6.176H5c-1.105 0-2 .949-2 2.118v10.588C3 20.052 3.895 21 5 21h11c1.105 0 2-.948 2-2.118v-7.75l-3.914 4.144A2.46 2.46 0 0 1 12.81 16l-2.681.568c-1.75.37-3.292-1.263-2.942-3.115l.536-2.839c.097-.512.335-.983.684-1.352l2.914-3.086Z" clip-rule="evenodd"/>
-            <path fill-rule="evenodd" d="M19.846 4.318a2.148 2.148 0 0 0-.437-.692 2.014 2.014 0 0 0-.654-.463 1.92 1.92 0 0 0-1.544 0 2.014 2.014 0 0 0-.654.463l-.546.578 2.852 3.02.546-.579a2.14 2.14 0 0 0 .437-.692 2.244 2.244 0 0 0 0-1.635ZM17.45 8.721 14.597 5.7 9.82 10.76a.54.54 0 0 0-.137.27l-.536 2.84c-.07.37.239.696.588.622l2.682-.567a.492.492 0 0 0 .255-.145l4.778-5.06Z" clip-rule="evenodd"/>
-        </svg>    
-      </div>
-    `
     bodyDropdown=`
       <div id="dropdown-body-${idPrefix}" data-accordion="open" class="w-25 z-40 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700">
         <ul class="py-2 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownDefaultButton">
@@ -2544,43 +4059,60 @@ document.getElementById('webpage').addEventListener('click', function (event) {
         </ul>
       </div>
     `
-
-    editorField.id = idPrefix
-    
-    if(idParts.includes('accordion')){
-      idSection = `editor-container-section-${idParts.find(part => !isNaN(part))}`
-      document.getElementById(idSection).insertAdjacentHTML('beforeend', bodyDropdown)
-    
+    if(idParts.includes('modal')){
+      document.getElementById(idAppendField).parentElement.insertAdjacentHTML('beforeend', bodyDropdown)
     }else{
-      wrapper.innerHTML += bodyDropdown;     
+      if(param.includes('prolog-web')){
+        document.getElementById(`webpage-section-prolog-web-${idParts.find(part => !isNaN(part))}`).insertAdjacentHTML('beforeend', bodyDropdown)
+      }else if(param.includes('prolog-emodul')){
+        document.getElementById(`webpage-section-prolog-emodul-${idParts.find(part => !isNaN(part))}`).insertAdjacentHTML('beforeend', bodyDropdown)
+
+      }else if(idPrefix.includes('footer')){
+        document.getElementById(`webpage-section-footer`).insertAdjacentHTML('beforeend', bodyDropdown)
+
+      }else{
+        document.getElementById(`webpage-section-${idParts.find(part => !isNaN(part))}`).insertAdjacentHTML('beforeend', bodyDropdown)
+
+      }
     }
-    wrapper.innerHTML += wrapperInnerHtml;
 
-    wrapper.style.position = "relative"
-    wrapper.dataset.fieldOrder = orderField;
+    const section = document.getElementById(`webpage-section-${idParts[4]}`)
+
+    webpageDb.push({
+      id: idPrefix,
+      type: 'field',
+      style: 'ol{list-style-type:decimal;}ul{list-style-type:disc;}',
+      element_order: fieldNumber
+    });
+
+    webpageDb.map(item=>{
+      if(item.id === `webpage-section-${idParts.find(part => !isNaN(part))}` && idParts.filter(part => !isNaN(part)).length == 1){
+        item.element_count++
+      }else if(item.id === bodyAppend.parentElement.id){
+        item.element_count++
+      }else if(item.id === `webpage-${idParts.slice(3).join('-')}` && idParts.filter(part => !isNaN(part)).length == 1){
+        item.element_count++
+      }else if(item.id === `section-${idParts.slice(2).join('-')}` && idParts.join('-').includes('accordion')){
+        item.element_count++
+      }else if(item.id === `body-${idParts.slice(2).join('-')}` && idParts.join('-').includes('modal-element')){
+        item.element_count++
+      }
+    })
+
+    console.log(webpageDb)
     
-    editorField.setAttribute('contenteditable', 'true');
-    editorField.setAttribute('style', 'ol{list-style-type:decimal;}ul{list-style-type:disc;}');
-    editorField.classList.add(
-      'border', 'border-b-1', 'border-gray-500','p-1',
-      'max-w-[100%]', 'break-all', 'scroll-hidden', 'overflow-scroll'
-    );
-    wrapper.appendChild(editorField)
-
-    document.getElementById(idAppendField)
-            .appendChild(wrapper);
+    const field = createFieldHTML(idPrefix,fieldNumber)
+    document.getElementById(idAppendField).insertAdjacentHTML('beforeend',field);
+    console.log(document.getElementById(idPrefix).style)
 
     dropdownInitialized()
-    collapseInitialized()
     setListener(); // kamu tetap bisa panggil fungsi tambahan kalau perlu
   }
 
   if (id.startsWith('add-video-')) {
     const idParts = event.target.id.split('-');
     const videoField = document.createElement('div');
-    let idAppendVideo, idPrefix, orderField, fieldNumber=0;
-    let sectionNumber, editorFieldNumber, bodyAppend
-    let accordionParent, bodyDropdown
+    let idAppendVideo, idPrefix, fieldNumber=0,bodyAppend, bodyDropdown
 
     const createVideoFieldHTML = (idPrefix) => `
       <input type="file" id="input-${idPrefix}" accept="video/*" class="hidden">
@@ -2594,7 +4126,7 @@ document.getElementById('webpage').addEventListener('click', function (event) {
         <svg class="w-12 h-12 text-gray-500 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
           <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 4H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V5a1 1 0 0 0-1-1Zm0 0-4 4m5 0H4m1 0 4-4m1 4 4-4m-4 7v6l4-3-4-3Z"/>
         </svg>
-    </label>`;
+      </label>`;
 
     const createBodyDropdown = (idPrefix) => `
       <div id="dropdown-${idPrefix}" data-accordion="open" class="w-20 z-30 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700">
@@ -2610,70 +4142,50 @@ document.getElementById('webpage').addEventListener('click', function (event) {
     `
 
     if(idParts[2] === 'accordion'){
-      idAppendVideo = `body-${idParts.slice(2, idParts.length).join('-')}`;
+      idAppendVideo = `wrapper-section-${idParts.slice(2, idParts.length).join('-')}`;
       bodyAppend = document.getElementById(idAppendVideo);
 
-      fieldNumber = parseInt(bodyAppend.getAttribute('data-field-count')) + 1;
-      bodyAppend.dataset.fieldCount = fieldNumber;
+      fieldNumber = parseInt(bodyAppend.getAttribute('data-element-count')) + 1;
+      bodyAppend.dataset.elementCount = fieldNumber;
       
       idPrefix = `${idParts.slice(1, idParts.length).join('-')}-${fieldNumber}`;
       videoField.id = idPrefix;
-      
-      orderField = editorCount;
-      accordionParent = `parent-${idParts.slice(2, idParts.length-1).join('-')}`;
 
       bodyDropdown = createBodyDropdown(idPrefix);
-      
-    }else if(idParts[2]==='collapse'){
-      idAppendVideo = `element-${idParts.slice(2, idParts.length).join('-')}`;
-      bodyAppend = document.getElementById(idAppendVideo);
-
-      fieldNumber = parseInt(bodyAppend.getAttribute('data-field-count')) + 1;
-      bodyAppend.dataset.fieldCount = fieldNumber;
-      
-      idPrefix = `${idParts.slice(1, idParts.length).join('-')}-${fieldNumber}`;
-      videoField.id = idPrefix;
-      
-      orderField = editorCount;
       
     }else if(idParts[2] === 'modal'){
       idAppendVideo = `body-${idParts.slice(2, idParts.length).join('-')}`;
       bodyAppend = document.getElementById(idAppendVideo);
 
-      fieldNumber = parseInt(bodyAppend.getAttribute('data-field-count')) + 1;
-      bodyAppend.dataset.fieldCount = fieldNumber;
+      fieldNumber = parseInt(bodyAppend.getAttribute('data-element-count')) + 1;
+      bodyAppend.dataset.elementCount = fieldNumber;
       
       idPrefix = `${idParts.slice(1, idParts.length).join('-')}-${fieldNumber}`;
       videoField.id = idPrefix;
-      
-      orderField = editorCount;
 
     }else{
-      editorCount++
-      orderField = editorCount;
+      idAppendVideo = `editor-container-section-${idParts[4]}`;
+      const section = document.getElementById(idAppendVideo)
+
+      fieldNumber = section.dataset.elementCount
+      fieldNumber++
+      section.dataset.elementCount = fieldNumber
       
-      sectionNumber = idParts[4];
-      idPrefix = `${idParts.slice(1, idParts.length).join('-')}-${editorCount}`;
-      idAppendVideo = `editor-container-section-${sectionNumber}`;
+      idPrefix = `${idParts.slice(1, idParts.length).join('-')}-${fieldNumber}`;
       videoField.id = idPrefix;
 
     }
 
     bodyDropdown = createBodyDropdown(idPrefix);
 
-    if(idParts.includes('accordion')){
-      if(idParts.includes('modal')){
-        videoField.innerHTML += bodyDropdown;
-      }else{
-        let idSection = `editor-container-section-${idParts.find(part => !isNaN(part))}`
-        document.getElementById(idSection).insertAdjacentHTML('beforeend', bodyDropdown)
-      }
-    }else{
+    if(idParts.includes('modal')){
       videoField.innerHTML += bodyDropdown;
+    }else{
+      document.getElementById(`webpage-section-${idParts.find(part => !isNaN(part))}`).insertAdjacentHTML('beforeend', bodyDropdown)
     }
 
     // Inject the template and styles
-    videoField.dataset.fieldOrder = orderField;
+    videoField.dataset.elementOrder = fieldNumber;
     videoField.classList.add('border', 'border-b-1', 'border-gray-500', 'max-w-[100%]', 'cursor-pointer', 'relative');
     videoField.style.maxWidth = "200px";
 
@@ -2682,900 +4194,52 @@ document.getElementById('webpage').addEventListener('click', function (event) {
     // Append to DOM
     document.getElementById(idAppendVideo)?.appendChild(videoField);
 
+    webpageDb.push({
+      id: idPrefix,
+      type: 'video',
+      style: videoField.getAttribute('style'),
+      element_order: fieldNumber
+    });
+
+    webpageDb.map(item=>{
+      if(item.id === `webpage-section-${idParts.find(part => !isNaN(part))}` && idParts.filter(part => !isNaN(part)).length == 1){
+        item.element_count++
+      }else if(item.id === `section-${idParts.slice(2).join('-')}` && idParts.join('-').includes('accordion')){
+        item.element_count++
+      }else if(item.id === `body-${idParts.slice(2).join('-')}` && idParts.join('-').includes('modal-element')){
+        item.element_count++
+      }
+    })
+    console.log(webpageDb)
+
     // Initialize dropdown & listeners
     dropdownInitialized();
     setListener();
   }
   
-  // ======================== ACCORDION ======================
-  if(id.startsWith('add-accordion-')) {
-    const idParts = event.target.id.split('-');
-    let bodyAppend, sectionNumber, editorFieldNumber, accordionWidth
-    let idPrefix, accordionHTML='', accordionId, accordionBodyDropdown='', idAppendAccordion, fieldNumber, orderField
-
-    let idAppendDropdown, accordionParentBody, itemCount, dropdownBody
-    const accordionField = document.createElement('div');
-
-    if(idParts[2] === 'head'){
-      sectionNumber = idParts[6];
-      editorFieldNumber = idParts[7];
-  
-      console.log("add item accordion")
-
-      let parentAccordionId=`parent-${idParts.slice(3, idParts.length).join('-')}`
-      accordionParentBody = document.getElementById(parentAccordionId)
-      itemCount = parseInt(accordionParentBody.getAttribute('data-item-accordion')) + 1;
-      
-      accordionId = `${idParts.slice(3, idParts.length).join('-')}`
-
-      idPrefix = `${idParts.slice(3, idParts.length).join('-')}-${itemCount}`
-
-      let newItem = `
-        <div id="${idPrefix}" class="relative z-10">
-          <div type="button" class="absolute right-0 top-0 z-10 cursor-pointer" data-dropdown-toggle="dropdown-${idPrefix}" data-dropdown-placement="right-end">
-            <svg id="edit-accordion" class="w-5 h-5 text-gray-600 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
-                <path fill-rule="evenodd" d="M11.32 6.176H5c-1.105 0-2 .949-2 2.118v10.588C3 20.052 3.895 21 5 21h11c1.105 0 2-.948 2-2.118v-7.75l-3.914 4.144A2.46 2.46 0 0 1 12.81 16l-2.681.568c-1.75.37-3.292-1.263-2.942-3.115l.536-2.839c.097-.512.335-.983.684-1.352l2.914-3.086Z" clip-rule="evenodd"/>
-                <path fill-rule="evenodd" d="M19.846 4.318a2.148 2.148 0 0 0-.437-.692 2.014 2.014 0 0 0-.654-.463 1.92 1.92 0 0 0-1.544 0 2.014 2.014 0 0 0-.654.463l-.546.578 2.852 3.02.546-.579a2.14 2.14 0 0 0 .437-.692 2.244 2.244 0 0 0 0-1.635ZM17.45 8.721 14.597 5.7 9.82 10.76a.54.54 0 0 0-.137.27l-.536 2.84c-.07.37.239.696.588.622l2.682-.567a.492.492 0 0 0 .255-.145l4.778-5.06Z" clip-rule="evenodd"/>
-            </svg>    
-          </div>
-
-        <h2 id="heading-${idPrefix}">
-            <button type="button" id="btn-heading-${idPrefix}"
-              class="flex items-center justify-between w-full p-5 break-all font-medium text-left text-gray-500 border border-gray-400"
-              data-accordion-target="#body-${idPrefix}"
-              aria-expanded="false"
-              aria-controls="body-${idPrefix}">
-                <span class="w-full">Section ${itemCount}</span>
-                <svg data-accordion-icon class="w-3 h-3 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
-                  <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5 5 1 1 5"/>
-                </svg>
-              </button>
-          </h2>
-
-          <div id="body-${idPrefix}" data-field-count="1" class="z-30 hidden relative flex flex-col justify-center items-center border border-gray-400">
-            <div type="button" class="absolute right-[-1.3rem] top-0 z-10 cursor-pointer" data-dropdown-toggle="dropdown-body-${idPrefix}" data-dropdown-placement="right-end">
-              <svg id="edit-accordion" class="w-5 h-5 text-gray-600 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
-                  <path fill-rule="evenodd" d="M11.32 6.176H5c-1.105 0-2 .949-2 2.118v10.588C3 20.052 3.895 21 5 21h11c1.105 0 2-.948 2-2.118v-7.75l-3.914 4.144A2.46 2.46 0 0 1 12.81 16l-2.681.568c-1.75.37-3.292-1.263-2.942-3.115l.536-2.839c.097-.512.335-.983.684-1.352l2.914-3.086Z" clip-rule="evenodd"/>
-                  <path fill-rule="evenodd" d="M19.846 4.318a2.148 2.148 0 0 0-.437-.692 2.014 2.014 0 0 0-.654-.463 1.92 1.92 0 0 0-1.544 0 2.014 2.014 0 0 0-.654.463l-.546.578 2.852 3.02.546-.579a2.14 2.14 0 0 0 .437-.692 2.244 2.244 0 0 0 0-1.635ZM17.45 8.721 14.597 5.7 9.82 10.76a.54.54 0 0 0-.137.27l-.536 2.84c-.07.37.239.696.588.622l2.682-.567a.492.492 0 0 0 .255-.145l4.778-5.06Z" clip-rule="evenodd"/>
-              </svg>    
-            </div>
-
-              <!-- Body Accordion -->
-              <div data-field-order="1" style="position: relative;" class="my-1">
-                <div type="button" class="absolute right-[-1.3rem] top-[0.8rem] z-10 cursor-pointer" data-dropdown-toggle="dropdown-field-${idPrefix}-${1}" data-dropdown-placement="right-end">
-                  <svg id="edit-accordion" class="w-5 h-5 text-gray-600 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
-                      <path fill-rule="evenodd" d="M11.32 6.176H5c-1.105 0-2 .949-2 2.118v10.588C3 20.052 3.895 21 5 21h11c1.105 0 2-.948 2-2.118v-7.75l-3.914 4.144A2.46 2.46 0 0 1 12.81 16l-2.681.568c-1.75.37-3.292-1.263-2.942-3.115l.536-2.839c.097-.512.335-.983.684-1.352l2.914-3.086Z" clip-rule="evenodd"/>
-                      <path fill-rule="evenodd" d="M19.846 4.318a2.148 2.148 0 0 0-.437-.692 2.014 2.014 0 0 0-.654-.463 1.92 1.92 0 0 0-1.544 0 2.014 2.014 0 0 0-.654.463l-.546.578 2.852 3.02.546-.579a2.14 2.14 0 0 0 .437-.692 2.244 2.244 0 0 0 0-1.635ZM17.45 8.721 14.597 5.7 9.82 10.76a.54.54 0 0 0-.137.27l-.536 2.84c-.07.37.239.696.588.622l2.682-.567a.492.492 0 0 0 .255-.145l4.778-5.06Z" clip-rule="evenodd"/>
-                  </svg>    
-                </div>
-                
-                <div id="field-${idPrefix}-${1}" style="ol{list-style-type:decimal;}ul{list-style-type:disc;}" class="border border-b-1 border-gray-500 px-1 max-w-[100%] break-all scroll-hidden overflow-scroll" contenteditable="true">
-                  isi section ${1} di field ${1}
-                </div>
-              </div>  
-            </div>
-        </div>
-      `
-
-      dropdownBody=`
-          <div id="dropdown-${idPrefix}" data-accordion="open" class="absolute mt-2 left-0 w-20 z-30 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700">
-            <ul class="py-2 text-sm text-gray-700 dark:text-gray-200">
-              <li><a id="down-head-${idPrefix}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Move Down</a></li>
-              <li><a id="up-head-${idPrefix}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Move Up</a></li>
-            </ul>
-            <ul class="py-2 text-sm text-gray-700 dark:text-gray-200 border-t border-gray-500">
-              <li><a id="delete-head-${idPrefix}" class="cursor-pointer font-bold block text-red-700 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Delete</a></li>
-            </ul>
-          </div>
-
-          <div id="dropdown-field-${idPrefix}-${1}" data-accordion="open" class="absolute mt-2 left-0 w-25 z-30 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700">
-            <ul class="py-2 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownDefaultButton">
-                <li>
-                    <a id="up-field-${idPrefix}-${1}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Move Up</a>
-                </li>
-                <li>
-                    <a id="down-field-${idPrefix}-${1}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Move Down</a>
-                </li>
-                <li>
-                    <a id="delete-field-${idPrefix}-${1}" class="cursor-pointer text-red-600 block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-red-400">Delete</a>
-                </li>
-            </ul>
-          </div>
-        `
-      if(idParts[5] === 'in' || idParts[4] === 'collapse' || idParts[5] === 'accordion'){
-        dropdownBody +=`
-          <div id="dropdown-body-${idPrefix}" data-accordion="open" class="absolute mt-2 left-0 w-25 z-30 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700">
-            <ul class="py-2 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownDefaultButton">
-                <li>
-                    <a id="add-field-${idPrefix}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Field</a>
-                </li>
-                <li>
-                    <a id="add-video-${idPrefix}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Video</a>
-                </li>
-                <li>
-                    <a id="add-collapse-${idPrefix}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Collapse Button</a>
-                </li>
-                <li>
-                    <a id="add-carousel-${idPrefix}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Carousel</a>
-                </li>
-              </ul>
-          </div> 
-          `
-      }else{
-        dropdownBody +=`
-        <div id="dropdown-body-${idPrefix}" data-accordion="open" class="absolute mt-2 left-0 w-25 z-30 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700">
-          <ul class="py-2 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownDefaultButton">
-              <li>
-                  <a id="add-field-${idPrefix}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Field</a>
-              </li>
-              <li>
-                  <a id="add-video-${idPrefix}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Video</a>
-              </li>
-              <li>
-                  <a id="add-accordion-in-${idPrefix}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Accordion</a>
-              </li>
-              <li>
-                  <a id="add-collapse-${idPrefix}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Collapse Button</a>
-              </li>
-              <li>
-                  <a id="add-carousel-${idPrefix}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Carousel</a>
-              </li>
-            </ul>
-        </div> 
-        `
-      }
-      
-      event.target.parentElement.parentElement.parentElement.classList.add('hidden')
-    
-      let accordionMotherNumber
-      if(idParts.includes('collapse')){
-        accordionMotherNumber = accordionId
-      }else{
-        accordionMotherNumber = `accordion-element-section-${idParts.filter(part => !isNaN(part)).slice(0, 2).join('-')}`
-      }
-      
-      accordionParentBody.innerHTML += newItem;
-      accordionParentBody.setAttribute('data-item-accordion', itemCount.toString());
-      document.getElementById(accordionMotherNumber).innerHTML += dropdownBody
-      
-    }else if(idParts[2] != 'head'){
-      if(idParts.join('-').includes('accordion-in-accordion')){
-
-        idAppendAccordion = `body-${idParts.slice(3, idParts.length).join('-')}`
-        bodyAppend = document.getElementById(idAppendAccordion)
-
-        fieldNumber = parseInt(bodyAppend.getAttribute('data-field-count'))+1
-        bodyAppend.dataset.fieldCount = fieldNumber;
-        orderField = fieldNumber;
-
-        idPrefix = `${idParts.slice(1, idParts.length).join('-')}-${fieldNumber}`;
-        accordionId = idPrefix
-    
-        console.log('accordion in accordion')
-
-        event.target.parentElement.parentElement.parentElement.classList.add('hidden')
-        accordionWidth= '300px'
-        
-      }else if(idParts.includes('collapse')){
-        idAppendAccordion = `element-${idParts.slice(2, idParts.length).join('-')}`
-        bodyAppend = document.getElementById(idAppendAccordion)
-
-        fieldNumber = parseInt(bodyAppend.getAttribute('data-field-count'))+1
-        bodyAppend.dataset.fieldCount = fieldNumber;
-        orderField = fieldNumber;
-
-        idPrefix = `${idParts.slice(1, idParts.length).join('-')}-${fieldNumber}`;
-        accordionId = idPrefix
-    
-        console.log('accordion in collapse')
-
-        event.target.parentElement.parentElement.parentElement.classList.add('hidden')
-        accordionWidth= '300px'
-
-      }else{
-        editorCount++
-        editorFieldNumber = editorCount
-        orderField = editorCount
-        sectionNumber = idParts[4]
-        
-        idPrefix = `${idParts.slice(1, idParts.length).join('-')}-${editorFieldNumber}`;
-        
-        accordionId = idPrefix
-        
-        idAppendAccordion = `editor-container-section-${sectionNumber}`
-        
-        console.log('accordion biasa')
-        accordionWidth= '400px'
-        
-      }
-      accordionField.style.width = accordionWidth;
-
-      accordionField.id= accordionId
-      accordionField.classList.add('relative', 'cursor-pointer');
-      accordionField.style.overflowAnchor = 'none'
-      accordionField.style.height = 'auto';
-      accordionField.dataset.fieldOrder = orderField;
-      
-      let totalItem = 3; // jumlah section accordion
-      console.log('idPrefix:', idPrefix)
-      
-      for (let i = 1; i <= totalItem; i++) {
-        accordionHTML +=`
-        <div id="${idPrefix}-${i}" class="relative z-10" data-field-order="${i}">
-          <div type="button" class="absolute right-0 top-0 z-10 cursor-pointer" data-dropdown-toggle="dropdown-head-${idPrefix}-${i}" data-dropdown-placement="right-end">
-            <svg id="edit-accordion" class="w-5 h-5 text-gray-600 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
-                <path fill-rule="evenodd" d="M11.32 6.176H5c-1.105 0-2 .949-2 2.118v10.588C3 20.052 3.895 21 5 21h11c1.105 0 2-.948 2-2.118v-7.75l-3.914 4.144A2.46 2.46 0 0 1 12.81 16l-2.681.568c-1.75.37-3.292-1.263-2.942-3.115l.536-2.839c.097-.512.335-.983.684-1.352l2.914-3.086Z" clip-rule="evenodd"/>
-                <path fill-rule="evenodd" d="M19.846 4.318a2.148 2.148 0 0 0-.437-.692 2.014 2.014 0 0 0-.654-.463 1.92 1.92 0 0 0-1.544 0 2.014 2.014 0 0 0-.654.463l-.546.578 2.852 3.02.546-.579a2.14 2.14 0 0 0 .437-.692 2.244 2.244 0 0 0 0-1.635ZM17.45 8.721 14.597 5.7 9.82 10.76a.54.54 0 0 0-.137.27l-.536 2.84c-.07.37.239.696.588.622l2.682-.567a.492.492 0 0 0 .255-.145l4.778-5.06Z" clip-rule="evenodd"/>
-            </svg>    
-          </div>
-  
-         <h2 id="heading-${idPrefix}-${i}">
-             <button type="button" id="btn-heading-${idPrefix}-${i}"
-              class="flex items-center justify-between w-full p-5 break-all font-medium text-left text-gray-500 border border-gray-400"
-              data-accordion-target="#body-${idPrefix}-${i}"
-              aria-expanded="false"
-              aria-controls="body-${idPrefix}-${i}">
-                <span class="w-full">Section ${i}</span>
-                <svg data-accordion-icon class="w-3 h-3 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
-                  <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5 5 1 1 5"/>
-                </svg>
-              </button>
-          </h2>
-  
-          <div id="body-${idPrefix}-${i}" data-field-count="1" class="z-30 hidden relative flex flex-col justify-center items-center border border-gray-400">
-            <div type="button" class="absolute right-[-1.3rem] top-0 z-10 cursor-pointer" data-dropdown-toggle="dropdown-body-${idPrefix}-${i}" data-dropdown-placement="right-end">
-              <svg id="edit-accordion" class="w-5 h-5 text-gray-600 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
-                  <path fill-rule="evenodd" d="M11.32 6.176H5c-1.105 0-2 .949-2 2.118v10.588C3 20.052 3.895 21 5 21h11c1.105 0 2-.948 2-2.118v-7.75l-3.914 4.144A2.46 2.46 0 0 1 12.81 16l-2.681.568c-1.75.37-3.292-1.263-2.942-3.115l.536-2.839c.097-.512.335-.983.684-1.352l2.914-3.086Z" clip-rule="evenodd"/>
-                  <path fill-rule="evenodd" d="M19.846 4.318a2.148 2.148 0 0 0-.437-.692 2.014 2.014 0 0 0-.654-.463 1.92 1.92 0 0 0-1.544 0 2.014 2.014 0 0 0-.654.463l-.546.578 2.852 3.02.546-.579a2.14 2.14 0 0 0 .437-.692 2.244 2.244 0 0 0 0-1.635ZM17.45 8.721 14.597 5.7 9.82 10.76a.54.54 0 0 0-.137.27l-.536 2.84c-.07.37.239.696.588.622l2.682-.567a.492.492 0 0 0 .255-.145l4.778-5.06Z" clip-rule="evenodd"/>
-              </svg>    
-            </div>
-  
-              <!-- Body Accordion -->
-              <div data-field-order="1" style="position: relative;" class="my-1">
-                <div type="button" class="absolute right-[-1.3rem] top-[0.8rem] z-10 cursor-pointer" data-dropdown-toggle="dropdown-field-${idPrefix}-${i}-${1}" data-dropdown-placement="right-end">
-                  <svg id="edit-accordion" class="w-5 h-5 text-gray-600 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
-                      <path fill-rule="evenodd" d="M11.32 6.176H5c-1.105 0-2 .949-2 2.118v10.588C3 20.052 3.895 21 5 21h11c1.105 0 2-.948 2-2.118v-7.75l-3.914 4.144A2.46 2.46 0 0 1 12.81 16l-2.681.568c-1.75.37-3.292-1.263-2.942-3.115l.536-2.839c.097-.512.335-.983.684-1.352l2.914-3.086Z" clip-rule="evenodd"/>
-                      <path fill-rule="evenodd" d="M19.846 4.318a2.148 2.148 0 0 0-.437-.692 2.014 2.014 0 0 0-.654-.463 1.92 1.92 0 0 0-1.544 0 2.014 2.014 0 0 0-.654.463l-.546.578 2.852 3.02.546-.579a2.14 2.14 0 0 0 .437-.692 2.244 2.244 0 0 0 0-1.635ZM17.45 8.721 14.597 5.7 9.82 10.76a.54.54 0 0 0-.137.27l-.536 2.84c-.07.37.239.696.588.622l2.682-.567a.492.492 0 0 0 .255-.145l4.778-5.06Z" clip-rule="evenodd"/>
-                  </svg>    
-                </div>
-                
-                <div id="field-${idPrefix}-${i}-${1}" style="ol{list-style-type:decimal;}ul{list-style-type:disc;}" class="border border-b-1 border-gray-500 px-1 max-w-[100%] break-all scroll-hidden overflow-scroll" contenteditable="true">
-                  isi section ${1} di field ${1}
-                </div>
-              </div>  
-            </div>
-        </div>
-        `;
-  
-        accordionBodyDropdown += `
-          <div id="dropdown-head-${idPrefix}-${i}" data-accordion="open" class="absolute mt-2 left-0 w-20 z-30 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700">
-            <ul class="py-2 text-sm text-gray-700 dark:text-gray-200">
-              <li><a id="down-head-${idPrefix}-${i}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Move Down</a></li>
-              <li><a id="up-head-${idPrefix}-${i}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Move Up</a></li>
-            </ul>
-            <ul class="py-2 text-sm text-gray-700 dark:text-gray-200 border-t border-gray-500">
-              <li><a id="delete-head-${idPrefix}-${i}" class="cursor-pointer font-bold block text-red-700 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Delete</a></li>
-            </ul>
-          </div>
-          
-          <div id="dropdown-field-${idPrefix}-${i}-${1}" data-accordion="open" class="absolute mt-2 left-0 w-25 z-30 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700">
-            <ul class="py-2 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownDefaultButton">
-                <li>
-                    <a id="up-field-${idPrefix}-${i}-${1}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Move Up</a>
-                </li>
-                <li>
-                    <a id="down-field-${idPrefix}-${i}-${1}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Move Down</a>
-                </li>
-                <li>
-                    <a id="delete-field-${idPrefix}-${i}-${1}" class="cursor-pointer text-red-600 block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-red-400">Delete</a>
-                </li>
-            </ul>
-          </div>
-          `
-        if(idParts[2] === 'in' || idParts[2] === 'collapse'){
-          accordionBodyDropdown +=`
-          <div id="dropdown-body-${idPrefix}-${i}" data-accordion="open" class="absolute mt-2 left-0 w-25 z-30 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700">
-            <ul class="py-2 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownDefaultButton">
-                <li>
-                    <a id="add-field-${idPrefix}-${i}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Field</a>
-                </li>
-                <li>
-                    <a id="add-video-${idPrefix}-${i}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Video</a>
-                </li>
-                <!-- <li>
-                     <a id="add-modal-${idPrefix}-${i}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Modal</a>
-                 </li>
-                 <li>
-                     <a id="add-collapse-${idPrefix}-${i}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Collapse Button</a>
-                 </li> --!>
-                <li>
-                    <a id="add-carousel-${idPrefix}-${i}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Carousel</a>
-                </li>
-              </ul>
-          </div> 
-            `
-        }else{
-          accordionBodyDropdown +=`
-          <div id="dropdown-body-${idPrefix}-${i}" data-accordion="open" class="absolute mt-2 left-0 w-25 z-30 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700">
-              <ul class="py-2 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownDefaultButton">
-                  <li>
-                      <a id="add-field-${idPrefix}-${i}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Field</a>
-                  </li>
-                  <li>
-                      <a id="add-video-${idPrefix}-${i}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Video</a>
-                  </li>
-                  <li>
-                      <a id="add-modal-${idPrefix}-${i}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Modal</a>
-                  </li>
-                  <li>
-                      <a id="add-accordion-in-${idPrefix}-${i}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Accordion</a>
-                  </li>
-                  <li>
-                      <a id="add-collapse-${idPrefix}-${i}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Collapse Button</a>
-                  </li>
-                  <li>
-                      <a id="add-carousel-${idPrefix}-${i}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Carousel</a>
-                  </li>
-                </ul>
-            </div> 
-            `
-        }
-      }
-
-      accordionBodyDropdown += `
-        <div id="dropdown-${idPrefix}" data-accordion="open" class="absolute mt-2 left-0 w-20 z-30 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700">
-          <ul class="py-2 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownDefaultButton">
-              <li>
-                  <a id="down-${idPrefix}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Move Down</a>
-              </li>
-              <li>
-                  <a id="up-${idPrefix}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Move Up</a>
-              </li>
-              <li>
-                  <a id="add-accordion-head-${idPrefix}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Add Item</a>
-              </li>
-          </ul>
-          <ul class="py-2 text-sm text-gray-700 dark:text-gray-200 border-0 border-t-1 border-gray-500 " aria-labelledby="dropdownDefaultButton">
-            <li>
-                <a id="delete-${idPrefix}" class="cursor-pointer font-bold block text-red-700 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white cursor-pointer">Delete</a>
-            </li>
-          </ul>
-        </div>
-      `
-      accordionField.innerHTML += `
-       <div type="button" class="absolute right-[-1.7rem] top-[-0.3rem] z-30 cursor-pointer" data-dropdown-toggle="dropdown-${idPrefix}" data-dropdown-placement="right-end">
-          <svg id="edit-accordion" class="w-6 h-6 text-gray-600 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
-              <path fill-rule="evenodd" d="M11.32 6.176H5c-1.105 0-2 .949-2 2.118v10.588C3 20.052 3.895 21 5 21h11c1.105 0 2-.948 2-2.118v-7.75l-3.914 4.144A2.46 2.46 0 0 1 12.81 16l-2.681.568c-1.75.37-3.292-1.263-2.942-3.115l.536-2.839c.097-.512.335-.983.684-1.352l2.914-3.086Z" clip-rule="evenodd"/>
-              <path fill-rule="evenodd" d="M19.846 4.318a2.148 2.148 0 0 0-.437-.692 2.014 2.014 0 0 0-.654-.463 1.92 1.92 0 0 0-1.544 0 2.014 2.014 0 0 0-.654.463l-.546.578 2.852 3.02.546-.579a2.14 2.14 0 0 0 .437-.692 2.244 2.244 0 0 0 0-1.635ZM17.45 8.721 14.597 5.7 9.82 10.76a.54.54 0 0 0-.137.27l-.536 2.84c-.07.37.239.696.588.622l2.682-.567a.492.492 0 0 0 .255-.145l4.778-5.06Z" clip-rule="evenodd"/>
-          </svg>                  
-        </div>
-        <div id="parent-${idPrefix}" data-item-accordion="3" data-accordion="collapse">
-          ${accordionHTML}
-        </div>
-      `;
-  
-      if(idParts[2] === 'in'){
-        document.getElementById(idParts.slice(3, idParts.length-1).join('-')).innerHTML += accordionBodyDropdown
-      }else{
-        accordionField.innerHTML += accordionBodyDropdown
-      }
-  
-      document.getElementById(idAppendAccordion).appendChild(accordionField);
-    }
-
-    setTimeout(() => {
-        try {
-            const accordionElement = document.getElementById(accordionId);
-            if (accordionElement) {
-                const accordion = new Accordion(accordionElement, {
-                    alwaysOpen: false,
-                    activeClasses: 'bg-gray-100 text-gray-900',
-                    inactiveClasses: 'text-gray-500'
-                });
-                console.log('✅ Accordion berhasil diinisialisasi:', accordionElement.id);
-            } else {
-                console.warn('⚠️ Elemen Accordion tidak ditemukan setelah appendChild');
-            }
-
-            // Panggil initFlowbite setelah inisialisasi accordion spesifik ini
-            // dan setelah ada sedikit penundaan
-            initFlowbite();
-
-        } catch (error) {
-            console.error('❌ Gagal menginisialisasi Accordion:', error);
-        }
-    }, 100);  
-    setListener();
-    collapseInitialized()
-    dropdownInitialized()
-  }
-
-  // ======================== COLLAPSE ======================
-  if(id.startsWith('add-collapse-')) {
-    const idParts = event.target.id.split('-')
-    let sectionNumber, bodyAppend, fieldNumber
-    let dropdownIdAppend, idPrefix, idAppend, dropdownBody='', collapseWidth
-
-    const collapseField = document.createElement('div');
-
-    if(idParts[2] === 'accordion'){
-  
-      idAppend = `body-${idParts.slice(2, idParts.length).join('-')}`;
-      bodyAppend = document.getElementById(idAppend);
-
-      fieldNumber = parseInt(bodyAppend.getAttribute('data-field-count')) + 1;
-      bodyAppend.dataset.fieldCount = fieldNumber;
-  
-      idPrefix = `${idParts.slice(1, idParts.length).join('-')}-${fieldNumber}`
-      collapseWidth = '300px'
-      
-      dropdownIdAppend =idParts.slice(2, idParts.length).join('-')
-      console.log('collapse in accordion')
-      
-    }else if(idParts.join('-').includes('collapse-in-collapse')){
-      idAppend = `element-${idParts.slice(3, idParts.length).join('-')}`;
-      bodyAppend = document.getElementById(idAppend);
-
-      fieldNumber = parseInt(bodyAppend.getAttribute('data-field-count')) + 1;
-      bodyAppend.dataset.fieldCount = fieldNumber;
-  
-      idPrefix = `${idParts.slice(1, idParts.length).join('-')}-${fieldNumber}`
-      collapseWidth = '300px'
-      
-      dropdownIdAppend = idAppend
-      console.log('collapse in collapse')
-
-    }else{
-      editorCount++
-      fieldNumber = editorCount;
-      
-      sectionNumber = idParts[4];
-  
-      idPrefix = `${idParts.slice(1, idParts.length).join('-')}-${fieldNumber}`
-      idAppend = `editor-container-section-${sectionNumber}`
-  
-      collapseWidth = '400px'
-      console.log('collapse biasa')
-      
-    }
-
-    collapseField.style.width = collapseWidth
-    collapseField.id = idPrefix
-
-    if(idParts[2]==='in' || idParts[2]==='accordion' || idParts[4]==='accordion'){
-      dropdownBody += `
-          <div id="dropdown-btn-${idPrefix}" data-accordion="open" class="absolute mt-2 left-0 w-20 z-30 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700">
-            <ul class="py-2 text-sm text-gray-700 dark:text-gray-200">
-              <li><a id="down-btn-${idPrefix}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Move Down</a></li>
-              <li><a id="up-btn-${idPrefix}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Move Up</a></li>
-            </ul>
-            <ul class="py-2 text-sm text-gray-700 dark:text-gray-200 border-t border-gray-500">
-              <li><a id="delete-btn-${idPrefix}" class="cursor-pointer font-bold block text-red-700 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Delete</a></li>
-            </ul>
-          </div>
-  
-          <div id="dropdown-body-${idPrefix}" data-accordion="open" class="w-25 z-30 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700">
-            <ul class="py-2 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownDefaultButton">
-              <li>
-                  <a id="add-field-${idPrefix}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Field</a>
-              </li>
-              <li>
-                  <a id="add-video-${idPrefix}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Video</a>
-              </li>
-              <!-- <li>
-                  <a id="add-modal-${idPrefix}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Modal</a>
-              </li> --!>
-              <li>
-                  <a id="add-carousel-${idPrefix}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Carousel</a>
-              </li>
-            </ul>
-          </div>
-  
-          <div id="dropdown-field-${idPrefix}-1" data-accordion="open" class="absolute mt-2 left-0 w-25 z-30 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700">
-            <ul class="py-2 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownDefaultButton">
-                <li>
-                    <a id="up-field-${idPrefix}-1" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Move Up</a>
-                </li>
-                <li>
-                    <a id="down-field-${idPrefix}-1" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Move Down</a>
-                </li>
-                <li>
-                    <a id="delete-field-${idPrefix}-1" class="cursor-pointer text-red-600 block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-red-400">Delete</a>
-                </li>
-            </ul>
-          </div>
-        `
-      document.getElementById(dropdownIdAppend).insertAdjacentHTML('afterend', dropdownBody)
-      console.log('collapse in')
-    }else{
-      collapseField.innerHTML += `
-        <div id="dropdown-btn-${idPrefix}" data-accordion="open" class="absolute mt-2 left-0 w-20 z-30 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700">
-          <ul class="py-2 text-sm text-gray-700 dark:text-gray-200">
-            <li><a id="down-btn-${idPrefix}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Move Down</a></li>
-            <li><a id="up-btn-${idPrefix}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Move Up</a></li>
-          </ul>
-          <ul class="py-2 text-sm text-gray-700 dark:text-gray-200 border-t border-gray-500">
-            <li><a id="delete-btn-${idPrefix}" class="cursor-pointer font-bold block text-red-700 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Delete</a></li>
-          </ul>
-        </div>
-
-        <div id="dropdown-body-${idPrefix}" data-accordion="open" class="w-25 z-30 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700">
-          <ul class="py-2 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownDefaultButton">
-            <li>
-                <a id="add-field-${idPrefix}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Field</a>
-            </li>
-            <li>
-                <a id="add-video-${idPrefix}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Video</a>
-            </li>
-            <li>
-                <a id="add-modal-${idPrefix}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Modal</a>
-            </li>
-            <li>
-                <a id="add-accordion-${idPrefix}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Accordion</a>
-            </li>
-            <li>
-                <a id="add-collapse-in-${idPrefix}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Collapse Button</a>
-            </li>
-            <li>
-                <a id="add-carousel-${idPrefix}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Carousel</a>
-            </li>
-          </ul>
-        </div>
-
-        <div id="dropdown-field-${idPrefix}-1" data-accordion="open" class="absolute mt-2 left-0 w-25 z-30 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700">
-          <ul class="py-2 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownDefaultButton">
-              <li>
-                  <a id="up-field-${idPrefix}-1" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Move Up</a>
-              </li>
-              <li>
-                  <a id="down-field-${idPrefix}-1" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Move Down</a>
-              </li>
-              <li>
-                  <a id="delete-field-${idPrefix}-1" class="cursor-pointer text-red-600 block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-red-400">Delete</a>
-              </li>
-          </ul>
-        </div>
-      `
-    }
-
-    collapseField.dataset.fieldOrder = fieldNumber
-    collapseField.style.position='relative'
-    collapseField.classList.add('flex', 'justify-center', 'items-center', 'flex-col');
-
-    collapseField.innerHTML +=`
-        <div id="${idPrefix}" class="relative z-10 w-full" data-field-order="${fieldNumber}" data-accordion="collapse">
-        
-        <div type="button" class="absolute right-[-1.3rem] top-0 z-10 cursor-pointer" data-dropdown-toggle="dropdown-btn-${idPrefix}" data-dropdown-placement="right-end">
-          <svg id="edit-accordion" class="w-5 h-5 text-gray-600 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
-              <path fill-rule="evenodd" d="M11.32 6.176H5c-1.105 0-2 .949-2 2.118v10.588C3 20.052 3.895 21 5 21h11c1.105 0 2-.948 2-2.118v-7.75l-3.914 4.144A2.46 2.46 0 0 1 12.81 16l-2.681.568c-1.75.37-3.292-1.263-2.942-3.115l.536-2.839c.097-.512.335-.983.684-1.352l2.914-3.086Z" clip-rule="evenodd"/>
-              <path fill-rule="evenodd" d="M19.846 4.318a2.148 2.148 0 0 0-.437-.692 2.014 2.014 0 0 0-.654-.463 1.92 1.92 0 0 0-1.544 0 2.014 2.014 0 0 0-.654.463l-.546.578 2.852 3.02.546-.579a2.14 2.14 0 0 0 .437-.692 2.244 2.244 0 0 0 0-1.635ZM17.45 8.721 14.597 5.7 9.82 10.76a.54.54 0 0 0-.137.27l-.536 2.84c-.07.37.239.696.588.622l2.682-.567a.492.492 0 0 0 .255-.145l4.778-5.06Z" clip-rule="evenodd"/>
-          </svg>    
-        </div>
-
-         <h2 id="heading-${idPrefix}">
-             <button type="button" id="btn-${idPrefix}"
-              class="flex items-center justify-between w-full p-2 break-all font-medium text-left text-black border border-gray-400"
-              data-accordion-target="#element-${idPrefix}"
-              aria-expanded="false"
-              aria-controls="element-${idPrefix}">
-                <span class="w-full">Button Collapse</span>
-              </button>
-          </h2>
-  
-          <div id="element-${idPrefix}" data-field-count="1" class="z-30 hidden relative flex flex-col justify-center items-center border border-gray-400">
-            <div type="button" class="absolute right-[-1.3rem] top-0 z-10 cursor-pointer" data-dropdown-toggle="dropdown-body-${idPrefix}" data-dropdown-placement="right-end">
-              <svg id="edit-accordion" class="w-5 h-5 text-gray-600 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
-                  <path fill-rule="evenodd" d="M11.32 6.176H5c-1.105 0-2 .949-2 2.118v10.588C3 20.052 3.895 21 5 21h11c1.105 0 2-.948 2-2.118v-7.75l-3.914 4.144A2.46 2.46 0 0 1 12.81 16l-2.681.568c-1.75.37-3.292-1.263-2.942-3.115l.536-2.839c.097-.512.335-.983.684-1.352l2.914-3.086Z" clip-rule="evenodd"/>
-                  <path fill-rule="evenodd" d="M19.846 4.318a2.148 2.148 0 0 0-.437-.692 2.014 2.014 0 0 0-.654-.463 1.92 1.92 0 0 0-1.544 0 2.014 2.014 0 0 0-.654.463l-.546.578 2.852 3.02.546-.579a2.14 2.14 0 0 0 .437-.692 2.244 2.244 0 0 0 0-1.635ZM17.45 8.721 14.597 5.7 9.82 10.76a.54.54 0 0 0-.137.27l-.536 2.84c-.07.37.239.696.588.622l2.682-.567a.492.492 0 0 0 .255-.145l4.778-5.06Z" clip-rule="evenodd"/>
-              </svg>    
-            </div>
-  
-              <!-- Body Collapse -->
-              <div data-field-order="1" style="position: relative;" class="my-1">
-                <div type="button" class="absolute right-[-1.3rem] top-[0.8rem] z-10 cursor-pointer" data-dropdown-toggle="dropdown-field-${idPrefix}-1" data-dropdown-placement="right-end">
-                  <svg id="edit-accordion" class="w-5 h-5 text-gray-600 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
-                      <path fill-rule="evenodd" d="M11.32 6.176H5c-1.105 0-2 .949-2 2.118v10.588C3 20.052 3.895 21 5 21h11c1.105 0 2-.948 2-2.118v-7.75l-3.914 4.144A2.46 2.46 0 0 1 12.81 16l-2.681.568c-1.75.37-3.292-1.263-2.942-3.115l.536-2.839c.097-.512.335-.983.684-1.352l2.914-3.086Z" clip-rule="evenodd"/>
-                      <path fill-rule="evenodd" d="M19.846 4.318a2.148 2.148 0 0 0-.437-.692 2.014 2.014 0 0 0-.654-.463 1.92 1.92 0 0 0-1.544 0 2.014 2.014 0 0 0-.654.463l-.546.578 2.852 3.02.546-.579a2.14 2.14 0 0 0 .437-.692 2.244 2.244 0 0 0 0-1.635ZM17.45 8.721 14.597 5.7 9.82 10.76a.54.54 0 0 0-.137.27l-.536 2.84c-.07.37.239.696.588.622l2.682-.567a.492.492 0 0 0 .255-.145l4.778-5.06Z" clip-rule="evenodd"/>
-                  </svg>    
-                </div>
-                
-                <div id="field-${idPrefix}-1" style="ol{list-style-type:decimal;}ul{list-style-type:disc;}" class="border border-b-1 border-gray-500 px-1 max-w-[100%] break-all scroll-hidden overflow-scroll" contenteditable="true">
-                  text
-                </div>
-              </div>  
-            </div>
-        </div>
-        `;
-
-    document.getElementById(idAppend).appendChild(collapseField);
-
-    setTimeout(() => {
-        try {
-            const accordionElement = document.getElementById(idPrefix);
-            if (accordionElement) {
-                const accordion = new Accordion(accordionElement, {
-                    alwaysOpen: false,
-                    activeClasses: 'bg-gray-100 text-gray-900',
-                    inactiveClasses: 'text-gray-500'
-                });
-                console.log('✅ Accordion berhasil diinisialisasi:', accordionElement.id);
-            } else {
-                console.warn('⚠️ Elemen Accordion tidak ditemukan setelah appendChild');
-            }
-
-            // Panggil initFlowbite setelah inisialisasi accordion spesifik ini
-            // dan setelah ada sedikit penundaan
-            initFlowbite();
-
-        } catch (error) {
-            console.error('❌ Gagal menginisialisasi Accordion:', error);
-        }
-    }, 100);  
-    setListener()
-    dropdownInitialized()
-  }
-  
-  // ======================== CAROUSEL ======================
-  if(id.startsWith('add-carousel-')) {
-    const idParts = event.target.id.split('-')
-    let sectionNumber, dropdownBody, dropdownIdAppend,idAppend,idPrefix,bodyAppend, fieldNumber
-    let svgControlerSlideSize, slideControlWrapperSize, indicatorSize, bottomIndicatorPosition, paddingSlideController
-
-    const carouselElement = document.createElement('div');
-
-    if(idParts[2] === 'accordion'){
-  
-      idAppend = `body-${idParts.slice(2, idParts.length).join('-')}`;
-
-      bodyAppend = document.getElementById(idAppend);
-      fieldNumber = parseInt(bodyAppend.getAttribute('data-field-count')) + 1;
-      bodyAppend.dataset.fieldCount = fieldNumber;
-
-      idPrefix = `${idParts.slice(1, idParts.length).join('-')}-${fieldNumber}`
-  
-      carouselElement.style.width = '300px'
-      carouselElement.style.height = '200px'
-
-      svgControlerSlideSize = 'w-[12px] h-[12px]'
-      slideControlWrapperSize = 'w-[24px] h-[24px]'
-      indicatorSize = 'w-[8px] h-[8px]'
-      bottomIndicatorPosition = 'bottom-2'
-      paddingSlideController = 'px-2'
-
-    }else if(idParts[2] === 'collapse'){
-      idAppend = `element-${idParts.slice(2, idParts.length).join('-')}`;
-
-      bodyAppend = document.getElementById(idAppend);
-      fieldNumber = parseInt(bodyAppend.getAttribute('data-field-count')) + 1;
-      bodyAppend.dataset.fieldCount = fieldNumber;
-
-      idPrefix = `${idParts.slice(1, idParts.length).join('-')}-${fieldNumber}`
-
-      dropdownIdAppend = `parent-${idParts.slice(3, idParts.length-2).join('-')}`
-  
-      carouselElement.style.width = '300px'
-      carouselElement.style.height = '200px'
-
-      svgControlerSlideSize = 'w-[12px] h-[12px]'
-      slideControlWrapperSize = 'w-[24px] h-[24px]'
-      indicatorSize = 'w-[8px] h-[8px]'
-      bottomIndicatorPosition = 'bottom-2'
-      paddingSlideController = 'px-2'
-
-    }else{
-      editorCount++;
-  
-      sectionNumber = idParts[4];
-      idPrefix = `${idParts.slice(1, idParts.length).join('-')}-${editorCount}`
-  
-      carouselElement.style.width = '400px'
-      carouselElement.style.height = '300px'
-      
-      idAppend = `editor-container-section-${sectionNumber}`
-
-      svgControlerSlideSize = 'w-[16px] h-[16px]'
-      slideControlWrapperSize = 'w-[32px] h-[32px]'
-      indicatorSize = 'w-[10px] h-[10px]'
-      bottomIndicatorPosition = 'bottom-5'
-      paddingSlideController = 'px-4'
-    }
-
-    dropdownBody = `
-       <div id="dropdown-${idPrefix}" data-accordion="open" class="absolute mt-2 left-0 w-30 z-40 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700">
-          <ul class="py-2 text-sm text-gray-700 dark:text-gray-200">
-            <li><a id="down-${idPrefix}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Move Down</a></li>
-            <li><a id="up-${idPrefix}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Move Up</a></li>
-          </ul>
-          <ul class="py-2 text-sm text-gray-700 dark:text-gray-200 border-t border-gray-500">
-            <li><a id="delete-${idPrefix}" class="cursor-pointer font-bold block text-red-700 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Delete</a></li>
-          </ul>
-        </div>
-    `
-    if(idParts.includes('accordion')){
-
-      carouselElement.style.width = '250px'
-      carouselElement.style.height = '150px'
-
-      let idSection = `editor-container-section-${idParts.find(part => !isNaN(part))}`
-      document.getElementById(idSection).insertAdjacentHTML('beforeend', dropdownBody)
-
-      console.log('mini carousel')
-
-    }else{
-      carouselElement.innerHTML += dropdownBody
-    }
-    
-    carouselElement.id = idPrefix;
-
-    carouselElement.dataset.fieldOrder = editorCount;
-    carouselElement.dataset.textPosition = 'on image';
-    carouselElement.dataset.text = 'false';
-    carouselElement.dataset.nextBtnHide = 'false';
-    carouselElement.dataset.carousel = 'static';
-
-    carouselElement.style.position='relative'
-    carouselElement.classList.add('flex', 'justify-center', 'items-center', 'flex-col');
-
-    carouselElement.innerHTML += `
-        <div type="button" class="absolute right-[-1.7rem] top-[-0.3rem] z-0 cursor-pointer" data-dropdown-toggle="dropdown-${idPrefix}" data-dropdown-placement="right-end">
-          <svg id="edit-accordion" class="w-6 h-6 text-gray-600 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
-            <path fill-rule="evenodd" d="M11.32 6.176H5c-1.105 0-2 .949-2 2.118v10.588C3 20.052 3.895 21 5 21h11c1.105 0 2-.948 2-2.118v-7.75l-3.914 4.144A2.46 2.46 0 0 1 12.81 16l-2.681.568c-1.75.37-3.292-1.263-2.942-3.115l.536-2.839c.097-.512.335-.983.684-1.352l2.914-3.086Z" clip-rule="evenodd"/>
-            <path fill-rule="evenodd" d="M19.846 4.318a2.148 2.148 0 0 0-.437-.692 2.014 2.014 0 0 0-.654-.463 1.92 1.92 0 0 0-1.544 0 2.014 2.014 0 0 0-.654.463l-.546.578 2.852 3.02.546-.579a2.14 2.14 0 0 0 .437-.692 2.244 2.244 0 0 0 0-1.635ZM17.45 8.721 14.597 5.7 9.82 10.76a.54.54 0 0 0-.137.27l-.536 2.84c-.07.37.239.696.588.622l2.682-.567a.492.492 0 0 0 .255-.145l4.778-5.06Z" clip-rule="evenodd"/>
-          </svg>                  
-        </div>
-
-        <div id="element-${idPrefix}" data-item-count="3" class="relative w-full h-full" data-carousel="static">
-          <!-- Carousel wrapper -->
-          <div class="relative w-full h-full overflow-hidden rounded-lg text-black">
-              <!-- Item 1 -->
-              <div id="item-${idPrefix}-1" data-item-order="1" class="duration-700 ease-in-out flex justify-center items-center" style='background-image: linear-gradient(rgba(0, 0, 0, 0.0), rgba(0, 0, 0, 0.0)), url("/assets/img/Flyer Qurban TPA.png");background-size:cover;background-position:center;' data-carousel-item>
-              </div>
-
-              <!-- Item 2 -->
-              <div id="item-${idPrefix}-2" data-item-order="2" class="duration-700 ease-in-out flex justify-center items-center" style='background-image: linear-gradient(rgba(0, 0, 0, 0.0), rgba(0, 0, 0, 0.0)), url("/assets/img/alpukat1.jpg");background-size:cover;background-position:center;' data-carousel-item>
-              </div>
-
-              <!-- Item 3 -->
-              <div id="item-${idPrefix}-3" data-item-order="3" class="duration-700 ease-in-out flex justify-center items-center" style='background-image: linear-gradient(rgba(0, 0, 0, 0.0), rgba(0, 0, 0, 0.0)), url("/assets/img/apple.jpg");background-size:cover;background-position:center;' data-carousel-item>
-              </div>
-          </div>
-          <!-- Slider indicators -->
-          <div id="slide-indicator-${idPrefix}" class="absolute z-30 flex -translate-x-1/2 ${bottomIndicatorPosition} left-1/2 space-x-3 rtl:space-x-reverse">
-              <button type="button" class="${indicatorSize} rounded-full" aria-current="true" aria-label="Slide 1" data-carousel-slide-to="0"></button>
-              <button type="button" class="${indicatorSize} rounded-full" aria-current="false" aria-label="Slide 2" data-carousel-slide-to="1"></button>
-              <button type="button" class="${indicatorSize} rounded-full" aria-current="false" aria-label="Slide 3" data-carousel-slide-to="2"></button>
-          </div>
-          <!-- Slider controls -->
-          <button id="slider-prev-btn" type="button" class="absolute top-0 start-0 z-30 flex items-center justify-center h-full ${paddingSlideController} cursor-pointer group focus:outline-none" data-carousel-prev>
-              <span class="inline-flex items-center justify-center ${slideControlWrapperSize} rounded-full bg-gray-400/30 group-hover:bg-gray-400/50 group-focus:ring-4 group-focus:ring-gray-300 group-focus:outline-none">
-                  <svg class="${svgControlerSlideSize} text-gray-500 rtl:rotate-180" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10">
-                      <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 1 1 5l4 4"/>
-                  </svg>
-                  <span class="sr-only">Previous</span>
-              </span>
-          </button>
-          <button id="slider-next-btn" type="button" class="absolute top-0 end-0 z-30 flex items-center justify-center h-full ${paddingSlideController} cursor-pointer group focus:outline-none" data-carousel-next>
-              <span class="inline-flex items-center justify-center ${slideControlWrapperSize} rounded-full bg-gray-400/30 group-hover:bg-gray-400/50 group-focus:ring-4 group-focus:ring-gray-300 group-focus:outline-none">
-                  <svg class="${svgControlerSlideSize} text-gray-500 rtl:rotate-180" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10">
-                      <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 9 4-4-4-4"/>
-                  </svg>
-                  <span class="sr-only">Next</span>
-              </span>
-          </button>
-        </div>
-    `
-
-    document.getElementById(idAppend).appendChild(carouselElement);
-
-    setListener()
-    dropdownInitialized()
-
-    setTimeout(() => {
-      try {
-          const carouselElement = document.getElementById(idPrefix);
-          if (carouselElement) {
-              new Carousel(carouselElement);
-              console.log('✅ Carousel berhasil diinisialisasi:', carouselElement.id);
-          } else {
-              console.warn('⚠️ Elemen Crousel tidak ditemukan setelah appendChild');
-          }
-
-          // Panggil initFlowbite setelah inisialisasi accordion spesifik ini
-          // dan setelah ada sedikit penundaan
-          initFlowbite();
-
-      } catch (error) {
-          console.error('❌ Gagal menginisialisasi Carousel:', error);
-      }
-    }, 100);  
-  }
-
-  // ======================== MODAL =========================
+    // ======================== MODAL =========================
   if(id.startsWith('add-modal-')) {
     const idParts = event.target.id.split('-')
-    let sectionNumber, bodyAppend, fieldNumber, bodyModal, idSection, bodyDropdown
-    let idPrefix, idAppend
+    let bodyAppend, fieldNumber, bodyDropdown, idPrefix, idAppend
 
-    const modalElement = document.createElement('div');
+    const createBtnModalHTML = (idPrefix,fieldNumber)=>`
+      <div id="${idPrefix}" data-element-order="${fieldNumber}" class="z-10 flex justify-center items-center flex-col">
+        <div id="wrapper-${idPrefix}" class="relative flex justify-center items-center inline-flex gap-2">
+          <div type="button" class="absolute right-[-1.7rem] top-[-0.3rem] z-10 cursor-pointer" data-dropdown-toggle="dropdown-btn-${idPrefix}" data-dropdown-placement="right-end">
+            <svg id="edit-accordion" class="w-6 h-6 text-gray-600 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+                <path fill-rule="evenodd" d="M11.32 6.176H5c-1.105 0-2 .949-2 2.118v10.588C3 20.052 3.895 21 5 21h11c1.105 0 2-.948 2-2.118v-7.75l-3.914 4.144A2.46 2.46 0 0 1 12.81 16l-2.681.568c-1.75.37-3.292-1.263-2.942-3.115l.536-2.839c.097-.512.335-.983.684-1.352l2.914-3.086Z" clip-rule="evenodd"/>
+                <path fill-rule="evenodd" d="M19.846 4.318a2.148 2.148 0 0 0-.437-.692 2.014 2.014 0 0 0-.654-.463 1.92 1.92 0 0 0-1.544 0 2.014 2.014 0 0 0-.654.463l-.546.578 2.852 3.02.546-.579a2.14 2.14 0 0 0 .437-.692 2.244 2.244 0 0 0 0-1.635ZM17.45 8.721 14.597 5.7 9.82 10.76a.54.54 0 0 0-.137.27l-.536 2.84c-.07.37.239.696.588.622l2.682-.567a.492.492 0 0 0 .255-.145l4.778-5.06Z" clip-rule="evenodd"/>
+            </svg>                  
+          </div>
 
-    if(idParts[2] === 'accordion'){
-      idAppend = `body-${idParts.slice(2, idParts.length).join('-')}`;
-      bodyAppend = document.getElementById(idAppend);
-
-      fieldNumber = parseInt(bodyAppend.getAttribute('data-field-count')) + 1;
-      bodyAppend.dataset.fieldCount = fieldNumber;
-
-      idPrefix = `${idParts.slice(1, idParts.length).join('-')}-${fieldNumber}`
-      
-      console.log('modal in accordion')
-
-    }else if(idParts[2] ==='collapse'){
-      idAppend = `element-${idParts.slice(2, idParts.length).join('-')}`;
-
-      bodyAppend = document.getElementById(idAppend);
-      fieldNumber = parseInt(bodyAppend.getAttribute('data-field-count')) + 1;
-      bodyAppend.dataset.fieldCount = fieldNumber;
-  
-      idPrefix = `${idParts.slice(1, idParts.length).join('-')}-${fieldNumber}`
-
-      console.log('modal in collapse')
-
-    }else{
-      editorCount++
-      fieldNumber = editorCount;
-  
-      sectionNumber = idParts[4];
-
-      idPrefix = `${idParts.slice(1, idParts.length).join('-')}-${fieldNumber}`
-      idAppend = `editor-container-section-${sectionNumber}`
-
-      console.log('modal biasa')
-      
-    }
-
-    idSection=`webpage-section-${idParts.find(part => !isNaN(part))}`
-
-    modalElement.id = idPrefix
-    modalElement.dataset.fieldOrder = fieldNumber;
-    modalElement.style.position='relative'
-    modalElement.classList.add('flex', 'justify-center', 'items-center', 'flex-col');
-
-    modalElement.innerHTML += `
-      <div id="wrapper-${idPrefix}" class="relative flex justify-center items-center inline-flex gap-2">
-        <div type="button" class="absolute right-[-1.7rem] top-[-0.3rem] z-10 cursor-pointer" data-dropdown-toggle="dropdown-btn-${idPrefix}" data-dropdown-placement="right-end">
-          <svg id="edit-accordion" class="w-6 h-6 text-gray-600 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
-              <path fill-rule="evenodd" d="M11.32 6.176H5c-1.105 0-2 .949-2 2.118v10.588C3 20.052 3.895 21 5 21h11c1.105 0 2-.948 2-2.118v-7.75l-3.914 4.144A2.46 2.46 0 0 1 12.81 16l-2.681.568c-1.75.37-3.292-1.263-2.942-3.115l.536-2.839c.097-.512.335-.983.684-1.352l2.914-3.086Z" clip-rule="evenodd"/>
-              <path fill-rule="evenodd" d="M19.846 4.318a2.148 2.148 0 0 0-.437-.692 2.014 2.014 0 0 0-.654-.463 1.92 1.92 0 0 0-1.544 0 2.014 2.014 0 0 0-.654.463l-.546.578 2.852 3.02.546-.579a2.14 2.14 0 0 0 .437-.692 2.244 2.244 0 0 0 0-1.635ZM17.45 8.721 14.597 5.7 9.82 10.76a.54.54 0 0 0-.137.27l-.536 2.84c-.07.37.239.696.588.622l2.682-.567a.492.492 0 0 0 .255-.145l4.778-5.06Z" clip-rule="evenodd"/>
-          </svg>                  
+          <button id="btn-${idPrefix}" data-modal-target="element-${idPrefix}" style="position:relative;padding: 5px 2px;background-color:rgba(234,255,248,1);" data-modal-toggle="element-${idPrefix}" class="flex justify-between items-center break-all" data-target="#element-${idPrefix}">
+            <span class="w-full">Button Modal</span>
+          </button>
         </div>
-
-        <button id="btn-${idPrefix}" data-modal-target="element-${idPrefix}" data-modal-toggle="element-${idPrefix}" class="flex justify-between items-center bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 break-all" data-target="#element-${idPrefix}">
-          <span class="w-full">Button Modal</span>
-        </button>
       </div>
-    `;
-
-    bodyDropdown = `
-        <div id="dropdown-btn-${idPrefix}" data-accordion="open" class="absolute mt-2 left-0 w-20 z-50 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700">
-          <ul class="py-2 text-sm text-gray-700 dark:text-gray-200">
-            <li><a id="down-btn-${idPrefix}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Move Down</a></li>
-            <li><a id="up-btn-${idPrefix}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Move Up</a></li>
-          </ul>
-          <ul class="py-2 text-sm text-gray-700 dark:text-gray-200 border-t border-gray-500">
-            <li><a id="delete-btn-${idPrefix}" class="cursor-pointer font-bold block text-red-700 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Delete</a></li>
-          </ul>
-        </div>
     `
-    if(idParts.includes('accordion')){
-      idSection = `editor-container-section-${idParts.find(part => !isNaN(part))}`
-      document.getElementById(idSection).insertAdjacentHTML('beforeend', bodyDropdown)
-    
-    }else{
-      modalElement.innerHTML += bodyDropdown;     
-    }
-
-    bodyModal =`
-      <div id="element-${idPrefix}" tabindex="-1" aria-hidden="true" class="absolute top-0 left-0 w-full h-full z-50 hidden flex justify-center items-center">
+    const createBodyModalHTML =(idPrefix)=>`
+      <div id="element-${idPrefix}" tabindex="-1" aria-hidden="true" class="absolute z-[80] top-0 left-0 w-full h-full hidden flex justify-center items-center">
         <div id="dropdown-body-${idPrefix}" data-accordion="open" class="w-25 z-50 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700">
           <ul class="py-2 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownDefaultButton">
             <li>
@@ -3587,26 +4251,26 @@ document.getElementById('webpage').addEventListener('click', function (event) {
           </ul>
         </div>
 
-          <div id="parent-${idPrefix}" class="bg-white rounded-md w-full max-w-2xl max-h-full">
+          <div id="parent-${idPrefix}" class="relative bg-white rounded-md w-full max-w-2xl max-h-full">
             <!-- Modal content -->
             <div class="shadow-sm">
               <!-- Modal header -->
               <div class="flex items-center justify-between p-4 md:p-5 border-b-2 rounded-t border-gray-200">
-                  <h3 id="field-head-${idPrefix}" class="border border-gray-400 break-all scroll-hidden overflow-scroll p-1" contenteditable="true">
+                  <div id="field-head-${idPrefix}" class="border border-gray-400 break-all scroll-hidden overflow-scroll p-1" contenteditable="true">
                       Head Modal
-                  </h3>
+                  </div>
               </div>
 
               <!-- Modal body -->
-              <div id="body-${idPrefix}" class="flex flex-col justify-center items-center relative p-3" data-field-count="1">
-                 <div type="button" class="absolute right-[-1.7rem] top-[-0.3rem] z-10 cursor-pointer" data-dropdown-toggle="dropdown-body-${idPrefix}" data-dropdown-placement="right-end">
-                  <svg id="edit-accordion" class="w-6 h-6 text-gray-600 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
-                      <path fill-rule="evenodd" d="M11.32 6.176H5c-1.105 0-2 .949-2 2.118v10.588C3 20.052 3.895 21 5 21h11c1.105 0 2-.948 2-2.118v-7.75l-3.914 4.144A2.46 2.46 0 0 1 12.81 16l-2.681.568c-1.75.37-3.292-1.263-2.942-3.115l.536-2.839c.097-.512.335-.983.684-1.352l2.914-3.086Z" clip-rule="evenodd"/>
-                      <path fill-rule="evenodd" d="M19.846 4.318a2.148 2.148 0 0 0-.437-.692 2.014 2.014 0 0 0-.654-.463 1.92 1.92 0 0 0-1.544 0 2.014 2.014 0 0 0-.654.463l-.546.578 2.852 3.02.546-.579a2.14 2.14 0 0 0 .437-.692 2.244 2.244 0 0 0 0-1.635ZM17.45 8.721 14.597 5.7 9.82 10.76a.54.54 0 0 0-.137.27l-.536 2.84c-.07.37.239.696.588.622l2.682-.567a.492.492 0 0 0 .255-.145l4.778-5.06Z" clip-rule="evenodd"/>
-                  </svg>                  
-                </div>
+              <div type="button" class="absolute right-[-1.7rem] top-[-0.3rem] z-10 cursor-pointer" data-dropdown-toggle="dropdown-body-${idPrefix}" data-dropdown-placement="right-end">
+               <svg id="edit-accordion" class="w-6 h-6 text-gray-600 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+                   <path fill-rule="evenodd" d="M11.32 6.176H5c-1.105 0-2 .949-2 2.118v10.588C3 20.052 3.895 21 5 21h11c1.105 0 2-.948 2-2.118v-7.75l-3.914 4.144A2.46 2.46 0 0 1 12.81 16l-2.681.568c-1.75.37-3.292-1.263-2.942-3.115l.536-2.839c.097-.512.335-.983.684-1.352l2.914-3.086Z" clip-rule="evenodd"/>
+                   <path fill-rule="evenodd" d="M19.846 4.318a2.148 2.148 0 0 0-.437-.692 2.014 2.014 0 0 0-.654-.463 1.92 1.92 0 0 0-1.544 0 2.014 2.014 0 0 0-.654.463l-.546.578 2.852 3.02.546-.579a2.14 2.14 0 0 0 .437-.692 2.244 2.244 0 0 0 0-1.635ZM17.45 8.721 14.597 5.7 9.82 10.76a.54.54 0 0 0-.137.27l-.536 2.84c-.07.37.239.696.588.622l2.682-.567a.492.492 0 0 0 .255-.145l4.778-5.06Z" clip-rule="evenodd"/>
+               </svg>                  
+             </div>
+              <div id="body-${idPrefix}" class="flex flex-col justify-center items-center relative p-3" data-element-count="1">
 
-                <div data-field-order="1" style="position: relative;">
+                <div data-element-order="1" style="position: relative;">
                   <div type="button" class="absolute right-[-1.3rem] top-[0.8rem] z-10 cursor-pointer" data-dropdown-toggle="dropdown-field-${idPrefix}-1" data-dropdown-placement="right-end">
                     <svg id="edit-accordion" class="w-5 h-5 text-gray-600 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
                         <path fill-rule="evenodd" d="M11.32 6.176H5c-1.105 0-2 .949-2 2.118v10.588C3 20.052 3.895 21 5 21h11c1.105 0 2-.948 2-2.118v-7.75l-3.914 4.144A2.46 2.46 0 0 1 12.81 16l-2.681.568c-1.75.37-3.292-1.263-2.942-3.115l.536-2.839c.097-.512.335-.983.684-1.352l2.914-3.086Z" clip-rule="evenodd"/>
@@ -3640,10 +4304,87 @@ document.getElementById('webpage').addEventListener('click', function (event) {
             </div>
           </div>
         </div>
-    ` 
-    document.querySelector(`[id^="${idSection}"]`).insertAdjacentHTML('beforeend', bodyModal)
+    `
 
-    document.getElementById(idAppend).appendChild(modalElement);
+    if(idParts[2] === 'accordion'){
+      idAppend = `wrapper-section-${idParts.slice(2, idParts.length).join('-')}`;
+      bodyAppend = document.getElementById(idAppend);
+
+      fieldNumber = parseInt(bodyAppend.getAttribute('data-element-count')) + 1;
+      bodyAppend.dataset.elementCount = fieldNumber;
+
+      idPrefix = `${idParts.slice(1, idParts.length).join('-')}-${fieldNumber}`
+      
+      console.log('modal in accordion')
+
+    }else{
+      idAppend = `editor-container-section-${idParts[4]}`;
+      const section = document.getElementById(idAppend)
+
+      fieldNumber = section.dataset.elementCount;
+      fieldNumber++
+      section.dataset.elementCount = fieldNumber
+
+      idPrefix = `${idParts.slice(1, idParts.length).join('-')}-${fieldNumber}`
+      idAppend = `editor-container-section-${idParts[4]}`
+
+      console.log('modal biasa')
+      
+    }
+
+    bodyDropdown = `
+        <div id="dropdown-btn-${idPrefix}" data-accordion="open" class="absolute mt-2 left-0 w-20 z-50 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700">
+          <ul class="py-2 text-sm text-gray-700 dark:text-gray-200">
+            <li><a id="down-btn-${idPrefix}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Move Down</a></li>
+            <li><a id="up-btn-${idPrefix}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Move Up</a></li>
+          </ul>
+          <ul class="py-2 text-sm text-gray-700 dark:text-gray-200 border-t border-gray-500">
+            <li><a id="delete-btn-${idPrefix}" class="cursor-pointer font-bold block text-red-700 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Delete</a></li>
+          </ul>
+        </div>
+    `
+
+    document.getElementById(`webpage-section-${idParts.find(part => !isNaN(part))}`).insertAdjacentHTML('beforeend', bodyDropdown)
+    document.getElementById(`webpage-section-${idParts.find(part => !isNaN(part))}`).insertAdjacentHTML('afterbegin', createBodyModalHTML(idPrefix))
+    document.getElementById(idAppend).insertAdjacentHTML('beforeend',createBtnModalHTML(idPrefix, fieldNumber));
+
+    webpageDb.push({
+      id: `${idPrefix}`,
+      type:'button-modal',
+      style: 'position:relative;padding: 5px 2px;background-color:rgba(234,255,248,1);',
+      element_order: fieldNumber,
+      content: 'Button Modal'
+    },
+    {
+      id: `body-${idPrefix}`,
+      type: 'body-modal',
+      content:'modal-default',
+      element_count:1
+    },
+    {
+      id: `field-${idPrefix}-1`,
+      type: 'field',
+      style: 'ol{list-style-type:decimal;}ul{list-style-type:disc;}',
+      element_order: '1',
+      content: 'test'
+    },
+    {
+      id: `field-head-${idPrefix}`,
+      type: 'field',
+      style: 'ol{list-style-type:decimal;}ul{list-style-type:disc;}',
+      element_order: '1',
+      content: 'Head Modal'
+    })
+
+    webpageDb.map(item=>{
+      if(item.id === `webpage-section-${idParts.find(part => !isNaN(part))}` && idParts.filter(part => !isNaN(part)).length == 1){
+        item.element_count++
+      }else if(item.id === `section-${idParts.slice(2).join('-')}` && idParts.join('-').includes('accordion')){
+        item.element_count++
+      }
+    })
+
+    console.log(webpageDb)
 
     setListener()
     dropdownInitialized()
@@ -3668,12 +4409,516 @@ document.getElementById('webpage').addEventListener('click', function (event) {
     }, 100);  
   }
 
+  // ======================== ACCORDION ======================
+  if(id.startsWith('add-accordion-')) {
+    const idParts = event.target.id.split('-');
+    let bodyAppend, accordionWidth,idPrefix, accordionId, idAppendAccordion, fieldNumber, accordionParentBody, itemCount, dropdownBody
+    
+    const createItemAccordionHTML = (idPrefix, i)=>{
+      webpageDb.push({
+        id:`btn-heading-${idPrefix}-${i}`,
+        type: "head-accordion",
+        style: 'background-color:rgba(255,255,255,1);padding:15px;border-bottom: 1px solid black;',
+        content:`section-${i}`,
+        element_order: i,
+        element_count: 1
+      },
+      {
+        id: `section-${idPrefix}-${i}-1`,
+        type: 'section-accordion',
+        style: 'background-color:rgba(237,237,237,1);padding:10px;',
+        element_order: 1,
+        element_count: 1
+      },
+      {
+        id: `field-${idPrefix}-${i}-1-${1}`,
+        type: 'field',
+        content: `text ${i}`,
+        element_order:1,
+        style:`ol{list-style-type:decimal;}ul{list-style-type:disc;}`
+      })
+
+      return`
+      <div id="${idPrefix}-${i}" class="relative z-10" data-element-order="${i}">
+        <div type="button" class="absolute right-0 top-0 z-10 cursor-pointer" data-dropdown-toggle="dropdown-head-${idPrefix}-${i}" data-dropdown-placement="right-end">
+          <svg id="edit-accordion" class="w-5 h-5 text-gray-600 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+              <path fill-rule="evenodd" d="M11.32 6.176H5c-1.105 0-2 .949-2 2.118v10.588C3 20.052 3.895 21 5 21h11c1.105 0 2-.948 2-2.118v-7.75l-3.914 4.144A2.46 2.46 0 0 1 12.81 16l-2.681.568c-1.75.37-3.292-1.263-2.942-3.115l.536-2.839c.097-.512.335-.983.684-1.352l2.914-3.086Z" clip-rule="evenodd"/>
+              <path fill-rule="evenodd" d="M19.846 4.318a2.148 2.148 0 0 0-.437-.692 2.014 2.014 0 0 0-.654-.463 1.92 1.92 0 0 0-1.544 0 2.014 2.014 0 0 0-.654.463l-.546.578 2.852 3.02.546-.579a2.14 2.14 0 0 0 .437-.692 2.244 2.244 0 0 0 0-1.635ZM17.45 8.721 14.597 5.7 9.82 10.76a.54.54 0 0 0-.137.27l-.536 2.84c-.07.37.239.696.588.622l2.682-.567a.492.492 0 0 0 .255-.145l4.778-5.06Z" clip-rule="evenodd"/>
+          </svg>    
+        </div>
+  
+        <h2 id="heading-${idPrefix}-${i}">
+          <button type="button" id="btn-heading-${idPrefix}-${i}"
+          class="flex justify-between w-full break-all"
+          style="background-color:rgba(255,255,255,1);padding:15px;border-bottom: 1px solid black;"
+          data-accordion-target="#body-${idPrefix}-${i}"
+          aria-expanded="false"
+          aria-controls="body-${idPrefix}-${i}">
+            <span style="width:100%;">Section ${i}</span>
+            <svg data-accordion-icon class="w-3 h-3 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
+              <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5 5 1 1 5"/>
+            </svg>
+          </button>
+        </h2>
+  
+        <div id="body-${idPrefix}-${i}" data-element-count="1" class="z-30 hidden relative flex flex-col justify-center items-center">
+          <div id="section-${idPrefix}-${i}-1" data-element-order="1" style="background-color:rgba(237,237,237,1);padding:10px;" class="relative w-full flex flex-col justify-center items-center border border-gray-400">
+            <div type="button" class="absolute right-[-1.3rem] top-0 z-10 cursor-pointer" data-dropdown-toggle="dropdown-body-${idPrefix}-${i}-1" data-dropdown-placement="right-end">
+              <svg id="edit-accordion" class="w-5 h-5 text-gray-600 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+                  <path fill-rule="evenodd" d="M11.32 6.176H5c-1.105 0-2 .949-2 2.118v10.588C3 20.052 3.895 21 5 21h11c1.105 0 2-.948 2-2.118v-7.75l-3.914 4.144A2.46 2.46 0 0 1 12.81 16l-2.681.568c-1.75.37-3.292-1.263-2.942-3.115l.536-2.839c.097-.512.335-.983.684-1.352l2.914-3.086Z" clip-rule="evenodd"/>
+                  <path fill-rule="evenodd" d="M19.846 4.318a2.148 2.148 0 0 0-.437-.692 2.014 2.014 0 0 0-.654-.463 1.92 1.92 0 0 0-1.544 0 2.014 2.014 0 0 0-.654.463l-.546.578 2.852 3.02.546-.579a2.14 2.14 0 0 0 .437-.692 2.244 2.244 0 0 0 0-1.635ZM17.45 8.721 14.597 5.7 9.82 10.76a.54.54 0 0 0-.137.27l-.536 2.84c-.07.37.239.696.588.622l2.682-.567a.492.492 0 0 0 .255-.145l4.778-5.06Z" clip-rule="evenodd"/>
+              </svg>    
+            </div>
+
+            <div id="wrapper-section-${idPrefix}-${i}-1" data-element-count="1" class="flex justify-start items-center flex-col">
+              <!-- Body Accordion -->
+              <div data-element-order="1" style="position: relative;" class="my-1">
+                <div type="button" class="absolute right-[-1.3rem] top-[0.8rem] z-10 cursor-pointer" data-dropdown-toggle="dropdown-field-${idPrefix}-${i}-1-${1}" data-dropdown-placement="right-end">
+                  <svg id="edit-accordion" class="w-5 h-5 text-gray-600 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+                      <path fill-rule="evenodd" d="M11.32 6.176H5c-1.105 0-2 .949-2 2.118v10.588C3 20.052 3.895 21 5 21h11c1.105 0 2-.948 2-2.118v-7.75l-3.914 4.144A2.46 2.46 0 0 1 12.81 16l-2.681.568c-1.75.37-3.292-1.263-2.942-3.115l.536-2.839c.097-.512.335-.983.684-1.352l2.914-3.086Z" clip-rule="evenodd"/>
+                      <path fill-rule="evenodd" d="M19.846 4.318a2.148 2.148 0 0 0-.437-.692 2.014 2.014 0 0 0-.654-.463 1.92 1.92 0 0 0-1.544 0 2.014 2.014 0 0 0-.654.463l-.546.578 2.852 3.02.546-.579a2.14 2.14 0 0 0 .437-.692 2.244 2.244 0 0 0 0-1.635ZM17.45 8.721 14.597 5.7 9.82 10.76a.54.54 0 0 0-.137.27l-.536 2.84c-.07.37.239.696.588.622l2.682-.567a.492.492 0 0 0 .255-.145l4.778-5.06Z" clip-rule="evenodd"/>
+                  </svg>    
+                </div>
+                
+                <div id="field-${idPrefix}-${i}-1-${1}" style="ol{list-style-type:decimal;}ul{list-style-type:disc;}" class="border border-b-1 border-gray-500 px-1 max-w-[100%] break-all scroll-hidden overflow-scroll" contenteditable="true">
+                  isi section ${1} di field ${1}
+                </div>
+              </div>  
+            </div>
+          </div>  
+        </div>
+      </div>
+      `
+    }
+
+    const createAccordionHTML = (idPrefix,fieldNumber, accordionWidth)=>{
+      webpageDb.push({
+        id:idPrefix,
+        type:'accordion',
+        element_order:fieldNumber,
+        element_count:3,
+        content: '{"accordionType":"collapse","headIndicator":"default"}',
+        style:`overflow-anchor:none;height:auto;width:${accordionWidth}`
+      })
+      let accordionItem=``
+      for (let i = 1; i <= 3; i++) {
+        accordionItem += createItemAccordionHTML(idPrefix, i)
+      }
+      return `
+      <div id="${idPrefix}" class="relative cursor-pointer" data-element-order="${fieldNumber}" data-type-indicator="default" style="overflow-anchor:none;height:auto;width:${accordionWidth}">
+        <div type="button" class="absolute right-[-1.7rem] top-[-0.3rem] z-10 cursor-pointer" data-dropdown-toggle="dropdown-${idPrefix}" data-dropdown-placement="right-end">
+          <svg id="edit-accordion" class="w-6 h-6 text-gray-600 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+              <path fill-rule="evenodd" d="M11.32 6.176H5c-1.105 0-2 .949-2 2.118v10.588C3 20.052 3.895 21 5 21h11c1.105 0 2-.948 2-2.118v-7.75l-3.914 4.144A2.46 2.46 0 0 1 12.81 16l-2.681.568c-1.75.37-3.292-1.263-2.942-3.115l.536-2.839c.097-.512.335-.983.684-1.352l2.914-3.086Z" clip-rule="evenodd"/>
+              <path fill-rule="evenodd" d="M19.846 4.318a2.148 2.148 0 0 0-.437-.692 2.014 2.014 0 0 0-.654-.463 1.92 1.92 0 0 0-1.544 0 2.014 2.014 0 0 0-.654.463l-.546.578 2.852 3.02.546-.579a2.14 2.14 0 0 0 .437-.692 2.244 2.244 0 0 0 0-1.635ZM17.45 8.721 14.597 5.7 9.82 10.76a.54.54 0 0 0-.137.27l-.536 2.84c-.07.37.239.696.588.622l2.682-.567a.492.492 0 0 0 .255-.145l4.778-5.06Z" clip-rule="evenodd"/>
+          </svg>                  
+        </div>
+        <div id="parent-${idPrefix}" data-item-accordion="3" data-accordion="collapse">
+          ${accordionItem}
+        </div>
+      </div>
+    `}
+    const createItemBodyDropdownHTML = (idPrefix,idParts,i)=>{
+      let bodyDropdown =``
+      bodyDropdown += `
+          <div id="dropdown-head-${idPrefix}-${i}" data-accordion="open" class="absolute mt-2 left-0 w-20 z-30 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700">
+            <ul class="py-2 text-sm text-gray-700 dark:text-gray-200">
+              <li><a id="down-head-${idPrefix}-${i}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Move Down</a></li>
+              <li><a id="up-head-${idPrefix}-${i}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Move Up</a></li>
+            </ul>
+            <ul class="py-2 text-sm text-gray-700 dark:text-gray-200 border-t border-gray-500">
+              <li><a id="delete-head-${idPrefix}-${i}" class="cursor-pointer font-bold block text-red-700 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Delete</a></li>
+            </ul>
+          </div>
+          
+          <div id="dropdown-field-${idPrefix}-${i}-1-${1}" data-accordion="open" class="absolute mt-2 left-0 w-25 z-30 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700">
+            <ul class="py-2 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownDefaultButton">
+                <li>
+                    <a id="up-field-${idPrefix}-${i}-1-${1}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Move Up</a>
+                </li>
+                <li>
+                    <a id="down-field-${idPrefix}-${i}-1-${1}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Move Down</a>
+                </li>
+                <li>
+                    <a id="delete-field-${idPrefix}-${i}-1-${1}" class="cursor-pointer text-red-600 block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-red-400">Delete</a>
+                </li>
+            </ul>
+          </div>
+          `
+      if(idParts[2] === 'in' || idParts[4] === 'in'){
+        bodyDropdown +=`
+        <div id="dropdown-body-${idPrefix}-${i}-1" data-accordion="open" class="absolute mt-2 left-0 w-25 z-30 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700">
+          <ul class="py-2 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownDefaultButton">
+            <li>
+              <a id="add-section-${idPrefix}-${i}-1" class="font-bold cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Add Section</a>
+            </li>
+            <li>
+              <a id="up-section-${idPrefix}-${i}-1" class="font-bold cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Move Up</a>
+            </li>
+            <li>
+              <a id="down-section-${idPrefix}-${i}-1" class="font-bold cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Move Down</a>
+            </li>
+            <li>
+              <a id="delete-section-${idPrefix}-${i}-1" class="text-red-600 font-bold cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-red-400">Delete Section</a>
+            </li>
+            <hr>
+            <li>
+              <a id="add-field-${idPrefix}-${i}-1" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Field</a>
+            </li>
+            <li>
+              <a id="add-video-${idPrefix}-${i}-1" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Video</a>
+            </li>
+            <li>
+              <a id="add-carousel-${idPrefix}-${i}-1" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Carousel</a>
+            </li>
+          </ul>
+        </div> 
+          `
+      }else{
+        bodyDropdown +=`
+        <div id="dropdown-body-${idPrefix}-${i}-1" data-accordion="open" class="absolute mt-2 left-0 w-25 z-30 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700">
+          <ul class="py-2 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownDefaultButton">
+            <li>
+                <a id="add-section-${idPrefix}-${i}-1" class="font-bold cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Add Section</a>
+            </li>
+            <li>
+                <a id="up-section-${idPrefix}-${i}-1" class="font-bold cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Move Up</a>
+            </li>
+            <li>
+                <a id="down-section-${idPrefix}-${i}-1" class="font-bold cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Move Down</a>
+            </li>
+            <li>
+                <a id="delete-section-${idPrefix}-${i}-1" class="text-red-600 font-bold cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-red-400">Delete Section</a>
+            </li>
+            <hr>
+            <li>
+                <a id="add-field-${idPrefix}-${i}-1" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Field</a>
+            </li>
+            <li>
+                <a id="add-video-${idPrefix}-${i}-1" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Video</a>
+            </li>
+            <li>
+                <a id="add-modal-${idPrefix}-${i}-1" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Modal</a>
+            </li>
+            <li>
+                <a id="add-accordion-in-${idPrefix}-${i}-1" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Accordion</a>
+            </li>
+            <li>
+                <a id="add-carousel-${idPrefix}-${i}-1" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Carousel</a>
+            </li>
+          </ul>
+        </div> 
+        `
+      }
+
+      return bodyDropdown
+    }
+    const createBodyDropdownHTML =(idPrefix, idParts)=>{
+      let bodyDropdown=``
+      for (let i = 1; i <= 3; i++) {
+       bodyDropdown+=createItemBodyDropdownHTML(idPrefix,idParts,i)
+      }
+      
+      bodyDropdown += `
+        <div id="dropdown-${idPrefix}" data-accordion="open" class="absolute mt-2 left-0 w-20 z-30 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700">
+          <ul class="py-2 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownDefaultButton">
+              <li>
+                  <a id="down-${idPrefix}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Move Down</a>
+              </li>
+              <li>
+                  <a id="up-${idPrefix}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Move Up</a>
+              </li>
+              <li>
+                  <a id="add-accordion-head-${idPrefix}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Add Item</a>
+              </li>
+          </ul>
+          <ul class="py-2 text-sm text-gray-700 dark:text-gray-200 border-0 border-t-1 border-gray-500 " aria-labelledby="dropdownDefaultButton">
+            <li>
+                <a id="delete-${idPrefix}" class="cursor-pointer font-bold block text-red-700 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white cursor-pointer">Delete</a>
+            </li>
+          </ul>
+        </div>
+      `
+      return bodyDropdown
+    }
+
+    if(idParts[2] === 'head'){
+      console.log("add item accordion")
+
+      let parentAccordionId=`parent-${idParts.slice(3, idParts.length).join('-')}`
+      accordionParentBody = document.getElementById(parentAccordionId)
+      itemCount = parseInt(accordionParentBody.getAttribute('data-item-accordion')) + 1;
+      
+      accordionId = `${idParts.slice(3, idParts.length).join('-')}`
+      idPrefix = `${idParts.slice(3, idParts.length).join('-')}`
+      
+      event.target.parentElement.parentElement.parentElement.classList.add('hidden')
+      
+      accordionParentBody.innerHTML += createItemAccordionHTML(idPrefix,itemCount);
+      accordionParentBody.setAttribute('data-item-accordion', itemCount.toString());
+
+      document.getElementById(`webpage-section-${idParts.find(part => !isNaN(part))}`).insertAdjacentHTML('beforeend',createItemBodyDropdownHTML(idPrefix,idParts,itemCount))
+      webpageDb.map(page =>{
+        if(page.id === idParts.slice(3, idParts.length).join('-')){
+          page.element_count = itemCount
+        }
+      })
+
+    }else if(idParts[2] != 'head'){
+      if(idParts.join('-').includes('accordion-in-accordion')){
+
+        idAppendAccordion = `wrapper-section-${idParts.slice(3, idParts.length).join('-')}`
+        bodyAppend = document.getElementById(idAppendAccordion)
+
+        fieldNumber = parseInt(bodyAppend.getAttribute('data-element-count'))+1
+        bodyAppend.dataset.elementCount = fieldNumber;
+
+        idPrefix = `${idParts.slice(1, idParts.length).join('-')}-${fieldNumber}`;
+        accordionId = idPrefix
+    
+        console.log('accordion in accordion')
+
+        event.target.parentElement.parentElement.parentElement.classList.add('hidden')
+        accordionWidth= '300px'
+        
+      }else{
+        idAppendAccordion = `editor-container-section-${idParts[4]}`
+        const section = document.getElementById(idAppendAccordion)
+
+        fieldNumber = section.dataset.elementCount
+        fieldNumber++
+        section.dataset.elementCount = fieldNumber
+        
+        idPrefix = `${idParts.slice(1, idParts.length).join('-')}-${fieldNumber}`;
+        
+        accordionId = idPrefix
+        
+        console.log('accordion biasa')
+        accordionWidth= '400px'
+        
+      }
+  
+      document.getElementById(`webpage-section-${idParts.find(part => !isNaN(part))}`).insertAdjacentHTML('beforeend', createBodyDropdownHTML(idPrefix,idParts))
+  
+      document.getElementById(idAppendAccordion).insertAdjacentHTML('beforeend',createAccordionHTML(idPrefix,fieldNumber,accordionWidth));
+
+      console.log('accoridon',idParts.filter(part => !isNaN(part)).length == 1, `section-${idParts.slice(1).join('-')}`)
+      webpageDb.map(item=>{
+        if(item.id === `webpage-section-${idParts.find(part => !isNaN(part))}` && idParts.filter(part => !isNaN(part)).length == 1){
+          item.element_count++
+        }else if(item.id === `section-${idParts.slice(3).join('-')}` && idParts.join('-').startsWith('add-accordion-in-accordion')){
+          item.element_count++
+        }
+      })
+
+      console.log(webpageDb, idParts)
+    }
+
+    setTimeout(() => {
+        try {
+            const accordionElement = document.getElementById(accordionId);
+            if (accordionElement) {
+                const accordion = new Accordion(accordionElement, {
+                    alwaysOpen: false,
+                    activeClasses: 'bg-gray-100 text-gray-900',
+                    inactiveClasses: 'text-gray-500'
+                });
+                console.log('✅ Accordion berhasil diinisialisasi:', accordionElement.id);
+            } else {
+                console.warn('⚠️ Elemen Accordion tidak ditemukan setelah appendChild');
+            }
+
+            // Panggil initFlowbite setelah inisialisasi accordion spesifik ini
+            // dan setelah ada sedikit penundaan
+            initFlowbite();
+
+        } catch (error) {
+            console.error('❌ Gagal menginisialisasi Accordion:', error);
+        }
+    }, 100);  
+    setListener();
+    dropdownInitialized()
+  }
+  
+  // ======================== CAROUSEL ======================
+  if(id.startsWith('add-carousel-')) {
+    const idParts = event.target.id.split('-')
+    let idAppend,idPrefix,bodyAppend, fieldNumber
+    let svgControlerSlideSize, slideControlWrapperSize, indicatorSize, bottomIndicatorPosition, paddingSlideController,widthCarousel,heightCarousel
+
+    const createCarousel = (idPrefix,fieldNumber,widthCarousel,heightCarousel,svgControlerSlideSize,slideControlWrapperSize,indicatorSize,bottomIndicatorPosition,paddingSlideController) => `
+      <div id="${idPrefix}" data-element-order="${fieldNumber}" data-text-position="on-image" data-text="false" data-next-btn-hide="false" data-carousel="static" class="flex justify-center items-center flex-col" style="width:${widthCarousel};height:${heightCarousel};position:relative;">
+        <div type="button" class="absolute right-[-1.7rem] top-[-0.3rem] z-0 cursor-pointer" data-dropdown-toggle="dropdown-${idPrefix}" data-dropdown-placement="right-end">
+          <svg id="edit-accordion" class="w-6 h-6 text-gray-600 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+            <path fill-rule="evenodd" d="M11.32 6.176H5c-1.105 0-2 .949-2 2.118v10.588C3 20.052 3.895 21 5 21h11c1.105 0 2-.948 2-2.118v-7.75l-3.914 4.144A2.46 2.46 0 0 1 12.81 16l-2.681.568c-1.75.37-3.292-1.263-2.942-3.115l.536-2.839c.097-.512.335-.983.684-1.352l2.914-3.086Z" clip-rule="evenodd"/>
+            <path fill-rule="evenodd" d="M19.846 4.318a2.148 2.148 0 0 0-.437-.692 2.014 2.014 0 0 0-.654-.463 1.92 1.92 0 0 0-1.544 0 2.014 2.014 0 0 0-.654.463l-.546.578 2.852 3.02.546-.579a2.14 2.14 0 0 0 .437-.692 2.244 2.244 0 0 0 0-1.635ZM17.45 8.721 14.597 5.7 9.82 10.76a.54.54 0 0 0-.137.27l-.536 2.84c-.07.37.239.696.588.622l2.682-.567a.492.492 0 0 0 .255-.145l4.778-5.06Z" clip-rule="evenodd"/>
+          </svg>                  
+        </div>
+
+        <div id="element-${idPrefix}" data-item-count="3" class="relative w-full h-full" data-carousel="static">
+          <!-- Carousel wrapper -->
+          <div class="relative w-full h-full overflow-hidden rounded-lg text-black">
+              <!-- Item 1 -->
+              <div id="item-${idPrefix}-1" data-item-order="1" class="duration-700 ease-in-out flex justify-center items-center" style='background-image: linear-gradient(rgba(0, 0, 0, 0.0), rgba(0, 0, 0, 0.0)), url("/assets/img/almond1DefaultImageCarousel.jpg");background-size:cover;background-position:center;' data-carousel-item>
+              </div>
+
+              <!-- Item 2 -->
+              <div id="item-${idPrefix}-2" data-item-order="2" class="duration-700 ease-in-out flex justify-center items-center" style='background-image: linear-gradient(rgba(0, 0, 0, 0.0), rgba(0, 0, 0, 0.0)), url("/assets/img/almond1DefaultImageCarousel.jpg");background-size:cover;background-position:center;' data-carousel-item>
+              </div>
+
+              <!-- Item 3 -->
+              <div id="item-${idPrefix}-3" data-item-order="3" class="duration-700 ease-in-out flex justify-center items-center" style='background-image: linear-gradient(rgba(0, 0, 0, 0.0), rgba(0, 0, 0, 0.0)), url("/assets/img/almond1DefaultImageCarousel.jpg");background-size:cover;background-position:center;' data-carousel-item>
+              </div>
+          </div>
+          <!-- Slider indicators -->
+          <div style="${bottomIndicatorPosition}" id="slide-indicator-${idPrefix}" class="absolute z-30 flex -translate-x-1/2 left-1/2 space-x-3 rtl:space-x-reverse">
+              <button type="button" style="${indicatorSize}" class="rounded-full" aria-current="true" aria-label="Slide 1" data-carousel-slide-to="0"></button>
+              <button type="button" style="${indicatorSize}" class="rounded-full" aria-current="false" aria-label="Slide 2" data-carousel-slide-to="1"></button>
+              <button type="button" style="${indicatorSize}" class="rounded-full" aria-current="false" aria-label="Slide 3" data-carousel-slide-to="2"></button>
+          </div>
+          <!-- Slider controls -->
+          <button id="slider-prev-btn" type="button" style="${paddingSlideController}" class="absolute top-0 start-0 z-30 flex items-center justify-center h-full cursor-pointer group focus:outline-none" data-carousel-prev>
+              <span style="${slideControlWrapperSize}" class="inline-flex items-center justify-center rounded-full bg-gray-400/30 group-hover:bg-gray-400/50 group-focus:ring-4 group-focus:ring-gray-300 group-focus:outline-none">
+                  <svg style="${svgControlerSlideSize}" class="text-gray-500 rtl:rotate-180" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10">
+                      <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 1 1 5l4 4"/>
+                  </svg>
+                  <span class="sr-only">Previous</span>
+              </span>
+          </button>
+          <button id="slider-next-btn" type="button" style="${paddingSlideController}" class="absolute top-0 end-0 z-30 flex items-center justify-center h-full cursor-pointer group focus:outline-none" data-carousel-next>
+              <span style="${slideControlWrapperSize}" class="inline-flex items-center justify-center rounded-full bg-gray-400/30 group-hover:bg-gray-400/50 group-focus:ring-4 group-focus:ring-gray-300 group-focus:outline-none">
+                  <svg class=" text-gray-500 rtl:rotate-180" aria-hidden="true" style="${svgControlerSlideSize}" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10">
+                      <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 9 4-4-4-4"/>
+                  </svg>
+                  <span class="sr-only">Next</span>
+              </span>
+          </button>
+        </div>
+      </div>
+    `
+
+    const  createDropdown = (idPrefix)=> `
+      <div id="dropdown-${idPrefix}" data-accordion="open" class="absolute mt-2 left-0 w-30 z-40 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700">
+        <ul class="py-2 text-sm text-gray-700 dark:text-gray-200">
+          <li><a id="down-${idPrefix}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Move Down</a></li>
+          <li><a id="up-${idPrefix}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Move Up</a></li>
+        </ul>
+        <ul class="py-2 text-sm text-gray-700 dark:text-gray-200 border-t border-gray-500">
+          <li><a id="delete-${idPrefix}" class="cursor-pointer font-bold block text-red-700 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Delete</a></li>
+        </ul>
+      </div>
+    `
+    if(idParts[2] === 'accordion'){
+      idAppend = `wrapper-section-${idParts.slice(2, idParts.length).join('-')}`;
+
+      bodyAppend = document.getElementById(idAppend);
+      fieldNumber = parseInt(bodyAppend.getAttribute('data-element-count')) + 1;
+      bodyAppend.dataset.elementCount = fieldNumber;
+
+      console.log('add: ',fieldNumber, parseInt(bodyAppend.getAttribute('data-element-count')) + 1)
+
+      idPrefix = `${idParts.slice(1, idParts.length).join('-')}-${fieldNumber}`
+  
+      widthCarousel='300px'
+      heightCarousel='200px'
+
+      svgControlerSlideSize = 'width:12px; height:12px;'
+      slideControlWrapperSize = 'width:24px;height:24px;'
+      indicatorSize = 'width:8px; height:8px;'
+      bottomIndicatorPosition = 'bottom:2px'
+      paddingSlideController = 'padding-left:2px;padding-right:2px;'
+
+    }else{
+      idAppend = `editor-container-section-${idParts[4]}`;
+      const section = document.getElementById(idAppend)
+
+      fieldNumber = section.dataset.elementCount;
+      fieldNumber++
+      section.dataset.elementCount = fieldNumber
+
+      idPrefix = `${idParts.slice(1, idParts.length).join('-')}-${fieldNumber}`
+  
+      widthCarousel='400px'
+      heightCarousel='300px'
+      
+      idAppend = `editor-container-section-${idParts[4]}`
+
+      svgControlerSlideSize = 'width:16px; height:16px;'
+      slideControlWrapperSize = 'width:32px;height:32px;'
+      indicatorSize = 'width:10px; height:10px;'
+      bottomIndicatorPosition = 'bottom:5px'
+      paddingSlideController = 'padding-left:4px;padding-right:4px;'
+    }
+
+    document.getElementById(`webpage-section-${idParts.find(part => !isNaN(part))}`).insertAdjacentHTML('beforeend', createDropdown(idPrefix))
+
+    document.getElementById(idAppend).insertAdjacentHTML('beforeend', createCarousel(idPrefix,fieldNumber,widthCarousel,heightCarousel,svgControlerSlideSize,slideControlWrapperSize,indicatorSize,bottomIndicatorPosition,paddingSlideController));
+
+    webpageDb.push({
+      id: `${idPrefix}`,
+      type:'carousel',
+      element_order: fieldNumber,
+      style: `{"css":"position:relative;width:${widthCarousel};height:${heightCarousel};","svgControlerSlideSize": "${svgControlerSlideSize}","slideControlWrapperSize": "${slideControlWrapperSize}","indicatorSize": "${indicatorSize}","bottomIndicatorPosition": "${bottomIndicatorPosition}","paddingSlideController": "${paddingSlideController}"}`,
+      element_count: 3,
+      content:`{"dataTextPosition":"on-image","dataText":"false","dataNextBtnHide":"false"}`
+    },
+    {
+      id: `item-${idPrefix}-1`,
+      type: 'item-carousel',
+      element_order:1,
+      style: `background-image: linear-gradient(rgba(0, 0, 0, 0.0), rgba(0, 0, 0, 0.0)), url('/assets/img/almond1DefaultImageCarousel.jpg');background-size:cover;background-position:center;`
+    },
+    {
+      id: `item-${idPrefix}-2`,
+      type: 'item-carousel',
+      element_order:2,
+      style: `background-image: linear-gradient(rgba(0, 0, 0, 0.0), rgba(0, 0, 0, 0.0)), url('/assets/img/almond1DefaultImageCarousel.jpg');background-size:cover;background-position:center;`
+    },
+    {
+      id: `item-${idPrefix}-3`,
+      type: 'item-carousel',
+      element_order:3,
+      style: `background-image: linear-gradient(rgba(0, 0, 0, 0.0), rgba(0, 0, 0, 0.0)), url('/assets/img/almond1DefaultImageCarousel.jpg');background-size:cover;background-position:center;`
+    },
+    )
+
+    webpageDb.map(item=>{
+      if(item.id === `webpage-section-${idParts.find(part => !isNaN(part))}` && idParts.filter(part => !isNaN(part)).length == 1){
+        item.element_count++
+      }else if(item.id === `section-${idParts.slice(2).join('-')}`){
+        item.element_count++
+      }
+    })
+
+    console.log(webpageDb)
+
+    setListener()
+    dropdownInitialized()
+
+    setTimeout(() => {
+      try {
+          const carouselElement = document.getElementById(idPrefix);
+          if (carouselElement) {
+              new Carousel(carouselElement);
+              console.log('✅ Carousel berhasil diinisialisasi:', carouselElement.id);
+          } else {
+              console.warn('⚠️ Elemen Crousel tidak ditemukan setelah appendChild');
+          }
+
+          // Panggil initFlowbite setelah inisialisasi accordion spesifik ini
+          // dan setelah ada sedikit penundaan
+          initFlowbite();
+
+      } catch (error) {
+          console.error('❌ Gagal menginisialisasi Carousel:', error);
+      }
+    }, 100);  
+  }
+
 // ================================= DOWN UP DELETE ELEMENT =================================
   let bodyFieldELement, fieldElement
-
   if(idParts[0] =='up' || idParts[0] == 'down' || idParts[0] == 'delete'){
     if(idParts[1] === 'btn' && idParts[2] === 'modal'){
-      
+      console.log(idParts.slice(1, idParts.length).join('-'))
       fieldElement = document.getElementById(idParts.slice(2, idParts.length).join('-'))
       bodyFieldELement = fieldElement.parentElement
       console.log('modal Select', fieldElement, bodyFieldELement)
@@ -3696,12 +4941,6 @@ document.getElementById('webpage').addEventListener('click', function (event) {
       bodyFieldELement = fieldElement.parentElement
       console.log('head accordion Select', fieldElement, bodyFieldELement)
 
-    }else if(idParts[1] === 'btn' && idParts[2] === 'collapse'){
-
-      fieldElement = document.getElementById(idParts.slice(2, idParts.length).join('-'))
-      bodyFieldELement = fieldElement.parentElement
-      console.log('collapse Select', fieldElement, bodyFieldELement)
-
     }else if(idParts[1] === 'carousel'){
 
       fieldElement = document.getElementById(idParts.slice(1, idParts.length).join('-'))
@@ -3714,6 +4953,18 @@ document.getElementById('webpage').addEventListener('click', function (event) {
       bodyFieldELement = fieldElement.parentElement
       console.log(`field select: `, fieldElement,' body: ', bodyFieldELement)
 
+    }else if(idParts[1] === 'section'){
+      if(idParts[2] === 'accordion'){
+        fieldElement = document.getElementById(`${idParts.slice(1, idParts.length).join('-')}`);
+        bodyFieldELement = fieldElement.parentElement
+        console.log(`section accordion select: `, fieldElement,' body: ', bodyFieldELement)
+
+      }else{
+        fieldElement = document.getElementById(`webpage-${idParts.slice(1, idParts.length).join('-')}`);
+        bodyFieldELement = fieldElement.parentElement
+        console.log(`section select: `, fieldElement,' body: ', bodyFieldELement)
+      }
+
     }
   }else{
     console.log('no up, down, or delete element')
@@ -3724,10 +4975,44 @@ document.getElementById('webpage').addEventListener('click', function (event) {
     console.log(nextField, fieldElement)
 
     if (fieldElement && nextField) {
-      let orderTemp = nextField.dataset.fieldOrder;
-      nextField.dataset.fieldOrder = fieldElement.dataset.fieldOrder;
-      fieldElement.dataset.fieldOrder = orderTemp;
-      // Sisipkan elemen field setelah elemen next-nya (artinya swap)
+      let orderTemp = nextField.dataset.elementOrder;
+      nextField.dataset.elementOrder = fieldElement.dataset.elementOrder;
+      fieldElement.dataset.elementOrder = orderTemp;
+
+      let fieldId
+      let nextFieldId
+
+      if(fieldElement.id && !fieldElement.parentElement.id.startsWith('parent-accordion')){
+        fieldId = fieldElement.id
+      }else if(fieldElement.parentElement.id.startsWith('parent-accordion')){
+        fieldId = fieldElement.querySelector('[id^="btn-heading-"]').id
+      }else if(fieldElement.id.startsWith('accordion')){
+        fieldId=fieldElement.id
+      }else{
+        fieldId = fieldElement.querySelector('[id^="field-"]').id
+      }
+      
+      if(nextField.id && !nextField.parentElement.id.startsWith('parent-accordion')){
+        nextFieldId = nextField.id
+      }else if(nextField.parentElement.id.startsWith('parent-accordion')){
+        nextFieldId = nextField.querySelector('[id^="btn-heading-"]').id
+      }else if(nextField.id.startsWith('accordion')){
+        nextFieldId=nextField.id
+      }else{
+        nextFieldId = nextField.querySelector('[id^="field-"]').id
+      }
+      
+      webpageDb.map(item=>{
+        if(item.id == fieldId){
+          item.element_order = fieldElement.dataset.elementOrder
+          console.log(item)
+        }else if(item.id == nextFieldId){
+          item.element_order = nextField.dataset.elementOrder
+          console.log(item)
+        }
+      })
+      console.log(webpageDb, nextFieldId, fieldId)
+
       nextField.insertAdjacentElement('afterend', fieldElement);
     }
 
@@ -3736,59 +5021,238 @@ document.getElementById('webpage').addEventListener('click', function (event) {
     console.log(prevField, fieldElement)
 
     if (fieldElement && prevField) {
-      let orderTemp = prevField.dataset.fieldOrder;
-      prevField.dataset.fieldOrder = fieldElement.dataset.fieldOrder;
-      fieldElement.dataset.fieldOrder = orderTemp;
-      // Sisipkan elemen field setelah elemen next-nya (artinya swap)
+      let orderTemp = prevField.dataset.elementOrder;
+      prevField.dataset.elementOrder = fieldElement.dataset.elementOrder;
+      fieldElement.dataset.elementOrder = orderTemp;
+      // Sisipkan elemen field setelah elemen next-nya (artinya swap
+
+      let fieldId
+      let prevFieldId
+
+      if(fieldElement.id && !fieldElement.parentElement.id.startsWith('parent-accordion')){
+        fieldId = fieldElement.id
+      }else if(fieldElement.parentElement.id.startsWith('parent-accordion')){
+        fieldId = fieldElement.querySelector('[id^="btn-heading-"]').id
+      }else if(fieldElement.id.startsWith('accordion')){
+        fieldId=fieldElement.id
+      }else{
+        fieldId = fieldElement.querySelector('[id^="field-"]').id
+      }
+      if(prevField.id && !prevField.parentElement.id.startsWith('parent-accordion')){
+        prevFieldId = prevField.id
+      }else if(prevField.parentElement.id.startsWith('parent-accordion')){
+        prevFieldId = prevField.querySelector('[id^="btn-heading-"]').id
+      }else if(prevField.id.startsWith('accordion')){
+        prevFieldId=prevField.id
+      }else{
+        prevFieldId = prevField.querySelector('[id^="field-"]').id
+      }
+
+      
+      webpageDb.map(item=>{
+        if(item.id == fieldId){
+          item.element_order = fieldElement.dataset.elementOrder
+          console.log(item)
+        }else if(item.id == prevFieldId){
+          item.element_order = prevField.dataset.elementOrder
+          console.log(item)
+        }
+      })
+      console.log('up element:',fieldId,fieldElement.dataset.elementOrder,fieldElement,prevFieldId,prevField.dataset.elementOrder, prevField)
+      console.log(webpageDb)
       prevField.insertAdjacentElement('beforebegin', fieldElement);
     }
 
   }else if(idParts[0] === 'delete') {
 
-    console.log('delete:', idParts.slice(1, idParts.length).join('-'), fieldElement, bodyFieldELement)
-    if(bodyFieldELement.id.startsWith('editor-container-section-') && fieldElement.parentElement.dataset.fieldOrder >= editorCount){
-      editorCount--
-      console.log('field in section delete')
+    // console.log('delete:', idParts.slice(1, idParts.length).join('-'), fieldElement, bodyFieldELement)
+    if(bodyFieldELement.id.startsWith('editor-container-section-') && fieldElement.dataset.elementOrder >= bodyFieldELement.dataset.elementCount){
+      bodyFieldELement.dataset.elementCount = Math.max(
+            0,
+            parseInt(bodyFieldELement.dataset.elementCount) - 1
+          );
 
-    }else if(fieldElement.parentElement.dataset.fieldOrder >= bodyFieldELement.dataset.fieldCount && idParts[1] !== 'head') {
-      bodyFieldELement.dataset.fieldCount--;
+      webpageDb.map(item=>{
+        if(item.id == bodyFieldELement.parentElement.id){
+          item.element_count = bodyFieldELement.dataset.elementCount
+        }
+      })
+
+      console.log('field in section delete', webpageDb)
+
+    }else if(fieldElement.dataset.elementOrder >= bodyFieldELement.dataset.elementCount && idParts[1] !== 'head' && idParts[1] !== 'section') {
+      bodyFieldELement.dataset.elementCount = Math.max(
+            0,
+            parseInt(bodyFieldELement.dataset.elementCount) - 1
+          );
       console.log('field delete')
 
-    }else if(fieldElement.dataset.fieldOrder >= bodyFieldELement.dataset.itemAccordion && idParts[1] === 'head') {
-      bodyFieldELement.dataset.itemAccordion--;
+      if(bodyFieldELement.id.includes('accordion-element')){
+        webpageDb.map(page=>{
+          if(page.id === bodyFieldELement.id.split('-').slice(1).join('-')){
+            page.element_count=bodyFieldELement.dataset.elementCount
+          }
+        })
+      }else{
+        webpageDb.map(page=>{
+          if(page.id === bodyFieldELement.id.split('-').slice(1).join('-')){
+            page.element_count=bodyFieldELement.dataset.elementCount
+          }
+        })
+      }
+
+    }else if(fieldElement.dataset.elementOrder >= bodyFieldELement.dataset.itemAccordion && idParts[1] === 'head') {  
+      bodyFieldELement.dataset.itemAccordion = Math.max(
+            0,
+            parseInt(bodyFieldELement.dataset.itemAccordion) - 1
+          );
       console.log('head delete')
+      webpageDb.map(page=>{
+        if(page.id === bodyFieldELement.id.split('-').slice(1).join('-')){
+          page.element_count=bodyFieldELement.dataset.itemAccordion
+        }
+      })
 
     }else{
-      console.log('no delete',fieldElement.dataset.fieldOrder >= editorCount, fieldElement.parentElement.dataset.fieldOrder, bodyFieldELement.dataset.fieldCount, )
+      console.log('no delete', fieldElement.dataset, bodyFieldELement.dataset.elementCount, bodyFieldELement)
     }
-    
-    event.target.parentElement.parentElement.parentElement.remove()
 
     if(idParts[1] === 'btn' && idParts[2] === 'modal'){
       document.querySelector(`[id='element-${fieldElement.id}']`).remove()
     }
     
-    fieldElement.remove();
+    if(idParts[1] === 'section'){
+      if(bodyFieldELement.children.length > 1 ){
+        if(fieldElement.dataset.elementOrder >= bodyFieldELement.dataset.elementCount){
+          bodyFieldELement.dataset.elementCount = Math.max(
+            0,
+            parseInt(bodyFieldELement.dataset.elementCount) - 1
+          );
+        }
+
+        if(idParts[2] != 'accordion' && idParts.length === 2){
+          const sectionNumber = fieldElement.id.split('-').find(part => !isNaN(part));
+          webpageDb = webpageDb.filter(item => {
+            const itemNumber = item.id.split('-').find(part => !isNaN(part));
+            return !(item.id === fieldElement.id || itemNumber === sectionNumber);
+          });
+          webpageDbParentSection[0].element_count = Math.max(
+            0,
+            parseInt(webpageDbParentSection[0].element_count) - 1
+          );
+          console.log('bukan accordion')
+          
+        }else if(idParts[2] != 'accordion' && idParts.length > 2){
+          let id = fieldElement.id.split('-')
+
+          webpageDb = webpageDb.filter(item => {
+            return !(item.id === fieldElement.id || item.id.includes(id.slice(1).join('-')));
+          });
+
+          webpageDbParentSection[0].element_count = parseInt(webpageDbParentSection[0].element_count) -1
+          console.log('bukan accordion 2', fieldElement.id)
+
+        }else{
+          webpageDb = webpageDb.filter(item => !item.id.includes(idParts.slice(2).join('-')));
+          webpageDb.map(page=>{
+            if(page.id === `btn-heading-${idParts.slice(2,-1).join('-')}`){
+              page.element_count = Math.max(
+                0,
+                parseInt(page.element_count) - 1
+              );
+              console.log(page.element_count)
+            }
+          })
+          console.log(`btn-heading-${idParts.slice(2,-1).join('-')}`,)
+        }
+        
+        fieldElement.remove();
+        event.target.parentElement.parentElement.parentElement.remove()
+        console.log('section delete', webpageDb, webpageDbParentSection)
+      }
+    }else{
+      fieldElement.querySelectorAll('[data-dropdown-toggle]').forEach(btnToggleDropdown=>{
+        document.getElementById(btnToggleDropdown.getAttribute('data-dropdown-toggle')).remove()
+      })
+
+      if(fieldElement.querySelector('[id^="field"]') && !fieldElement.id.startsWith('accordion-') && !fieldElement.id.startsWith('carousel-')){
+        webpageDb = webpageDb.filter(item => item.id !== fieldElement.querySelector('[id^="field"]').id);
+
+      }else if(fieldElement.id.startsWith('modal-') || fieldElement.id.startsWith('accordion-')){
+        webpageDb = webpageDb.filter(item => !item.id.includes(fieldElement.id));
+        
+      }else if(fieldElement.id.startsWith('btn-heading-')){
+        webpageDb = webpageDb.filter(item => !item.id.includes(fieldElement.id.split('-').slice(2).join('-')));
+        
+      }else if(fieldElement.id.startsWith('carousel')){
+        webpageDb = webpageDb.filter(item => !item.id.includes(fieldElement.id));
+
+      }else{
+        webpageDb = webpageDb.filter(item => item.id !== fieldElement.id);
+
+      }
+
+      console.log('delete id:', fieldElement.id, webpageDb)
+      event.target.parentElement.parentElement.parentElement.remove()
+      fieldElement.remove();
+    }
 
   }
 });
 
 document.getElementById('btn-save').addEventListener('click', function(){
-  console.log(sectionSelect)
-  // console.log(carouselSelect.style.backgroundImage.split('url(')[1].split(')')[0])
-  // const selection = window.getSelection();
-  // if (selection.rangeCount > 0) {
-  //   const range = selection.getRangeAt(0);
-  //   const contents = range.cloneContents();
+  const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+  document.getElementById('loading-overlay').style.display = 'flex';
+  let mergedDb = [...webpageDbParentSection, ...webpageDb]
+  console.log(mergedDb)
 
-  //   const spans = contents.querySelectorAll("*");
-  //   spans.forEach(span => {
-  //     const styles = window.getComputedStyle(span);
-  //     //console.log("Element:", span.nodeName, "Color:", styles.color, "Font:", styles.fontFamily);
-  //   });
-  // }
-  // //console.log(editorFieldSelect.style.backgroundImage ? 'ada' : 'gkada', editorFieldSelect.style.backgroundColor ? 'null' : 'ada')
+  const form = new FormData();
 
+  mergedDb.forEach((item, index) => {
+      let normalizedStyle
+      if(item.style && item.style.includes('background-image')){
+        normalizedStyle = item.style.replace(/url\((["'])(.*?)\1\)/g, "url('$2')");
+      }else{
+        normalizedStyle = item.style
+      }
+      form.append(`items[${index}][id]`, item.id);
+      form.append(`items[${index}][type]`, item.type);
+      form.append(`items[${index}][style]`, normalizedStyle ?? '');
+      form.append(`items[${index}][content]`, item.content ?? '');
+      form.append(`items[${index}][element_order]`, item.element_order ?? '');
+      form.append(`items[${index}][element_count]`, item.element_count ?? '');
+
+      if (item.file) {
+          form.append(`items[${index}][file]`, item.file); 
+      }
+  });
+
+  form.append("paramStatus", param);
+
+  fetch('http://127.0.0.1:8000/webpage/store', {
+    method: 'POST',
+    headers: {
+      'Accept': 'application/json',
+      'X-CSRF-TOKEN': csrfToken // kalau pakai Laravel CSRF
+    },
+    body: form
+  })
+    .then(response => response.json())
+    .then(data => {
+      console.log('Response:', data);
+      if (data.success) {
+         document.getElementById('loading-overlay').style.display = 'none';
+        alert('Data berhasil disimpan');
+        window.location.reload();
+      } else {
+         document.getElementById('loading-overlay').style.display = 'none';
+        alert('Gagal menyimpan data');
+      }
+    })
+    .catch(error => {
+       document.getElementById('loading-overlay').style.display = 'none';
+      console.error('Error:', error, webpageDb);
+    });
 })
 
 fontStylingField()
@@ -3800,3 +5264,4 @@ borderWave()
 setListener()
 accordionStyling()
 modalTypeStyling()
+accordionTypeStyling()

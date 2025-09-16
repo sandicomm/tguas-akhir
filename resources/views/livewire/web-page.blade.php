@@ -1,6 +1,6 @@
 
     <div>
-        <div class="p-4 sm:ml-64 realtive">
+        <div class="p-4 sm:ml-64 relative">
             
             <x-loading wire:loading.flex />
             @if(session('success'))
@@ -33,7 +33,14 @@
                     @endforeach
                 </div>
             @endif
-            <div id="webpage" class="relative">
+
+            @if($webpage)
+                <script>
+                    webpageJs = @js($webpage);
+                    paramJs = @js($param);
+                </script>
+            @endif
+            <div id="webpage" data-element-count="0" class="relative">
             </div>
             
             {{-- <div class="w-full h-[100dvh] relative" 
@@ -198,4 +205,3 @@
             </div> --}}
         </div>
     </div>
-
