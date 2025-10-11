@@ -49,8 +49,46 @@ document.addEventListener('DOMContentLoaded', function(){
   loadWebpage()
 })
 
-function dropdownInitialized(){
-  document.querySelectorAll('[data-dropdown-toggle]').forEach(toggleEl => {
+function dropdownInitialized(element,id){
+  if(element == 'multi'){
+     document.querySelectorAll(`[data-dropdown-toggle*="${id}"]`).forEach(toggleEl=>{
+
+       const targetId = toggleEl.getAttribute('data-dropdown-toggle');
+       const targetEl = document.getElementById(targetId);
+   
+       if (targetEl && !targetEl.dataset.initialized) {
+         // Inisialisasi ulang dropdown
+         new Dropdown(targetEl, toggleEl, {
+           placement: toggleEl.getAttribute('data-dropdown-placement') || 'bottom',
+         });
+   
+         targetEl.dataset.initialized = 'true';
+         console.log("dropdown initialized", targetEl, targetEl.dataset.initialized)
+       }else{
+         console.log("gagal inisialisasi dropdown", targetEl, targetEl.dataset.initialized)
+       }
+     })
+
+  }else if(element == 'all'){
+     document.querySelectorAll(`[data-dropdown-toggle]`).forEach(toggleEl=>{
+
+       const targetId = toggleEl.getAttribute('data-dropdown-toggle');
+       const targetEl = document.getElementById(targetId);
+   
+       if (targetEl && !targetEl.dataset.initialized) {
+         // Inisialisasi ulang dropdown
+         new Dropdown(targetEl, toggleEl, {
+           placement: toggleEl.getAttribute('data-dropdown-placement') || 'bottom',
+         });
+   
+         targetEl.dataset.initialized = 'true';
+        //  console.log("dropdown initialized", targetEl, targetEl.dataset.initialized)
+       }else{
+         console.log("gagal inisialisasi dropdown", targetEl, targetEl.dataset.initialized)
+       }
+     })
+  }else{
+    const toggleEl = document.querySelector(`[data-dropdown-toggle="${id}"]`)
     const targetId = toggleEl.getAttribute('data-dropdown-toggle');
     const targetEl = document.getElementById(targetId);
 
@@ -61,11 +99,11 @@ function dropdownInitialized(){
       });
 
       targetEl.dataset.initialized = 'true';
-      console.log("dropdown initialized")
+      console.log("dropdown initialized", targetEl, targetEl.dataset.initialized)
     }else{
-      console.log("gagal inisialisasi dropdown")
+      console.log("gagal inisialisasi dropdown", targetEl, targetEl.dataset.initialized)
     }
-  });
+  }
 }
 
 function setPaddingMarginBoxBorder(computedField){
@@ -130,11 +168,11 @@ function updateStylingControls(data, field) {
       document.getElementById('heading-text-wrapper').classList.add('hidden')
       document.getElementById('accordion-modal-type').classList.add('hidden')
 
-      let fieldColor= data.style.backgroundImage ?? data.style.backgroundColor
+      let fieldColor= data.style.backgroundImage || data.style.backgroundColor
       let borderColor= data.style.borderColor ?? ''
 
       fieldColor = getRgbArray(fieldColor)
-
+      console.log(data,fieldColor, data.style.backgroundColor, data.style.backgroundImage)
       if(fieldColor){
         fieldColor = rgbToHex(fieldColor[0],fieldColor[1],fieldColor[2])
       }
@@ -266,6 +304,8 @@ function updateStylingControls(data, field) {
 
     }else if(data.id.startsWith('btn-modal') || data.id.startsWith('btn-heading-accordion')){
       document.getElementById('accordion-carousel-styling').classList.add('hidden')
+      document.getElementById('heading-text-wrapper').classList.remove('hidden')
+      document.getElementById("heading-text").innerHTML = ''
       document.getElementById("heading-text").innerHTML = data.querySelector('span').innerHTML
       document.getElementById('accordion-head-indicator-wrapper').classList.remove('hidden')
       document.getElementById('accordion-head-indicator-wrapper').classList.add('flex')
@@ -282,7 +322,6 @@ function updateStylingControls(data, field) {
       document.getElementById('font-order-list').classList.add('hidden')
       document.getElementById('font-unorder-list').classList.add('hidden')
 
-      document.getElementById('heading-text-wrapper').classList.remove('hidden')
 
       let fieldColor= data.style.backgroundImage || data.style.backgroundColor
       let borderColor= data.style.borderColor
@@ -345,6 +384,8 @@ function updateStylingControls(data, field) {
       document.getElementById('accordion-font-styling').classList.add('hidden')
       document.getElementById('accordion-border-field').classList.remove('hidden')
       document.getElementById('accordion-accordion-type').classList.remove('hidden')
+
+      document.getElementById('accordion-box-field').classList.remove('hidden')
 
       let fieldColor= data.style.backgroundImage || data.style.backgroundColor
       let borderColor= data.style.borderColor
@@ -410,6 +451,7 @@ function updateStylingControls(data, field) {
                   <li><a id="down-${item.id}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100">Move Down</a></li>
                   <li><a id="up-${item.id}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 ">Move Up</a></li>
                   <li><label for="bg-image-carousel" id="set-image-${item.id}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100">Set Image</label></li>
+                  <li><a id="reset-image-${item.id}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100">Reset Image</a></li>
                 </ul>
                 <ul class="py-2 text-sm text-gray-700 border-t border-gray-500">
                   <li><a id="delete-${item.id}" class="cursor-pointer font-bold block text-red-700 px-4 py-2 hover:bg-gray-100">Delete</a></li>
@@ -426,9 +468,40 @@ function updateStylingControls(data, field) {
       addItemCarousel.id = `add-item-${data.id}`
 
       accordionCarouselStyling.classList.remove('hidden')
-      console.log(data)
       accordionCarouselStyling.querySelector('[id="edit-carousel-item-wrapping"]').dataset.itemCount = data.querySelector('[id^="element-carousel-"]').dataset.itemCount
-      dropdownInitialized()
+      
+      // ============= SET BG COLOR =================
+      const element = data.querySelector('[id^="item-carousel-"]');
+      const fieldColorStyle = element.getAttribute('style');
+
+      // Definisikan nilai default
+      let hexColor = '#000000'; // Default warna hitam jika tidak ditemukan
+      let opacityValue = 1;
+
+      // Gunakan regular expression untuk mencari nilai rgba()
+      const rgbaMatch = fieldColorStyle.match(/rgba?\((\d+),\s*(\d+),\s*(\d+),?\s*([\d.]+)?\)/);
+
+      // Jika nilai rgba() ditemukan, ekstrak dan ubah ke heksadesimal
+      if (rgbaMatch) {
+        // Ambil nilai R, G, dan B dari hasil regex
+        const r = parseInt(rgbaMatch[1], 10);
+        const g = parseInt(rgbaMatch[2], 10);
+        const b = parseInt(rgbaMatch[3], 10);
+        const a = rgbaMatch[4] ? parseFloat(rgbaMatch[4]) : 1;
+
+        // Ubah nilai RGB ke heksadesimal
+        hexColor = rgbToHex(r, g, b);
+        opacityValue = a;
+
+      }
+      
+      // Masukkan nilai heksadesimal ke input
+      document.getElementById('color-field-input').value = hexColor;
+      document.getElementById('bg-color-opacity').value = opacityValue;
+
+      console.log('Nilai warna heksadesimal:', hexColor, opacityValue, document.getElementById('bg-color-opacity').value);
+
+      console.log(data)
     }
 
     if(accordionSelect){
@@ -445,20 +518,19 @@ function updateStylingControls(data, field) {
       rgba = data.style.backgroundImage.split('linear-gradient(')[1].split(')')[0];
     }
 
-    let rgbArray;
-
-    if (rgba.includes('rgba')) {
-      rgbArray = rgba.split('rgba(')[1].split(')')[0].split(',');
-    } else if (rgba.includes('rgb')) {
-      rgbArray = rgba.split('rgb(')[1].split(')')[0].split(',');
+    if(!data.id.startsWith('carousel')){
+      let rgbArray;
+  
+      if (rgba.includes('rgba')) {
+        rgbArray = rgba.split('rgba(')[1].split(')')[0].split(',');
+      } else if (rgba.includes('rgb')) {
+        rgbArray = rgba.split('rgb(')[1].split(')')[0].split(',');
+      }
+  
+      const a = parseFloat(rgbArray[3] ? rgbArray[3].trim() : 1);
+  
+      document.getElementById('bg-color-opacity').value = a;
     }
-
-    const r = parseInt(rgbArray[0].trim());
-    const g = parseInt(rgbArray[1].trim());
-    const b = parseInt(rgbArray[2].trim());
-    const a = parseFloat(rgbArray[3] ? rgbArray[3].trim() : 1);
-
-    document.getElementById('bg-color-opacity').value = a;
 
     const preview = document.getElementById('preview-image');
     const nameFile = document.getElementById('file-name-display');
@@ -485,7 +557,23 @@ function updateStylingControls(data, field) {
       let fontSizeValue
       
       if(data){
-        fontSizeValue = data.dataset.fieldFontSize;
+        fontSizeValue = data.dataset.fieldFontSize
+
+        if (!fontSizeValue) {
+          // cari elemen <font> yang punya atribut size di dalam scope `data`
+          const fontElement = data.querySelector("font[size]");
+
+          // fallback: kalau ternyata `data` sendiri adalah <font>
+          const selfFont = data.closest("font[size]");
+
+          if (fontElement) {
+            fontSizeValue = fontElement.getAttribute("size");
+          } else if (selfFont) {
+            fontSizeValue = selfFont.getAttribute("size");
+          }else{
+            fontSizeValue='3'
+          }
+        }
       }
       
       if (fontSizeValue) {
@@ -504,6 +592,22 @@ function updateStylingControls(data, field) {
       
       if(data){
         fontFamilyValue = data.dataset.fieldFontFamily;
+
+        if (!fontFamilyValue) {
+          // cari elemen <font> yang punya atribut size di dalam scope `data`
+          const fontElement = data.querySelector("font[face]");
+
+          // fallback: kalau ternyata `data` sendiri adalah <font>
+          const selfFont = data.closest("font[face]");
+
+          if (fontElement) {
+            fontFamilyValue = fontElement.getAttribute("face");
+          } else if (selfFont) {
+            fontFamilyValue = selfFont.getAttribute("face");
+          }else{
+            fontFamilyValue='sans-serif'
+          }
+        }
       }
 
       if (fontFamilyValue) {
@@ -515,6 +619,15 @@ function updateStylingControls(data, field) {
         // Jika tidak ada value yang cocok, set ke default
         fontFamilyField.value = 'default';
       }
+
+      if(!document.getElementById('preview-image').classList.contains('hidden')){
+        document.getElementById('wrapper-btn-reset-bg-image').classList.remove('hidden')
+        console.log('atas',document.getElementById('wrapper-btn-reset-bg-image'))
+      }else{
+        document.getElementById('wrapper-btn-reset-bg-image').classList.add('hidden')
+        console.log('bawah',document.getElementById('wrapper-btn-reset-bg-image'))
+      }
+
 }
 
 function hexToRgb(hex) {
@@ -553,7 +666,7 @@ function setListener(){
           return
         }
       })
-      console.log(event.target, editorFieldSelect)
+      console.log('editorFieldSelect: ',event.target, editorFieldSelect)
       updateStylingControls(editorFieldSelect ,event.target);
     })
     field.addEventListener('keyup', function (){
@@ -1790,7 +1903,11 @@ function colorBackgroundField(){
       fieldEditor.dataset.fieldBgColor = this.value;
       fieldEditor.querySelectorAll('[id^="item-carousel-"]').forEach(item =>{
         if(fieldEditor.dataset.textPosition === 'on-image'){
-          item.style.backgroundImage = `linear-gradient(rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${alpha}), rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${alpha})), url(${item.style.backgroundImage.split('url(')[1].split(')')[0]})`;
+          if(item.style.backgroundImage){
+            item.style.backgroundImage = `linear-gradient(rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${alpha}), rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${alpha})), url(${item.style.backgroundImage.split('url(')[1].split(')')[0]})`;
+          }else{
+            item.style.backgroundColor = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${alpha})`;
+          }
           updateStyle(item)
         }else{
           item.children[1].style.backgroundColor=`rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${alpha})`;
@@ -1800,7 +1917,11 @@ function colorBackgroundField(){
 
       if(fieldEditor.dataset.textPosition === 'on-image'){
         document.querySelectorAll('[id^="edit-item-carousel-"]').forEach(item =>{
-          item.style.backgroundImage = `linear-gradient(rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${alpha}), rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${alpha})), url(${item.style.backgroundImage.split('url(')[1].split(')')[0]})`;
+           if(item.style.backgroundImage){
+            item.style.backgroundImage = `linear-gradient(rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${alpha}), rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${alpha})), url(${item.style.backgroundImage.split('url(')[1].split(')')[0]})`;
+          }else{
+            item.style.backgroundColor = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${alpha})`;
+          }
         })
       }
       console.log('tipe 2')
@@ -1833,11 +1954,16 @@ function colorBackgroundField(){
     if(fieldEditor.id.startsWith('carousel')){
       fieldEditor.querySelectorAll('[id^="item-carousel-"]').forEach(item =>{
         if(fieldEditor.dataset.textPosition ==="on-image"){
-          item.style.backgroundImage = `
-              linear-gradient(rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${this.value}), 
-              rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${this.value})), 
-              url(${item.style.backgroundImage.split('url(')[1].split(')')[0]})`;
+          if(item.style.backgroundImage){
+            item.style.backgroundImage = `
+                linear-gradient(rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${this.value}), 
+                rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${this.value})), 
+                url(${item.style.backgroundImage.split('url(')[1].split(')')[0]})`;
             
+          }else{
+            item.style.backgroundColor = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${this.value})`;
+              
+          }
           updateStyle(item)
         }else{
           item.children[1].style.backgroundColor=`rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${this.value})`;
@@ -1846,7 +1972,11 @@ function colorBackgroundField(){
       })
       if(fieldEditor.dataset.textPosition === "on-image"){
         document.querySelectorAll('[id^="edit-item-carousel-"]').forEach(item =>{
-          item.style.backgroundImage = `linear-gradient(rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${this.value}), rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${this.value})), url(${item.style.backgroundImage.split('url(')[1].split(')')[0]})`;
+          if(item.style.backgroundImage){
+            item.style.backgroundImage = `linear-gradient(rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${this.value}), rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${this.value})), url(${item.style.backgroundImage.split('url(')[1].split(')')[0]})`;
+          }else{
+            item.style.backgroundColor = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${this.value})`;
+          }
         })
       }
 
@@ -1963,27 +2093,48 @@ function colorBackgroundField(){
       const reader = new FileReader();
       reader.onload = function (e) {
         const imgUrl = `url("${e.target.result}")`;
+        const currentStyle = editCarouselItem.getAttribute('style');
 
         // Default/fallback rgba
-        let rgba = 'rgba(0, 0, 0, 0.0), rgba(0, 0, 0, 0.0)';
+        let rgbaValue = 'rgba(0,0,0,0.0), rgba(0,0,0,0.0)';
 
-        // Coba parsing kalau sebelumnya ada nilai
-        const currentBg = editCarouselItem.getAttribute('style');
-        if (currentBg.includes('linear-gradient(')) {
+        if (currentStyle.includes('linear-gradient(')) {
           try {
-            rgba = currentBg
-              .split('linear-gradient(')[1]
-              .split(')')[0]
-              .trim();
+            const startIndex = currentStyle.indexOf('linear-gradient(') + 'linear-gradient('.length;
+            const endIndex = currentStyle.indexOf(')', startIndex);
+            
+            rgbaValue = currentStyle.slice(startIndex, endIndex + 1); 
+            
+            const secondGradientIndex = currentStyle.indexOf(')', endIndex + 1);
+            if (secondGradientIndex !== -1) {
+              rgbaValue += currentStyle.slice(endIndex + 1, secondGradientIndex + 1);
+            }
           } catch (err) {
             console.warn('Failed to parse gradient, using default.');
           }
+        } 
+
+        else if (currentStyle.includes('background-color:')) {
+          try {
+            const startIndex = currentStyle.indexOf('background-color:') + 'background-color:'.length;
+       
+            const endIndex = currentStyle.indexOf(';', startIndex);
+            rgbaValue = currentStyle.slice(startIndex, endIndex).trim();
+          } catch (err) {
+            console.warn('Failed to parse background-color, using default.');
+          }
         }
 
-        const bgValue = `linear-gradient(${rgba})), ${imgUrl}`;
+        const [firstColor, secondColor] = rgbaValue.split(/,\s*/).length === 2 ?
+          rgbaValue.split(/,\s*/) :
+          [rgbaValue, rgbaValue];
+
+        const bgValue = `linear-gradient(${firstColor}, ${secondColor}), ${imgUrl}`;
+
+        console.log('Final background value:', bgValue);
 
         // Terapkan ke keduanya
-        console.log('car')
+        // console.log('car', rgba)
         carousel = document.getElementById(carouselItem.id.split('-').slice(1,-1).join('-'))
         if(carousel.dataset.textPosition === 'on-image'){
           [editCarouselItem, carouselItem].forEach(el => {
@@ -2031,36 +2182,33 @@ function colorBackgroundField(){
   })
 
   document.getElementById("btn-reset-bg-image").addEventListener('click', function(event){
-    let fieldEditor;
+    let styleField = editorFieldSelect.getAttribute("style"); // ambil sebagai string
 
-    if (editorFieldSelect && editorFieldSelect.id === 'heading-text') {
-      fieldEditor = accordionPartSelect;
+    if (styleField && styleField.includes("background-image")) {
+      // Ambil nilai rgba(...)
+      let match = styleField.match(/rgba?\([^)]+\)/);
+      let rgba = match ? match[0] : "transparent";
+
+      // Replace background-image:... dengan background-color:rgba(...)
+      styleField = styleField.replace(/background-image:[^;]+;/, `background-color:${rgba};`);
+
+      // Set kembali ke elemen
+      editorFieldSelect.setAttribute("style", styleField);
+
+      // Update ke database
+      webpageDb = webpageDb.map(field => {
+        if (field.id === editorFieldSelect.id) {
+          field.style = styleField;
+          delete field.file;
+        }
+        return field;
+      });
     } else {
-      fieldEditor = editorFieldSelect;
-    }
-
-    // Reset background image
-    if (fieldEditor) {
-      // Jika sebelumnya pakai linear-gradient + image, kita hanya reset image-nya
-      if (fieldEditor.style.backgroundImage.includes('url')) {
-        const linearPart = fieldEditor.style.backgroundImage.includes('linear-gradient')
-          ? fieldEditor.style.backgroundImage.split(', url')[0] + ')'
-          : '';
-        fieldEditor.style.backgroundImage = linearPart;
-      } else {
-        fieldEditor.style.backgroundImage = '';
-      }
-
-      // Optional: reset background size & position jika tidak lagi diperlukan
-      fieldEditor.style.backgroundSize = '';
-      fieldEditor.style.backgroundPosition = '';
-
-      // Hapus data atribut
-      delete fieldEditor.dataset.nameBg;
+      editorFieldSelect.style.backgroundColor = "";
     }
 
     // Reset preview image
-    const previewImageField = document.getElementById('field-preview-image');
+    const previewImageField = document.getElementById('preview-image');
     if (previewImageField) {
       previewImageField.src = '';
       previewImageField.classList.add('hidden');
@@ -2428,7 +2576,7 @@ function accordionTypeStyling(){
 function loadWebpage(){
   console.log(webpageDb)
 
-  const createSection = (idPrefix,order,count,style)=>{
+  const createSection = (idPrefix,borderWave,order,count,style)=>{
     let section=``
     let dropdownSection = `
             <ul class="py-2 text-sm text-gray-700 dark:text-gray-200 border-0 border-b-1 border-gray-500 " aria-labelledby="dropdownDefaultButton">
@@ -2469,6 +2617,10 @@ function loadWebpage(){
             <a id="add-field-element-${idPrefix}" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Field</a>
         </li>`
     }
+    let wave=''
+    if(borderWave.length > 0){
+      wave=borderWave[0].style
+    }
 
     section=`
       <div id="webpage-${idPrefix}" data-element-order="${order}" class="bg-gray-200 flex flex-col justify-center items-center border border-gray-700" style="${style}">
@@ -2487,6 +2639,7 @@ function loadWebpage(){
         </div>
     
         <div id="editor-container-${idPrefix}" data-element-count="${count}" class="p-8 w-full flex flex-col flex-1" style="justify-content:start;align-items:center;"></div>
+        ${wave}
       </div>   
    `
    return section
@@ -2504,12 +2657,12 @@ function loadWebpage(){
         <div id="dropdown-${idPrefix}" data-accordion="open" class="z-50 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700">
           <ul class="py-2 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownDefaultButton">
               <li>
-                <a id="add-field-element-${idPrefix}" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Field</a>
+                <a id="add-field-element-${idPrefix}" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white cursor-pointer">Field</a>
               </li>
           </ul>
         </div>
     
-        <div id="editor-container-${idPrefix}" data-element-count="${count}" class="p-5 w-full flex flex-col flex-1" style="justify-content:start;align-items:center;"></div>
+        <div id="editor-container-${idPrefix}" data-element-count="${count}" class="p-5 w-full flex flex-col flex-1" style="justify-content:start;align-items:start;"></div>
         <div class="bg-white text-center p-2 w-full text-sm">Copyright © 2024 Smart Health Diabetes. All Right Reserved</div>
       </div>   
    `
@@ -2533,34 +2686,41 @@ function loadWebpage(){
   const createField = (page) =>{
     let field=''
     if(page){
-      field = `
-        <div data-element-order="${page.element_order}" style="z-index:10;position:relative;display:flex;justify-content:center;align-items:center;flex-direction:column;">
-          <div type="button" class="absolute right-[-1.3rem] top-0 z-30 cursor-pointer" data-dropdown-toggle="dropdown-body-${page.id}" data-dropdown-placement="right-end">
+      let dropdown=`<div type="button" class="absolute right-[-1.3rem] top-0 z-30 cursor-pointer" data-dropdown-toggle="dropdown-body-${page.id}" data-dropdown-placement="right-end">
             <svg id="edit-accordion" class="w-5 h-5 text-gray-600 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
                 <path fill-rule="evenodd" d="M11.32 6.176H5c-1.105 0-2 .949-2 2.118v10.588C3 20.052 3.895 21 5 21h11c1.105 0 2-.948 2-2.118v-7.75l-3.914 4.144A2.46 2.46 0 0 1 12.81 16l-2.681.568c-1.75.37-3.292-1.263-2.942-3.115l.536-2.839c.097-.512.335-.983.684-1.352l2.914-3.086Z" clip-rule="evenodd"/>
                 <path fill-rule="evenodd" d="M19.846 4.318a2.148 2.148 0 0 0-.437-.692 2.014 2.014 0 0 0-.654-.463 1.92 1.92 0 0 0-1.544 0 2.014 2.014 0 0 0-.654.463l-.546.578 2.852 3.02.546-.579a2.14 2.14 0 0 0 .437-.692 2.244 2.244 0 0 0 0-1.635ZM17.45 8.721 14.597 5.7 9.82 10.76a.54.54 0 0 0-.137.27l-.536 2.84c-.07.37.239.696.588.622l2.682-.567a.492.492 0 0 0 .255-.145l4.778-5.06Z" clip-rule="evenodd"/>
             </svg>    
-          </div>
-          <div id="${page.id}" contenteditable="true" style="ol{list-style-type:decimal;}ul{list-style-type:disc;};${page.style}" class="border border-b-1 border-gray-500 p-1 max-w-[100%] break-all scroll-hidden overflow-scroll">${page.content ?? 'no centent'}</div>
+          </div>`
+      if(page.id.includes('carousel')){
+        dropdown=''
+      }
+      field = `
+        <div data-element-order="${page.element_order}" style="z-index:10;position:relative;display:flex;justify-content:center;align-items:center;flex-direction:column;">
+          ${dropdown}
+          <div id="${page.id}" contenteditable="true" style="ol{list-style-type:decimal;}ul{list-style-type:disc;};${page.style}" class="border border-b-1 border-gray-500 p-1 max-w-[100%] break-all scroll-hidden overflow-scroll" >${page.content ?? ''}</div>
         </div>
       `
     }
     return field
   }
   const createDropdownField = (idPrefix)=>`
-    <div id="dropdown-body-${idPrefix}" data-accordion="open" class="w-25 z-40 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700">
-      <ul class="py-2 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownDefaultButton">
-        <li>
-            <a id="up-${idPrefix}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Move Up</a>
-        </li>
-        <li>
-            <a id="down-${idPrefix}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Move Down</a>
-        </li>
-        <li>
-            <a id="delete-${idPrefix}" class="cursor-pointer text-red-600 block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-red-400">Delete</a>
-        </li>
-      </ul>
-    </div>
+     <div id="dropdown-body-${idPrefix}" data-accordion="open" class="w-25 z-40 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700">
+        <ul class="py-2 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownDefaultButton">
+          <li>
+              <a id="up-${idPrefix}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Move Up</a>
+          </li>
+          <li>
+              <a id="down-${idPrefix}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Move Down</a>
+          </li>
+          <li>
+              <a id="delete-${idPrefix}" class="cursor-pointer text-red-600 block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-red-400">Delete</a>
+          </li>
+          <li>
+              <a id="copy-${idPrefix}" class="cursor-pointer text-red-600 block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-red-400">Duplikat</a>
+          </li>
+        </ul>
+      </div>
   `
   const createVideo = (page) => `
     <div id="${page.id}" data-element-order="${page.element_order}" style="${page.style}" class="border border-b-1 border-gray-500 max-w-[100%] cursor-pointer relative">
@@ -2589,6 +2749,7 @@ function loadWebpage(){
         <li><label for="input-${idPrefix}" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Set Video</label></li>
         <li><a id="down-${idPrefix}" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Move Down</a></li>
         <li><a id="up-${idPrefix}" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Move Up</a></li>
+        <li><a id="copy-${idPrefix}" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Duplikat</a></li>
       </ul>
       <ul class="py-2 text-sm text-gray-700 dark:text-gray-200">
         <li><a id="delete-${idPrefix}" class="block px-4 py-2 font-extrabold text-red-600 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-red-400">Delete</a></li>
@@ -2605,7 +2766,7 @@ function loadWebpage(){
           </svg>                  
         </div>
 
-        <button id="btn-${page.id}" style="${page.style}" data-modal-target="element-${page.id}" data-modal-toggle="element-${page.id}" class="flex justify-between items-center bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 break-all">
+        <button id="btn-${page.id}" style="${page.style}" data-modal-target="element-${page.id}" data-modal-toggle="element-${page.id}" class="flex justify-between items-center hover:bg-blue-700 break-all">
           ${page.content ?? `<span class="w-full">Button Modal</span>`}
         </button>
       </div>
@@ -2658,6 +2819,7 @@ function loadWebpage(){
           <ul class="py-2 text-sm text-gray-700 dark:text-gray-200">
             <li><a id="down-btn-${idPrefix}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Move Down</a></li>
             <li><a id="up-btn-${idPrefix}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Move Up</a></li>
+            <li><a id="copy-${idPrefix}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Duplikat</a></li>
           </ul>
           <ul class="py-2 text-sm text-gray-700 dark:text-gray-200 border-t border-gray-500">
             <li><a id="delete-btn-${idPrefix}" class="cursor-pointer font-bold block text-red-700 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Delete</a></li>
@@ -2696,7 +2858,9 @@ function loadWebpage(){
             data-accordion-target="#body-${itemId}"
             aria-expanded="false"
             aria-controls="body-${itemId}">
+            <span style="width:100%;">
             ${item.content}
+            </span>
             ${indicator}
             </button>
           </h2>
@@ -2914,7 +3078,7 @@ function loadWebpage(){
     for(let i=0;i <= itemCarouselLength-1;i++){
       let indicator = i
       slide += `
-      <button type="button" style="${parseStyleObj(carousel.style).indicatorSize}}" class="rounded-full" aria-current="true" aria-label="Slide ${indicator+1}" data-carousel-slide-to="${i}"></button>
+      <button type="button" style="${parseStyleObj(carousel.style).indicatorSize}" class="rounded-full" aria-current="true" aria-label="Slide ${indicator+1}" data-carousel-slide-to="${i}"></button>
       `
     }
     
@@ -2945,7 +3109,8 @@ function loadWebpage(){
   `
   }
   
-  if(webpageDb.length == 0){
+  const webpageNotFooter = webpageDb.filter(file => !file.id.includes('footer'))
+  if(webpageNotFooter.length == 0){
     let idPrefix = `section-1`
     if(param.includes('prolog-web')){
       idPrefix = `section-prolog-web-1`
@@ -2956,6 +3121,35 @@ function loadWebpage(){
     const webpage = document.getElementById('webpage')
     webpage.insertAdjacentHTML('beforeend', createSection(idPrefix, 1, 0, 'min-height:100dvh;position:relative;'))
     webpage.dataset.elementCount = 1
+
+    //====================== FOOTER =========================
+    let sectionsFooter = webpageDb
+      .filter(page => page.type === "section" && page.id.includes('footer'))
+
+    // 2. Loop per section
+    sectionsFooter.forEach(section => {
+      let idPrefix = section.id.split('-').slice(1).join('-');
+
+      // Cetak section
+      webpage.insertAdjacentHTML(
+        'beforeend',
+        createSectionFooter(idPrefix, section.element_order, section.element_count, section.style)
+      );
+
+      let childElements = webpageDb.filter(page => {
+        return page.type !== "section" && page.id.includes('footer');
+      });
+
+      childElements.sort((a, b) => a.element_order - b.element_order);
+      childElements.forEach(page => {
+        let sectionAppend = document.querySelector(`#webpage-section-footer`);
+
+        const editorContainer = sectionAppend.querySelector('[id^="editor-container-"]');
+        editorContainer.insertAdjacentHTML('beforeend', createField(page));
+        sectionAppend.insertAdjacentHTML('afterend', createDropdownField(page.id));
+          
+      })
+    });
 
     if(param.includes('prolog-web')){
       webpageDb.push({
@@ -2981,10 +3175,8 @@ function loadWebpage(){
           element_order: '1',
           element_count: '0'
       })
-
     }
 
-    console.log('hallw',webpageDb)
   }else{
     const webpage = document.getElementById('webpage')
 
@@ -3000,11 +3192,12 @@ function loadWebpage(){
     // 2. Loop per section
     sections.forEach(section => {
       let idPrefix = section.id.split('-').slice(1).join('-');
+      const borderWave = webpageDb.filter(page => page.type === 'border-wave' && page.id.includes(idPrefix))
 
       // Cetak section
       webpage.insertAdjacentHTML(
         'beforeend',
-        createSection(idPrefix, section.element_order, section.element_count, section.style)
+        createSection(idPrefix, borderWave, section.element_order, section.element_count, section.style)
       );
 
       // Update element count
@@ -3020,7 +3213,7 @@ function loadWebpage(){
 
       function appendTo(selector, html, container=document) {
         const el = container.querySelector(selector);
-        if (el) el.insertAdjacentHTML('beforeend', html);
+        if(el) el.insertAdjacentHTML('beforeend', html);    
       }
 
       function renderAccordion(accordionEl, childElements, editorContainer) {
@@ -3063,7 +3256,7 @@ function loadWebpage(){
         });
 
         // render head
-        console.log(parseStyleObj(accordionEl.content))
+        // console.log(parseStyleObj(accordionEl.content))
         grouped.head.sort((a, b) => a.element_order - b.element_order)
           .forEach(head => {
             appendTo(`#parent-${id}`, createItemAccordion(head.id.split('-').slice(2).join('-'), head, accordionEl));
@@ -3079,35 +3272,38 @@ function loadWebpage(){
 
         // render field
         grouped.field.sort((a,b)=>a.element_order-b.element_order).forEach(field=>{
-        let html, dropdown;
-        switch (field.type) {
-          case 'button-modal':
-            html = createBtnModal(field);
-            dropdown = createDropdownModal(field.id);
-            appendTo(`#wrapper-section-${field.id.split('-').slice(1,-1).join('-')}`, html);
-            break;
-          case 'video':
-            html = createVideo(field);
-            dropdown = createDropdownVideo(field.id);
-            appendTo(`#wrapper-section-${field.id.split('-').slice(1,-1).join('-')}`, html);
-            break;
-          case 'field':
-            html = createField(field);
-            dropdown = createDropdownField(field.id);
-            appendTo(`#wrapper-section-${field.id.split('-').slice(1,-1).join('-')}`, html);
-            break;
-          case 'carousel':
-            html = createCarousel(field, childElements, editorContainer)
-            dropdown = createDropdownCarousel(field.id, field.id.split('-'))
-            appendTo(`#wrapper-section-${field.id.split('-').slice(1,-1).join('-')}`, html)
-            console.log(`#wrapper-section-${field.id.split('-').slice(1,-1).join('-')}`)
-            break;
-          case 'accordion':
-            renderAccordion(field, childElements,editorContainer);
-            break;
-        }
-        if (dropdown) editorContainer.insertAdjacentHTML('afterend', dropdown);
-      });
+          let html, dropdown;
+          switch (field.type) {
+            case 'button-modal':
+              html = createBtnModal(field);
+              dropdown = createDropdownModal(field.id);
+              appendTo(`#wrapper-section-${field.id.split('-').slice(1,-1).join('-')}`, html);
+              break;
+            case 'video':
+              html = createVideo(field);
+              dropdown = createDropdownVideo(field.id);
+              appendTo(`#wrapper-section-${field.id.split('-').slice(1,-1).join('-')}`, html);
+              break;
+            case 'field':
+              if(!field.id.includes('modal')){
+                html = createField(field);
+                dropdown = createDropdownField(field.id);
+                appendTo(`#wrapper-section-${field.id.split('-').slice(1,-1).join('-')}`, html);
+                break;
+              }
+            case 'carousel':
+              html = createCarousel(field, childElements, editorContainer)
+              dropdown = createDropdownCarousel(field.id, field.id.split('-'))
+              appendTo(`#wrapper-section-${field.id.split('-').slice(1,-1).join('-')}`, html)
+              console.log(`#wrapper-section-${field.id.split('-').slice(1,-1).join('-')}`)
+              break;
+            case 'accordion':
+              renderAccordion(field, childElements,editorContainer);
+              break;
+          }
+
+          if (dropdown) editorContainer.insertAdjacentHTML('afterend', dropdown);
+        });
 
         // init accordion
         setTimeout(() => {
@@ -3135,7 +3331,7 @@ function loadWebpage(){
             element = createField(page);
             dropdown = createDropdownField(page.id);
             appendTo(`#body-${page.id.split('-').slice(1, -1).join('-')}`, element, sectionAppend);
-            appendTo(`#body-${page.id.split('-').slice(1, -1).join('-')}`, dropdown, sectionAppend.parentElement);
+            document.querySelector(`#${page.id}`).parentElement.insertAdjacentHTML('afterbegin', dropdown)
             return true; // stop, biar gak render ulang di bawah
             
           } else if (page.id.startsWith('field-element-')) {
@@ -3224,7 +3420,6 @@ function loadWebpage(){
       });
       childElements.forEach(page => {
         if(!page.id.includes('footer')){
-          console.log(page)
           let sectionAppend=''
           if(param.includes('prolog-web')){
             sectionAppend = document.querySelector(`#webpage-section-prolog-web-${sectionNum}`);
@@ -3246,7 +3441,6 @@ function loadWebpage(){
           if (result === true) return; // sudah di-handle sepenuhnya di dalam renderer
           
           if (result && result.element) {
-            console.log('render', result)
             editorContainer.insertAdjacentHTML('beforeend', result.element);
             if (result.dropdown) sectionAppend.insertAdjacentHTML('beforeend', result.dropdown);
           }
@@ -3255,37 +3449,38 @@ function loadWebpage(){
     });
 
     //====================== FOOTER =========================
-    let sectionsFooter = webpageDb
-      .filter(page => page.type === "section" && page.id.includes('footer'))
+      let sectionsFooter = webpageDb
+        .filter(page => page.type === "section" && page.id.includes('footer'))
 
-    // 2. Loop per section
-    sectionsFooter.forEach(section => {
-      let idPrefix = section.id.split('-').slice(1).join('-');
+      // 2. Loop per section
+      sectionsFooter.forEach(section => {
+        let idPrefix = section.id.split('-').slice(1).join('-');
 
-      // Cetak section
-      webpage.insertAdjacentHTML(
-        'beforeend',
-        createSectionFooter(idPrefix, section.element_order, section.element_count, section.style)
-      );
+        // Cetak section
+        webpage.insertAdjacentHTML(
+          'beforeend',
+          createSectionFooter(idPrefix, section.element_order, section.element_count, section.style)
+        );
 
-      let childElements = webpageDb.filter(page => {
-        return page.type !== "section" && page.id.includes('footer');
+        let childElements = webpageDb.filter(page => {
+          return page.type !== "section" && page.id.includes('footer');
+        });
+
+        childElements.sort((a, b) => a.element_order - b.element_order);
+        childElements.forEach(page => {
+          let sectionAppend = document.querySelector(`#webpage-section-footer`);
+
+          const editorContainer = sectionAppend.querySelector('[id^="editor-container-"]');
+          editorContainer.insertAdjacentHTML('beforeend', createField(page));
+          sectionAppend.insertAdjacentHTML('afterend', createDropdownField(page.id));
+            
+        })
       });
-
-      childElements.sort((a, b) => a.element_order - b.element_order);
-      childElements.forEach(page => {
-        let sectionAppend = document.querySelector(`#webpage-section-footer`);
-
-        const editorContainer = sectionAppend.querySelector('[id^="editor-container-"]');
-        editorContainer.insertAdjacentHTML('beforeend', createField(page));
-        sectionAppend.insertAdjacentHTML('afterend', createDropdownField(page.id));
-          
-      })
-    });
+    //=========================================================
 
   }
   setListener()
-
+  dropdownInitialized('all')
   setTimeout(() => {
       try {
         initFlowbite();
@@ -3303,9 +3498,41 @@ document.getElementById('default-sidebar').addEventListener('click', function (e
   let bodyItem
 
   if(event.target.id.startsWith('set-image-item')){
-    editCarouselItem = document.getElementById(`edit-${idParts.slice(2,idParts.length).join('-')}`)
+    editCarouselItem = document.getElementById(`edit-${idParts.slice(2).join('-')}`)
     bodyItem = editCarouselItem.parentElement.parentElement
     console.log('edit item carousel:',editCarouselItem)
+  }
+
+  if(event.target.id.startsWith('reset-image-')){
+    let carouselItem = document.getElementById(`${idParts.slice(2).join('-')}`)
+    editCarouselItem = document.getElementById(`edit-${idParts.slice(2).join('-')}`) 
+
+    bodyItem = editCarouselItem.parentElement.parentElement
+    let styleField = carouselItem.getAttribute("style"); // ambil sebagai string
+
+    if (styleField && styleField.includes("background-image")) {
+      // Ambil nilai rgba(...)
+      let match = styleField.match(/rgba?\([^)]+\)/);
+      let rgba = match ? match[0] : "transparent";
+
+      // Replace background-image:... dengan background-color:rgba(...)
+      styleField = styleField.replace(/background-image:[^;]+;/, `background-color:${rgba};`);
+
+      // Set kembali ke elemen
+      carouselItem.setAttribute("style", styleField);
+      editCarouselItem.setAttribute("style", styleField);
+
+      // Update ke database
+      webpageDb = webpageDb.map(field => {
+        if (field.id === carouselItem.id) {
+          field.style = styleField;
+          delete field.file;
+        }
+        return field;
+      });
+    } else {
+      carouselItem.style.backgroundColor = "";
+    }
   }
 
   if (event.target.id.startsWith('add-item-carousel-')) {
@@ -3350,7 +3577,7 @@ document.getElementById('default-sidebar').addEventListener('click', function (e
         itemContent = `
         <div id="field-${newItemId}" class="border border-b-1 border-gray-500 p-1 max-w-[100%] break-all scroll-hidden overflow-scroll" style="ol{list-style-type:decimal;}ul{list-style-type:disc;}" contenteditable="true"></div>
         `
-        style = `background-image: linear-gradient(rgba(${rgba})), url(/assets/img/almond1DefaultImageCarousel.jpg); background-size: cover; background-position: center;`
+        style = `padding:25px;background-image: linear-gradient(rgba(${rgba})), url(/assets/img/almond1DefaultImageCarousel.jpg); background-size: cover; background-position: center;`
         styleItem=style
         webpageDb.push({
           id: newItemId,
@@ -3393,7 +3620,7 @@ document.getElementById('default-sidebar').addEventListener('click', function (e
       })
       setListener()
     }else{
-      styleItem = `background-image: linear-gradient(rgba(${rgba})), url(/assets/img/almond1DefaultImageCarousel.jpg); background-size: cover; background-position: center;`
+      styleItem = `padding:25px;background-image: linear-gradient(rgba(${rgba})), url(/assets/img/almond1DefaultImageCarousel.jpg); background-size: cover; background-position: center;`
     }
 
     webpageDb.map(field =>{
@@ -3978,14 +4205,15 @@ document.getElementById('webpage').addEventListener('click', function (event) {
     if(idParts[2] === 'accordion'){
       console.log('field accordion')
       idAppendField = `wrapper-section-${idParts.slice(2,idParts.length).join('-')}`
-
       bodyAppend = document.getElementById(idAppendField)
-      fieldNumber = parseInt(bodyAppend.getAttribute('data-element-count'))
-      fieldNumber++
+      console.log(bodyAppend.getAttribute('data-element-count'))
+      fieldNumber = parseInt(bodyAppend.getAttribute('data-element-count'))+1
 
       bodyAppend.dataset.elementCount = fieldNumber
     
       idPrefix = `field-${idParts.slice(2, idParts.length).join('-')}-${fieldNumber}`
+
+      console.log('field add',bodyAppend.getAttribute('data-element-count') ,fieldNumber,  parseInt(bodyAppend.getAttribute('data-element-count'))+1)
 
     }else if(idParts[2] === 'modal'){
       console.log('field modal')
@@ -3993,8 +4221,7 @@ document.getElementById('webpage').addEventListener('click', function (event) {
       idAppendField = `body-${idParts.slice(2,idParts.length).join('-')}`
 
       bodyAppend = document.getElementById(idAppendField)
-      fieldNumber = parseInt(bodyAppend.getAttribute('data-element-count'))
-      fieldNumber++
+      fieldNumber = parseInt(bodyAppend.getAttribute('data-element-count'))+1
 
       bodyAppend.dataset.elementCount = fieldNumber
     
@@ -4007,8 +4234,7 @@ document.getElementById('webpage').addEventListener('click', function (event) {
         idAppendField = `editor-container-section-prolog-web-${idParts[6]}`
         bodyAppend = document.getElementById(idAppendField)
   
-        fieldNumber = parseInt(bodyAppend.dataset.elementCount)
-        fieldNumber+=1
+        fieldNumber = parseInt(bodyAppend.dataset.elementCount)+1
         bodyAppend.dataset.elementCount = fieldNumber
         idPrefix = `field-${idParts.slice(2, idParts.length).join('-')}-${fieldNumber}`
         
@@ -4016,8 +4242,7 @@ document.getElementById('webpage').addEventListener('click', function (event) {
         idAppendField = `editor-container-section-prolog-emodul-${idParts[6]}`
         bodyAppend = document.getElementById(idAppendField)
   
-        fieldNumber = bodyAppend.dataset.elementCount
-        fieldNumber++
+        fieldNumber = parseInt(bodyAppend.dataset.elementCount)+1
         bodyAppend.dataset.elementCount = fieldNumber
   
         idPrefix = `field-${idParts.slice(2, idParts.length).join('-')}-${fieldNumber}`
@@ -4026,8 +4251,7 @@ document.getElementById('webpage').addEventListener('click', function (event) {
         idAppendField = `editor-container-section-footer`
         bodyAppend = document.getElementById(idAppendField)
   
-        fieldNumber = bodyAppend.dataset.elementCount
-        fieldNumber++
+        fieldNumber = parseInt(bodyAppend.dataset.elementCount)+1
         bodyAppend.dataset.elementCount = fieldNumber
   
         idPrefix = `field-${idParts.slice(2, idParts.length).join('-')}-${fieldNumber}`
@@ -4036,8 +4260,7 @@ document.getElementById('webpage').addEventListener('click', function (event) {
         idAppendField = `editor-container-section-${idParts[4]}`
         bodyAppend = document.getElementById(idAppendField)
   
-        fieldNumber = bodyAppend.dataset.elementCount
-        fieldNumber++
+        fieldNumber = parseInt(bodyAppend.dataset.elementCount)=1
         bodyAppend.dataset.elementCount = fieldNumber
   
         idPrefix = `field-${idParts.slice(2, idParts.length).join('-')}-${fieldNumber}`
@@ -4055,6 +4278,9 @@ document.getElementById('webpage').addEventListener('click', function (event) {
           </li>
           <li>
               <a id="delete-${idPrefix}" class="cursor-pointer text-red-600 block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-red-400">Delete</a>
+          </li>
+          <li>
+              <a id="copy-${idPrefix}" class="cursor-pointer text-red-600 block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-red-400">Duplikat</a>
           </li>
         </ul>
       </div>
@@ -4103,9 +4329,8 @@ document.getElementById('webpage').addEventListener('click', function (event) {
     
     const field = createFieldHTML(idPrefix,fieldNumber)
     document.getElementById(idAppendField).insertAdjacentHTML('beforeend',field);
-    console.log(document.getElementById(idPrefix).style)
 
-    dropdownInitialized()
+    dropdownInitialized('',`dropdown-body-${idPrefix}`)
     setListener(); // kamu tetap bisa panggil fungsi tambahan kalau perlu
   }
 
@@ -4134,6 +4359,7 @@ document.getElementById('webpage').addEventListener('click', function (event) {
           <li><label for="input-${idPrefix}" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Set Video</label></li>
           <li><a id="down-${idPrefix}" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Move Down</a></li>
           <li><a id="up-${idPrefix}" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Move Up</a></li>
+          <li><a id="copy-${idPrefix}" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Duplikat</a></li>
         </ul>
         <ul class="py-2 text-sm text-gray-700 dark:text-gray-200">
           <li><a id="delete-${idPrefix}" class="block px-4 py-2 font-extrabold text-red-600 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-red-400">Delete</a></li>
@@ -4213,7 +4439,7 @@ document.getElementById('webpage').addEventListener('click', function (event) {
     console.log(webpageDb)
 
     // Initialize dropdown & listeners
-    dropdownInitialized();
+    dropdownInitialized('',`dropdown-${idPrefix}`);
     setListener();
   }
   
@@ -4232,14 +4458,14 @@ document.getElementById('webpage').addEventListener('click', function (event) {
             </svg>                  
           </div>
 
-          <button id="btn-${idPrefix}" data-modal-target="element-${idPrefix}" style="position:relative;padding: 5px 2px;background-color:rgba(234,255,248,1);" data-modal-toggle="element-${idPrefix}" class="flex justify-between items-center break-all" data-target="#element-${idPrefix}">
+          <button id="btn-${idPrefix}" data-modal-target="element-${idPrefix}" style="position:relative;padding: 10px;border-radius:5px;background-color:rgba(255,255,255,1);" data-modal-toggle="element-${idPrefix}" class="flex justify-between items-center break-all" data-target="#element-${idPrefix}">
             <span class="w-full">Button Modal</span>
           </button>
         </div>
       </div>
     `
     const createBodyModalHTML =(idPrefix)=>`
-      <div id="element-${idPrefix}" tabindex="-1" aria-hidden="true" class="absolute z-[80] top-0 left-0 w-full h-full hidden flex justify-center items-center">
+      <div id="element-${idPrefix}" tabindex="-1" aria-hidden="true" class="fixed z-[80] top-0 right-0 w-full sm:w-[calc(100%-18rem)] h-full hidden flex justify-center items-center">
         <div id="dropdown-body-${idPrefix}" data-accordion="open" class="w-25 z-50 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700">
           <ul class="py-2 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownDefaultButton">
             <li>
@@ -4285,6 +4511,9 @@ document.getElementById('webpage').addEventListener('click', function (event) {
                         </li>
                         <li>
                             <a id="down-field-${idPrefix}-1" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Move Down</a>
+                        </li>
+                        <li>
+                            <a id="copy-${idPrefix}-1" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Duplikat</a>
                         </li>
                         <li>
                             <a id="delete-field-${idPrefix}-1" class="cursor-pointer text-red-600 block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-red-400">Delete</a>
@@ -4337,6 +4566,7 @@ document.getElementById('webpage').addEventListener('click', function (event) {
           <ul class="py-2 text-sm text-gray-700 dark:text-gray-200">
             <li><a id="down-btn-${idPrefix}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Move Down</a></li>
             <li><a id="up-btn-${idPrefix}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Move Up</a></li>
+            <li><a id="copy-${idPrefix}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Duplikat</a></li>
           </ul>
           <ul class="py-2 text-sm text-gray-700 dark:text-gray-200 border-t border-gray-500">
             <li><a id="delete-btn-${idPrefix}" class="cursor-pointer font-bold block text-red-700 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Delete</a></li>
@@ -4345,15 +4575,15 @@ document.getElementById('webpage').addEventListener('click', function (event) {
     `
 
     document.getElementById(`webpage-section-${idParts.find(part => !isNaN(part))}`).insertAdjacentHTML('beforeend', bodyDropdown)
-    document.getElementById(`webpage-section-${idParts.find(part => !isNaN(part))}`).insertAdjacentHTML('afterbegin', createBodyModalHTML(idPrefix))
+    document.getElementById(`webpage-section-${idParts.find(part => !isNaN(part))}`).insertAdjacentHTML('beforeend', createBodyModalHTML(idPrefix))
     document.getElementById(idAppend).insertAdjacentHTML('beforeend',createBtnModalHTML(idPrefix, fieldNumber));
 
     webpageDb.push({
       id: `${idPrefix}`,
       type:'button-modal',
-      style: 'position:relative;padding: 5px 2px;background-color:rgba(234,255,248,1);',
+      style: 'position:relative;padding: 10px;border-radius:5px;background-color:rgba(255,255,255,1);',
       element_order: fieldNumber,
-      content: 'Button Modal'
+      content: '<span class="w-full">Button Modal</span>'
     },
     {
       id: `body-${idPrefix}`,
@@ -4387,7 +4617,7 @@ document.getElementById('webpage').addEventListener('click', function (event) {
     console.log(webpageDb)
 
     setListener()
-    dropdownInitialized()
+    dropdownInitialized('multi',`${idPrefix}`)
 
     setTimeout(() => {
       try {
@@ -4414,7 +4644,7 @@ document.getElementById('webpage').addEventListener('click', function (event) {
     const idParts = event.target.id.split('-');
     let bodyAppend, accordionWidth,idPrefix, accordionId, idAppendAccordion, fieldNumber, accordionParentBody, itemCount, dropdownBody
     
-    const createItemAccordionHTML = (idPrefix, i)=>{
+    const createItemAccordionHTML = (idPrefix, i, content)=>{
       webpageDb.push({
         id:`btn-heading-${idPrefix}-${i}`,
         type: "head-accordion",
@@ -4438,6 +4668,21 @@ document.getElementById('webpage').addEventListener('click', function (event) {
         style:`ol{list-style-type:decimal;}ul{list-style-type:disc;}`
       })
 
+      let indicator=''
+      if(content === 'question'){
+        indicator = `<div class="btn-cta">
+                      <p>?</p>
+                    </div>`
+      }else if(content === 'icon'){
+        indicator = `<div data-accordion-icon>⮛</div>`
+      }else if(content === 'none'){
+        indicator = ``
+      }else{
+        indicator = `<svg data-accordion-icon class="w-3 h-3 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
+                      <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5 5 1 1 5"/>
+                    </svg>`
+      }
+
       return`
       <div id="${idPrefix}-${i}" class="relative z-10" data-element-order="${i}">
         <div type="button" class="absolute right-0 top-0 z-10 cursor-pointer" data-dropdown-toggle="dropdown-head-${idPrefix}-${i}" data-dropdown-placement="right-end">
@@ -4454,10 +4699,8 @@ document.getElementById('webpage').addEventListener('click', function (event) {
           data-accordion-target="#body-${idPrefix}-${i}"
           aria-expanded="false"
           aria-controls="body-${idPrefix}-${i}">
-            <span style="width:100%;">Section ${i}</span>
-            <svg data-accordion-icon class="w-3 h-3 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
-              <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5 5 1 1 5"/>
-            </svg>
+            <span style="width:100%;text-align:left;">Section ${i}</span>
+            ${indicator}
           </button>
         </h2>
   
@@ -4653,7 +4896,7 @@ document.getElementById('webpage').addEventListener('click', function (event) {
       
       event.target.parentElement.parentElement.parentElement.classList.add('hidden')
       
-      accordionParentBody.innerHTML += createItemAccordionHTML(idPrefix,itemCount);
+      accordionParentBody.innerHTML += createItemAccordionHTML(idPrefix,itemCount, accordionParentBody.parentElement.dataset.typeIndicator);
       accordionParentBody.setAttribute('data-item-accordion', itemCount.toString());
 
       document.getElementById(`webpage-section-${idParts.find(part => !isNaN(part))}`).insertAdjacentHTML('beforeend',createItemBodyDropdownHTML(idPrefix,idParts,itemCount))
@@ -4736,7 +4979,7 @@ document.getElementById('webpage').addEventListener('click', function (event) {
         }
     }, 100);  
     setListener();
-    dropdownInitialized()
+    dropdownInitialized('multi', idPrefix)
   }
   
   // ======================== CAROUSEL ======================
@@ -4758,15 +5001,15 @@ document.getElementById('webpage').addEventListener('click', function (event) {
           <!-- Carousel wrapper -->
           <div class="relative w-full h-full overflow-hidden rounded-lg text-black">
               <!-- Item 1 -->
-              <div id="item-${idPrefix}-1" data-item-order="1" class="duration-700 ease-in-out flex justify-center items-center" style='background-image: linear-gradient(rgba(0, 0, 0, 0.0), rgba(0, 0, 0, 0.0)), url("/assets/img/almond1DefaultImageCarousel.jpg");background-size:cover;background-position:center;' data-carousel-item>
+              <div id="item-${idPrefix}-1" data-item-order="1" class="duration-700 ease-in-out flex justify-center items-center" style='padding:25px;background-image: linear-gradient(rgba(0, 0, 0, 0.0), rgba(0, 0, 0, 0.0)), url("/assets/img/almond1DefaultImageCarousel.jpg");background-size:cover;background-position:center;' data-carousel-item>
               </div>
 
               <!-- Item 2 -->
-              <div id="item-${idPrefix}-2" data-item-order="2" class="duration-700 ease-in-out flex justify-center items-center" style='background-image: linear-gradient(rgba(0, 0, 0, 0.0), rgba(0, 0, 0, 0.0)), url("/assets/img/almond1DefaultImageCarousel.jpg");background-size:cover;background-position:center;' data-carousel-item>
+              <div id="item-${idPrefix}-2" data-item-order="2" class="duration-700 ease-in-out flex justify-center items-center" style='padding:25px;background-image: linear-gradient(rgba(0, 0, 0, 0.0), rgba(0, 0, 0, 0.0)), url("/assets/img/almond1DefaultImageCarousel.jpg");background-size:cover;background-position:center;' data-carousel-item>
               </div>
 
               <!-- Item 3 -->
-              <div id="item-${idPrefix}-3" data-item-order="3" class="duration-700 ease-in-out flex justify-center items-center" style='background-image: linear-gradient(rgba(0, 0, 0, 0.0), rgba(0, 0, 0, 0.0)), url("/assets/img/almond1DefaultImageCarousel.jpg");background-size:cover;background-position:center;' data-carousel-item>
+              <div id="item-${idPrefix}-3" data-item-order="3" class="duration-700 ease-in-out flex justify-center items-center" style='padding:25px;background-image: linear-gradient(rgba(0, 0, 0, 0.0), rgba(0, 0, 0, 0.0)), url("/assets/img/almond1DefaultImageCarousel.jpg");background-size:cover;background-position:center;' data-carousel-item>
               </div>
           </div>
           <!-- Slider indicators -->
@@ -4795,7 +5038,6 @@ document.getElementById('webpage').addEventListener('click', function (event) {
         </div>
       </div>
     `
-
     const  createDropdown = (idPrefix)=> `
       <div id="dropdown-${idPrefix}" data-accordion="open" class="absolute mt-2 left-0 w-30 z-40 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700">
         <ul class="py-2 text-sm text-gray-700 dark:text-gray-200">
@@ -4807,6 +5049,7 @@ document.getElementById('webpage').addEventListener('click', function (event) {
         </ul>
       </div>
     `
+
     if(idParts[2] === 'accordion'){
       idAppend = `wrapper-section-${idParts.slice(2, idParts.length).join('-')}`;
 
@@ -4892,7 +5135,7 @@ document.getElementById('webpage').addEventListener('click', function (event) {
     console.log(webpageDb)
 
     setListener()
-    dropdownInitialized()
+    dropdownInitialized('',`dropdown-${idPrefix}`)
 
     setTimeout(() => {
       try {
@@ -4912,6 +5155,580 @@ document.getElementById('webpage').addEventListener('click', function (event) {
           console.error('❌ Gagal menginisialisasi Carousel:', error);
       }
     }, 100);  
+  }
+
+  if(id.startsWith('copy-')){
+    const idParts = event.target.id.split('-')
+
+    const copyField = ()=>{
+      // element original
+      const element = document.getElementById(idParts.slice(1).join('-'))
+      const parent = element.parentElement
+      const oldId = element.id
+
+      const container = parent.parentElement
+
+      // set element count
+      const countNumber = parseInt(container.dataset.elementCount || 0)+1
+      container.dataset.elementCount = countNumber
+
+      // new id
+      const newId = oldId.replace(/\d+$/, countNumber.toString()); 
+
+      // duplikat element
+      const copyElement = parent.cloneNode(true)
+      copyElement.dataset.elementOrder = parseInt(copyElement.dataset.elementOrder)+1
+      copyElement.querySelector(`#${oldId}`).id = newId
+
+      // set element order element
+      Array.from(container.children).forEach(el => {
+        if (el.dataset.elementOrder) {
+          const currentOrder = parseInt(el.dataset.elementOrder);
+          const newOrderBase = parseInt(copyElement.dataset.elementOrder);
+
+          if (currentOrder >= newOrderBase) {
+            const newOrder = currentOrder + 1;
+            el.dataset.elementOrder = newOrder;
+
+            const idx = webpageDb.findIndex(field => field.id === el.id);
+            if (idx !== -1) {
+              webpageDb[idx].element_order = newOrder;
+            }
+          }
+        }
+      });
+
+
+      // set dropdown
+      const btnDropdown = copyElement.querySelector(`[data-dropdown-toggle^="dropdown-body"]`)
+      btnDropdown.dataset.dropdownToggle = `dropdown-body-${newId}`
+      
+      const bodyDropdown = document.getElementById(`dropdown-body-${idParts.slice(1).join('-')}`)
+      const copyBodyDropdown = bodyDropdown.cloneNode(true)
+      
+      copyBodyDropdown.id = copyBodyDropdown.id.replace(/\d+$/, countNumber.toString());
+      copyBodyDropdown.setAttribute('class', 'w-25 z-40 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700')
+      copyBodyDropdown.setAttribute('data-initialized', '')
+
+      copyBodyDropdown.querySelectorAll('a').forEach(a=>{
+        a.id=a.id.replace(/\d+$/, countNumber.toString()); 
+      })
+
+      parent.insertAdjacentElement('afterend', copyElement)
+      bodyDropdown.insertAdjacentElement('afterend', copyBodyDropdown)
+      setListener()
+      dropdownInitialized('',`dropdown-body-${newId}`)
+
+      // 1️⃣ Update element_count di container
+      webpageDb.forEach(field => {
+        if (field.id === container.parentElement.id) {
+          field.element_count = countNumber;
+        }
+      });
+
+      // 2️⃣ Temukan elemen lama yang mau diduplikat
+      const originalField = webpageDb.find(field => field.id === oldId);
+
+      if (originalField) {
+        // 3️⃣ Duplikat object-nya
+        const clonedField = {
+          ...structuredClone(originalField), // salin semua properti
+          id: newId, // ganti ID jadi ID baru
+          element_order: copyElement.dataset.elementOrder // ganti order-nya
+        };
+
+        // 4️⃣ Tambahkan ke database
+        webpageDb.push(clonedField);
+      }
+      console.log(webpageDb, container.id)
+    }
+    const copyVideo=()=>{
+      // element original
+      const element = document.getElementById(idParts.slice(1).join('-'))
+      const oldId = element.id
+
+      const container = element.parentElement
+
+      // set element count
+      const countNumber = parseInt(container.dataset.elementCount || 0)+1
+      container.dataset.elementCount = countNumber
+
+      // new id
+      const newId = oldId.replace(/\d+$/, countNumber.toString()); 
+
+      // duplikat element
+      const copyElement = element.cloneNode(true)
+      copyElement.dataset.elementOrder = parseInt(copyElement.dataset.elementOrder)+1
+      copyElement.id = newId
+
+      // set element order element
+      Array.from(container.children).forEach(el => {
+        if (el.dataset.elementOrder) {
+          const currentOrder = parseInt(el.dataset.elementOrder);
+          const newOrderBase = parseInt(copyElement.dataset.elementOrder);
+
+          if (currentOrder >= newOrderBase) {
+            const newOrder = currentOrder + 1;
+            el.dataset.elementOrder = newOrder;
+
+            const idx = webpageDb.findIndex(field => field.id === el.id);
+            if (idx !== -1) {
+              webpageDb[idx].element_order = newOrder;
+            }
+          }
+        }
+      });
+
+      // set dropdown
+      const btnDropdown = copyElement.querySelector(`[data-dropdown-toggle^="dropdown-"]`)
+      btnDropdown.dataset.dropdownToggle = `dropdown-${newId}`
+      
+      const bodyDropdown = document.getElementById(`dropdown-${idParts.slice(1).join('-')}`)
+      const copyBodyDropdown = bodyDropdown.cloneNode(true)
+      
+      copyBodyDropdown.id = copyBodyDropdown.id.replace(/\d+$/, countNumber.toString());
+      copyBodyDropdown.setAttribute('class', 'w-25 z-40 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700')
+      copyBodyDropdown.setAttribute('data-initialized', '')
+
+      copyBodyDropdown.querySelectorAll('a').forEach(a=>{
+        a.id=a.id.replace(/\d+$/, countNumber.toString()); 
+      })
+
+      element.insertAdjacentElement('afterend', copyElement)
+      bodyDropdown.insertAdjacentElement('afterend', copyBodyDropdown)
+      setListener()
+      dropdownInitialized('',`dropdown-${newId}`)
+
+      // 1️⃣ Update element_count di container
+      webpageDb.forEach(field => {
+        if (field.id === container.parentElement.id) {
+          field.element_count = countNumber;
+        }
+      });
+
+      // 2️⃣ Temukan elemen lama yang mau diduplikat
+      const originalField = webpageDb.find(field => field.id === oldId);
+
+      if (originalField) {
+        // 3️⃣ Duplikat object-nya
+        const clonedField = {
+          ...structuredClone(originalField), // salin semua properti
+          id: newId, // ganti ID jadi ID baru
+          element_order: copyElement.dataset.elementOrder // ganti order-nya
+        };
+
+        // 4️⃣ Tambahkan ke database
+        webpageDb.push(clonedField);
+      }
+      console.log(webpageDb, container.id)
+    }
+    
+    if(idParts[1] == "field"){
+      copyField()
+    }else if(idParts[1] == "video"){
+      copyVideo()
+    }else if(idParts[1] == "modal"){
+      function dupmodal(){
+
+        // element original
+        const btnModal = document.getElementById(idParts.slice(1).join('-'))
+        const bodyModal = document.getElementById(`element-${idParts.slice(1).join('-')}`)
+        // console.log(idParts.slice(1).join('-'))
+        const btnOldId = btnModal.id
+        const modalOldId = bodyModal.id
+  
+        const container = btnModal.parentElement
+  
+        // set element count
+        const countNumber = parseInt(container.dataset.elementCount || 0)+1
+        container.dataset.elementCount = countNumber
+  
+        // new id
+        const btnNewId = btnOldId.replace(/\d+$/, countNumber.toString()); 
+        const modalNewId = modalOldId.replace(/\d+$/, countNumber.toString()); 
+  
+        // duplikat element
+        const btnCopyElement = btnModal.cloneNode(true)
+        const modalCopyElement = bodyModal.cloneNode(true)
+        btnCopyElement.dataset.elementOrder = parseInt(btnCopyElement.dataset.elementOrder)+1
+        btnCopyElement.id = btnNewId
+        modalCopyElement.id = modalNewId
+  
+        // set element order element
+        Array.from(container.children).forEach(el => {
+          if (el.dataset.elementOrder) {
+            const currentOrder = parseInt(el.dataset.elementOrder);
+            const newOrderBase = parseInt(btnCopyElement.dataset.elementOrder);
+  
+            if (currentOrder >= newOrderBase) {
+              const newOrder = currentOrder + 1;
+              el.dataset.elementOrder = newOrder;
+  
+              const idx = webpageDb.findIndex(field => field.id === el.id);
+              if (idx !== -1) {
+                webpageDb[idx].element_order = newOrder;
+              }
+            }
+          }
+        });
+  
+        // set dropdown
+        const btnDropdown = btnCopyElement.querySelector(`[data-dropdown-toggle^="dropdown-"]`)
+        btnDropdown.dataset.dropdownToggle = `dropdown-${btnNewId}`
+        
+        const bodyDropdown = document.getElementById(`dropdown-btn-${idParts.slice(1).join('-')}`)
+        const copyBodyDropdown = bodyDropdown.cloneNode(true)
+        
+        copyBodyDropdown.id = copyBodyDropdown.id.replace(/\d+$/, countNumber.toString());
+        copyBodyDropdown.setAttribute('class', 'w-25 z-40 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700')
+        copyBodyDropdown.setAttribute('data-initialized', '')
+  
+        copyBodyDropdown.querySelectorAll('a').forEach(a=>{
+          a.id=a.id.replace(/\d+$/, countNumber.toString()); 
+        })
+  
+        btnModal.insertAdjacentElement('afterend', btnCopyElement)
+        document.getElementById(`webpage-section-${idParts.find(part => !isNaN(part))}`).insertAdjacentElement('beforeend', modalCopyElement)
+        bodyDropdown.insertAdjacentElement('afterend', copyBodyDropdown)
+  
+        // dapetin id elemen dalam body modal
+        const prefixBodyModalId = modalCopyElement.id.split('-').slice(1).join('-')
+        modalCopyElement.querySelectorAll(`[id*="${prefixBodyModalId}"]`).forEach(el=>{
+          const newId = el.id.replace(`${modalOldId.split('-').slice(1).join('-')}`, prefixBodyModalId);
+  
+          const originalField = webpageDb.find(field => field.id === el.id);
+          if (originalField) {
+            // 3️⃣ Duplikat object-nya
+            const clonedField = {
+              ...structuredClone(originalField), // salin semua properti
+              id: newId, // ganti ID jadi ID baru
+            };
+  
+            // 4️⃣ Tambahkan ke database
+            webpageDb.push(clonedField);
+          }
+          el.id = newId
+        })
+        modalCopyElement.querySelectorAll(`[data-dropdown-toggle*="${prefixBodyModalId}"]`).forEach(el=>{
+          el.id=el.id.replace(`${modalOldId.split('-').slice(1).join('-')}`, prefixBodyModalId);
+        })
+  
+        setListener()
+        dropdownInitialized('',`dropdown-btn-${btnNewId}`)
+  
+        // 1️⃣ Update element_count di container
+        webpageDb.forEach(field => {
+          if (field.id === container.id) {
+            field.element_count = countNumber;
+          }
+        });
+  
+        // 2️⃣ Temukan elemen lama yang mau diduplikat
+        const originalField = webpageDb.find(field => field.id === btnOldId);
+  
+        if (originalField) {
+          // 3️⃣ Duplikat object-nya
+          const clonedField = {
+            ...structuredClone(originalField), // salin semua properti
+            id: newId, // ganti ID jadi ID baru
+            element_order: btnCopyElement.dataset.elementOrder // ganti order-nya
+          };
+  
+          // 4️⃣ Tambahkan ke database
+          webpageDb.push(clonedField);
+        }
+        console.log(webpageDb, container.id)
+      }
+
+      // --- util kecil ---
+      const deepClone = (o) => {
+        if (typeof structuredClone === 'function') return structuredClone(o);
+        return JSON.parse(JSON.stringify(o));
+      };
+
+      function replaceTrailingNumber(str, newNum) {
+        return str.replace(/\d+$/, String(newNum));
+      }
+
+      // --- fungsi utama: duplikat modal ---
+      // panggil: duplicateModal({ btnId: 'btn-modal-...'})
+      function duplicateModal(btnId) {
+        try {
+          const btnModal = document.getElementById(btnId);
+          if (!btnModal) {
+            console.error('button modal tidak ditemukan:', btnId);
+            return false;
+          }
+
+          // asumsikan modal terkait ada dan id-nya adalah idModal (bisa diberikan kalau pola beda)
+          // contoh pola: btn id = "btn-modal-accordion-element-section-2-4-2-1-5"
+          // modal id = "element-modal-accordion-element-section-2-4-2-1-5"
+          // kita coba derive modalId dari btnId dengan mengganti prefix "btn-" -> "element-"
+          const modalId = btnModal.id.startsWith('btn-')
+            ? 'element-' + btnModal.id.slice(4)
+            : null;
+
+          let modalEl = modalId ? document.getElementById(modalId) : null;
+          if (!modalEl) {
+            console.warn('modal body tidak ditemukan otomatis untuk btnId, sebutkan modalId manual. Mencoba mencari di DOM berdasarkan pattern...');
+            // fallback: cari element yang mengandung sisa id btn tanpa prefix btn-
+            const suffix = btnModal.id.slice(btnModal.id.indexOf('-') + 1);
+            const found = document.querySelector(`[id*="${suffix}"][id^="element-"]`);
+            if (found) {
+              console.log('fallback modal ditemukan:', found.id);
+              modalEl = found;
+            } else {
+              console.error('modal body tidak ditemukan untuk btn:', btnId);
+              return false;
+            }
+          }
+
+          const container = btnModal.parentElement;
+          if (!container) {
+            console.error('container parent btn tidak ditemukan');
+            return false;
+          }
+
+          // hitung count baru & simpan
+          const countNumber = (parseInt(container.dataset.elementCount || '0', 10) || 0) + 1;
+          container.dataset.elementCount = String(countNumber);
+
+          // clone elemen (btn + modal body)
+          const btnCopy = btnModal.cloneNode(true);
+          const modalCopy = modalEl.cloneNode(true);
+
+          // buat id baru dengan mengganti angka terakhir
+          const oldBtnId = btnModal.id;
+          const oldModalId = modalEl.id;
+          const newBtnId = replaceTrailingNumber(oldBtnId, countNumber);
+          const newModalId = replaceTrailingNumber(oldModalId, countNumber);
+          console.log('test',countNumber, {oldBtnId, oldModalId, newBtnId,newModalId})
+
+          btnCopy.id = newBtnId;
+          modalCopy.id = newModalId;
+
+          // update element order btnCopy: +1 dari original (jika ada)
+          const originalOrder = parseInt(btnCopy.dataset.elementOrder || '0', 10);
+          const newOrderBase = originalOrder + 1;
+          btnCopy.dataset.elementOrder = String(newOrderBase);
+
+          // 1) Perbarui element_order pada sibling (hanya direct children container)
+          Array.from(container.children).forEach(el => {
+            if (!el.dataset || typeof el.dataset.elementOrder === 'undefined') return;
+
+            const currentOrder = parseInt(el.dataset.elementOrder || '0', 10);
+            if (currentOrder >= newOrderBase) {
+              const updated = currentOrder + 1;
+              el.dataset.elementOrder = String(updated);
+
+              // update di webpageDb bila ada
+              const idx = webpageDb.findIndex(f => f.id === el.id);
+              if (idx !== -1) webpageDb[idx].element_order = String(updated);
+            }
+          });
+
+          // 2) Update dropdown toggle(s) di dalam btnCopy (kalau ada)
+          // ganti nilai data-dropdown-toggle yang menunjuk ke dropdown-... menjadi versi baru
+          btnCopy.querySelectorAll('[data-dropdown-toggle]').forEach(toggleEl => {
+            const oldTarget = toggleEl.getAttribute('data-dropdown-toggle'); // mis: "dropdown-...-5"
+            if (!oldTarget) return;
+            const newTarget = replaceTrailingNumber(oldTarget, countNumber);
+            toggleEl.setAttribute('data-dropdown-toggle', newTarget);
+          });
+
+          btnCopy.querySelectorAll('[data-modal-target]').forEach(toggleEl => {
+            const oldTarget = toggleEl.getAttribute('data-modal-target'); // mis: "dropdown-...-5"
+            if (!oldTarget) return;
+            const newTarget = replaceTrailingNumber(oldTarget, countNumber);
+            toggleEl.setAttribute('data-modal-target', newTarget);
+            toggleEl.setAttribute('data-modal-toggle', newTarget);
+          });
+
+          const btnOldSuffix = oldModalId.split('-').slice(1).join('-'); // contoh: "modal-accordion-element-section-2-4-2-1-5"
+          const btnNewSuffix = newModalId.split('-').slice(1).join('-');
+          btnCopy.querySelectorAll('[id]').forEach(el => {
+            if (!el.id.includes(btnOldSuffix)) return;
+            const origId = el.id;
+            const newId = origId.replace(btnOldSuffix, btnNewSuffix);
+
+            // update DOM id
+            el.id = newId;
+
+            // update dropdown toggles di dalam modalCopy yang mengacu ke old ids
+            if (el.hasAttribute('data-dropdown-toggle')) {
+              const target = el.getAttribute('data-dropdown-toggle');
+              el.setAttribute('data-dropdown-toggle', replaceTrailingNumber(target, countNumber));
+            }
+
+            // update entry di webpageDb: find original record and clone to new id
+            const originalField = webpageDb.find(f => f.id === origId);
+            if (originalField) {
+              const cloned = deepClone(originalField);
+              cloned.id = newId;
+              // jika ada element_order di elemen internal, kita biarkan sama atau bisa diset ulang jika mau
+              webpageDb.push(cloned);
+            }
+          });
+
+          // 3) clone popup dropdown body (jika ada)
+          // asumsikan id dropdown terkait adalah `dropdown-${something-same-as-btnSuffix}`
+          // kita coba cari dropdown yang mengandung bagian id tombol (tanpa 'btn-')
+          const btnSuffix = oldBtnId.replace(/^btn-/, '');
+          const btnBodyDropdown = document.getElementById(`dropdown-btn-${btnSuffix}`);
+          let copyBtnBodyDropdown = null;
+          if (btnBodyDropdown) {
+            copyBtnBodyDropdown = btnBodyDropdown.cloneNode(true);
+            copyBtnBodyDropdown.id = replaceTrailingNumber(copyBtnBodyDropdown.id, countNumber);
+            // update all ids di dalam dropdown (mis anchor ids)
+            copyBtnBodyDropdown.querySelectorAll('[id]').forEach(el => {
+              el.id = replaceTrailingNumber(el.id, countNumber);
+            });
+            copyBtnBodyDropdown.dataset.initialized = ''; // reset inisialisasi
+            // atur kelas sesuai kebutuhan
+            copyBtnBodyDropdown.className = 'w-25 z-40 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700';
+            // update anchors/links dataset jika perlu (tergantung struktur)
+          }
+
+          // 4) sisipkan elemen ke DOM: btn setelah btnModal; modal di webpage-section-{n}
+          btnModal.insertAdjacentElement('afterend', btnCopy);
+
+          // tentukan section target untuk append modal (ambil nomor section dari id)
+          const sectionNum = (btnModal.id.split('-').find(part => !isNaN(part)) || null);
+          if (sectionNum) {
+            const sectionContainer = document.getElementById(`webpage-section-${sectionNum}`);
+            if (sectionContainer) {
+              sectionContainer.insertAdjacentElement('beforeend', modalCopy);
+            } else {
+              // fallback append ke body
+              document.body.appendChild(modalCopy);
+            }
+          } else {
+            document.body.appendChild(modalCopy);
+          }
+
+          if (copyBtnBodyDropdown) {
+            btnBodyDropdown.insertAdjacentElement('afterend', copyBtnBodyDropdown);
+          }
+
+          // 5) Update id di dalam modalCopy (elemen field/video yang mengandung oldModal suffix)
+          // mapping oldSuffix -> newSuffix
+          const oldSuffix = oldModalId.split('-').slice(1).join('-'); // contoh: "modal-accordion-element-section-2-4-2-1-5"
+          const newSuffix = newModalId.split('-').slice(1).join('-');
+
+          // untuk setiap elemen yang punya id mengandung oldSuffix: ubah id dan buat clone di webpageDb
+          modalCopy.querySelectorAll('[id]').forEach(el => {
+            if (!el.id.includes(oldSuffix)) return;
+            const origId = el.id;
+            const newId = origId.replace(oldSuffix, newSuffix);
+
+            // update DOM id
+            el.id = newId;
+
+            // update dropdown toggles di dalam modalCopy yang mengacu ke old ids
+            if (el.hasAttribute('data-dropdown-toggle')) {
+              const target = el.getAttribute('data-dropdown-toggle');
+              el.setAttribute('data-dropdown-toggle', replaceTrailingNumber(target, countNumber));
+            }
+
+            // update entry di webpageDb: find original record and clone to new id
+            const originalField = webpageDb.find(f => f.id === origId);
+            if (originalField) {
+              const cloned = deepClone(originalField);
+              cloned.id = newId;
+              // jika ada element_order di elemen internal, kita biarkan sama atau bisa diset ulang jika mau
+              webpageDb.push(cloned);
+            }
+          });
+          modalCopy.querySelectorAll('[id]').forEach(el => {
+            if (!el.id.includes(oldSuffix)) return;
+            const origId = el.id;
+            const newId = origId.replace(oldSuffix, newSuffix);
+
+            // update DOM id
+            el.id = newId;
+
+            // update dropdown toggles di dalam modalCopy yang mengacu ke old ids
+            if (el.hasAttribute('data-dropdown-toggle')) {
+              const target = el.getAttribute('data-dropdown-toggle');
+              el.setAttribute('data-dropdown-toggle', replaceTrailingNumber(target, countNumber));
+            }
+
+            // update entry di webpageDb: find original record and clone to new id
+            const originalField = webpageDb.find(f => f.id === origId);
+            if (originalField) {
+              const cloned = deepClone(originalField);
+              cloned.id = newId;
+              // jika ada element_order di elemen internal, kita biarkan sama atau bisa diset ulang jika mau
+              webpageDb.push(cloned);
+            }
+          });
+
+          // 6) update dropdown-toggle attributes yang mengandung oldSuffix (mis > tombol di modal)
+          modalCopy.querySelectorAll('[data-dropdown-toggle]').forEach(el => {
+            const t = el.getAttribute('data-dropdown-toggle') || '';
+            el.setAttribute('data-dropdown-toggle', t.includes(oldSuffix) ? t.replace(oldSuffix, newSuffix) : replaceTrailingNumber(t, countNumber));
+          });
+
+          modalCopy.querySelectorAll('[data-modal-hide]').forEach(el => {
+            const t = el.getAttribute('data-modal-hide') || '';
+            el.setAttribute('data-modal-hide', t.includes(oldSuffix) ? t.replace(oldSuffix, newSuffix) : replaceTrailingNumber(t, countNumber));
+          });
+
+          modalEl.insertAdjacentElement('afterend', modalCopy);
+
+          // 7) update webpageDb untuk btn dan modal (clone data)
+          // btn
+          const originalBtnObj = webpageDb.find(f => f.id === oldBtnId);
+          if (originalBtnObj) {
+            const clonedBtnObj = deepClone(originalBtnObj);
+            clonedBtnObj.id = newBtnId;
+            clonedBtnObj.element_order = String(newOrderBase);
+            webpageDb.push(clonedBtnObj);
+          }
+
+          // modal (element body)
+          const originalModalObj = webpageDb.find(f => f.id === oldModalId);
+          if (originalModalObj) {
+            const clonedModalObj = deepClone(originalModalObj);
+            clonedModalObj.id = newModalId;
+            // update element_count jika perlu
+            clonedModalObj.element_count = clonedModalObj.element_count || '0';
+            webpageDb.push(clonedModalObj);
+          }
+
+          // 8) Perbarui element_count pada container record di webpageDb (container kemungkinan = wrapper yang menaungi btn)
+          const containerRecord = webpageDb.find(f => f.id === container.id.split('-').slice(1).join('-'));
+          console.log(container)
+          if (containerRecord) {
+            containerRecord.element_count = String(countNumber);
+          }
+
+          // 9) jalankan ulang listener + inisialisasi dropdown baru
+          setListener?.();
+          // inisialisasi dropdown baru: coba id dropdown baru dari btnCopy's toggles
+          const anyToggle = btnCopy.querySelector('[data-dropdown-toggle]');
+          if (anyToggle) {
+            const newDropdownTarget = anyToggle.getAttribute('data-dropdown-toggle');
+            dropdownInitialized('', newDropdownTarget);
+          }
+
+          console.log('duplicated modal success', { oldBtnId, newBtnId, oldModalId, newModalId }, webpageDb);
+          return true;
+        } catch (e) {
+          console.error('duplicateModal error', e);
+          return false;
+        }
+      }
+      duplicateModal(idParts.slice(1).join('-'))
+      setTimeout(() => {
+        try {
+          initFlowbite();
+        } catch (error) {
+            console.error('❌ Gagal menginisialisasi Modal:', error);
+        }
+      }, 100); 
+
+    }
   }
 
 // ================================= DOWN UP DELETE ELEMENT =================================

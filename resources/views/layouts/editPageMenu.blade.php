@@ -225,6 +225,14 @@
                                         <option value="Arial" class="text-black">Arial</option>
                                         <option value="Courier New" class="text-black">Courier New</option>
                                         <option value="Times New Roman" class="text-black">Times New Roman</option>
+                                        <option value="Georgia" class="text-black">Georgia</option>
+                                        <option value="Verdana" class="text-black">Verdana</option>
+                                        <option value="Tahoma" class="text-black">Tahoma</option>
+                                        <option value="Trebuchet MS" class="text-black">Trebuchet MS</option>
+                                        <option value="Comic Sans MS" class="text-black">Comic Sans MS</option>
+                                        <option value="Impact" class="text-black">Impact</option>
+                                        <option value="Lucida Console" class="text-black">Lucida Console</option>
+                                        <option value="Palatino Linotype" class="text-black">Palatino Linotype</option>
                                     </select>
 
                                     <select id="font-size" class="p-1 bg-transparent text-white rounded border-white m-1">
@@ -563,7 +571,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="mb-5 text-white w-full hidden">
+                                <div id="wrapper-btn-reset-bg-image" class="mb-5 text-white w-full hidden">
                                     <button type="button" id="btn-reset-bg-image" class="bg-blue-500 rounded p-3 w-full text-sm ">Reset Background Image</button>
                                 </div>
                             </div>

@@ -76,6 +76,7 @@ class WebPage extends Component
                         if (preg_match("/url\(['\"]?(.*?)['\"]?\)/", $oldItem->style, $matches)) {
                             $oldUrl = $matches[1];
                             $oldFile = str_replace(asset('storage') . '/', '', $oldUrl);
+                            
                             if (\Storage::disk('public')->exists($oldFile) && !str_contains($oldFile, 'almond1DefaultImageCarousel')) {
                                 \Storage::disk('public')->delete($oldFile);
                             }
@@ -115,12 +116,17 @@ class WebPage extends Component
                         }
 
                     }else{
+                        
                         $style = $item['style'] ?? '';
-                        $style = preg_replace(
-                            "/url\((.*?)\)/",
-                            "url('" . asset('storage/media/' . $filename) . "')",
-                            $style
-                        );
+                        
+                        if (preg_match("/url\(([^)]+)\)/", $style)) {
+                            // cocok dengan semua isi dalam url(...)
+                            $style = preg_replace(
+                                "/url\(([^)]+)\)/",
+                                "url('" . asset('storage/media/' . $filename) . "')",
+                                $style
+                            ); 
+                        }
     
                         $item['style'] = $style;
                     }
@@ -153,37 +159,6 @@ class WebPage extends Component
             }else{
                 $pages =  \App\Models\Webpage::whereNotIn('id', $ids)->where('id', 'not like', '%prolog-web%')->where('id', 'not like', '%prolog-emodul%')->get();
             }
-            
-            foreach ($pages as $page) {
-                if ($page->type === 'video' && $page->content) {
-                    preg_match("/media\/([^')]+)/", $page->content, $matches);
-                    if (isset($matches[1])) {
-                        $filename = $matches[1];
-                        if (Storage::disk('public')->exists("media/" . $filename) && !str_contains($filename, 'almond1DefaultImageCarousel')) {
-                            Storage::disk('public')->delete("media/" . $filename);
-                        }
-                    }
-                } elseif ($page->style && $page->type !== 'img-carousel') {
-                    // logic lama untuk style (image/background)
-                    preg_match("/media\/([^')]+)/", $page->style, $matches);
-                    if (isset($matches[1])) {
-                        $filename = $matches[1];
-                        if (Storage::disk('public')->exists("media/" . $filename) && !str_contains($filename, 'almond1DefaultImageCarousel')) {
-                            Storage::disk('public')->delete("media/" . $filename);
-                        }
-                    }
-                } elseif ($page->content && $page->type === 'img-carousel') {
-                    // logic lama untuk style (image/background)
-                    preg_match("/media\/([^')]+)/", $page->content, $matches);
-                    if (isset($matches[1])) {
-                        $filename = $matches[1];
-                        if (Storage::disk('public')->exists("media/" . $filename) && !str_contains($filename, 'almond1DefaultImageCarousel')) {
-                            Storage::disk('public')->delete("media/" . $filename);
-                        }
-                    }
-                }
-            }
-            // Setelah itu hapus record di database
 
             if($paramStatus ==='prolog-web'){
                 \App\Models\Webpage::whereNotIn('id', $ids)
@@ -202,6 +177,58 @@ class WebPage extends Component
                     ->where('id', '<>', 'webpage-section-prolog-web-1')
                     ->where('id', '<>', 'webpage-section-prolog-emodul-1')
                     ->where('id', '<>', 'webpage')->delete();
+            }
+
+            foreach ($pages as $page) {
+                if ($page->type === 'video' && $page->content) {
+                    preg_match("/media\/([^')]+)/", $page->content, $matches);
+                    if (isset($matches[1])) {
+                        $filename = $matches[1];
+
+                        if (!str_contains($filename, 'almond1DefaultImageCarousel')) {
+
+                            // Cek apakah ada elemen lain yang masih pakai file ini
+                            $isUsed = \DB::table('webpage')
+                                ->where('id', '!=', $page->id) // selain elemen yang lagi dihapus
+                                ->where('content', 'like', '%' . $filename . '%')
+                                ->exists();
+
+                            if (!$isUsed && Storage::disk('public')->exists("media/" . $filename)) {
+                                Storage::disk('public')->delete("media/" . $filename);
+                            }
+                        }
+                    }
+                } elseif ($page->style && $page->type !== 'img-carousel') {
+                    // logic lama untuk style (image/background)
+                    preg_match("/media\/([^')]+)/", $page->style, $matches);
+
+                    if (isset($matches[1])) {
+                        $filename = $matches[1];
+
+                        // Pastikan bukan default image
+                        if (!str_contains($filename, 'almond1DefaultImageCarousel')) {
+
+                            // Cek apakah ada elemen lain yang masih pakai file ini
+                            $isUsed = \DB::table('webpage')
+                                ->where('id', '!=', $page->id) // selain elemen yang lagi dihapus
+                                ->where('style', 'like', '%' . $filename . '%')
+                                ->exists();
+
+                            if (!$isUsed && Storage::disk('public')->exists("media/" . $filename)) {
+                                Storage::disk('public')->delete("media/" . $filename);
+                            }
+                        }
+                    }
+                } elseif ($page->content && $page->type === 'img-carousel') {
+                    // logic lama untuk style (image/background)
+                    preg_match("/media\/([^')]+)/", $page->content, $matches);
+                    if (isset($matches[1])) {
+                        $filename = $matches[1];
+                        if (Storage::disk('public')->exists("media/" . $filename) && !str_contains($filename, 'almond1DefaultImageCarousel')) {
+                            Storage::disk('public')->delete("media/" . $filename);
+                        }
+                    }
+                }
             }
 
             return response()->json([
