@@ -3280,17 +3280,19 @@ function loadWebpage(){
               appendTo(`#wrapper-section-${field.id.split('-').slice(1,-1).join('-')}`, html);
               break;
             case 'video':
-              html = createVideo(field);
-              dropdown = createDropdownVideo(field.id);
-              appendTo(`#wrapper-section-${field.id.split('-').slice(1,-1).join('-')}`, html);
+              if(!field.id.includes('modal')){
+                html = createVideo(field);
+                dropdown = createDropdownVideo(field.id);
+                appendTo(`#wrapper-section-${field.id.split('-').slice(1,-1).join('-')}`, html);
+              }
               break;
             case 'field':
               if(!field.id.includes('modal')){
                 html = createField(field);
                 dropdown = createDropdownField(field.id);
                 appendTo(`#wrapper-section-${field.id.split('-').slice(1,-1).join('-')}`, html);
-                break;
               }
+              break;
             case 'carousel':
               html = createCarousel(field, childElements, editorContainer)
               dropdown = createDropdownCarousel(field.id, field.id.split('-'))
@@ -3348,7 +3350,7 @@ function loadWebpage(){
             element = createVideo(page);
             dropdown = createDropdownVideo(page.id);
             appendTo(`#body-${page.id.split('-').slice(1, -1).join('-')}`, element);
-            sectionAppend.insertAdjacentHTML('afterend', dropdown);
+            document.querySelector(`#${page.id}`).insertAdjacentHTML('afterbegin', dropdown);
             return true
           } else if(page.id.startsWith('video-element')) {
             element = createVideo(page);
@@ -4320,7 +4322,7 @@ document.getElementById('webpage').addEventListener('click', function (event) {
         item.element_count++
       }else if(item.id === `section-${idParts.slice(2).join('-')}` && idParts.join('-').includes('accordion')){
         item.element_count++
-      }else if(item.id === `body-${idParts.slice(2).join('-')}` && idParts.join('-').includes('modal-element')){
+      }else if(item.id === `body-${idParts.slice(2).join('-')}` && idParts.join('-').includes('modal')){
         item.element_count++
       }
     })
@@ -5160,88 +5162,147 @@ document.getElementById('webpage').addEventListener('click', function (event) {
   if(id.startsWith('copy-')){
     const idParts = event.target.id.split('-')
 
-    const copyField = ()=>{
-      // element original
-      const element = document.getElementById(idParts.slice(1).join('-'))
-      const parent = element.parentElement
-      const oldId = element.id
+    function replaceTrailingNumber(str, newNum) {
+      return str.replace(/\d+$/, String(newNum));
+    }
 
-      const container = parent.parentElement
+    const copyField = () => {
+      // --- 1️⃣ Ambil elemen sumber ---
+      const element = document.getElementById(idParts.slice(1).join('-'));
+      if (!element) {
+        console.error('Element asal tidak ditemukan:', idParts.slice(1).join('-'));
+        return;
+      }
+      
+      const parent = element.parentElement;
+      const container = parent?.parentElement;
+      console.log('element: ',element)
+      console.log('parent: ',parent)
+      console.log('container: ',container)
+      if (!container) {
+        console.error('Container tidak ditemukan');
+        return;
+      }
 
-      // set element count
-      const countNumber = parseInt(container.dataset.elementCount || 0)+1
-      container.dataset.elementCount = countNumber
+      const oldId = element.id;
+      const countNumber = (parseInt(container.dataset.elementCount || '0', 10)) + 1;
+      container.dataset.elementCount = countNumber;
 
-      // new id
-      const newId = oldId.replace(/\d+$/, countNumber.toString()); 
+      // --- 2️⃣ Buat ID baru dan clone node ---
+      const newId = replaceTrailingNumber(oldId, countNumber);
+      const copyElement = parent.cloneNode(true);
 
-      // duplikat element
-      const copyElement = parent.cloneNode(true)
-      copyElement.dataset.elementOrder = parseInt(copyElement.dataset.elementOrder)+1
-      copyElement.querySelector(`#${oldId}`).id = newId
+      copyElement.dataset.elementOrder = String(parseInt(copyElement.dataset.elementOrder || '0', 10) + 1);
 
-      // set element order element
+      // Update ID field utama
+      const fieldEl = copyElement.querySelector(`#${oldId}`);
+      if (fieldEl) fieldEl.id = newId;
+
+      // --- 3️⃣ Update element order di level yang sama ---
+      const newOrderBase = parseInt(copyElement.dataset.elementOrder, 10);
       Array.from(container.children).forEach(el => {
-        if (el.dataset.elementOrder) {
-          const currentOrder = parseInt(el.dataset.elementOrder);
-          const newOrderBase = parseInt(copyElement.dataset.elementOrder);
+        const order = parseInt(el.dataset.elementOrder || '0', 10);
+        if (order >= newOrderBase) {
+          const newOrder = order + 1;
+          el.dataset.elementOrder = String(newOrder);
 
-          if (currentOrder >= newOrderBase) {
-            const newOrder = currentOrder + 1;
-            el.dataset.elementOrder = newOrder;
+          // cari id field dalam elemen kalau belum ada
+          let id = el.id;
+          if (!id) {
+            const childField = el.querySelector('[id^="field-"]');
+            if (childField) id = childField.id;
+          }
 
-            const idx = webpageDb.findIndex(field => field.id === el.id);
-            if (idx !== -1) {
-              webpageDb[idx].element_order = newOrder;
-            }
+          // update di webpageDb
+          if (id) {
+            const idx = webpageDb.findIndex(f => f.id === id);
+            if (idx !== -1) webpageDb[idx].element_order = String(newOrder);
           }
         }
       });
 
+      // --- 4️⃣ Fungsi bantu untuk update semua atribut yang mengandung ID lama ---
+      function updateFieldAttributes(rootEl, oldSuffix, newSuffix) {
+        rootEl.querySelectorAll('*').forEach(el => {
+          for (const attr of el.getAttributeNames()) {
+            const val = el.getAttribute(attr);
+            if (!val || typeof val !== 'string') continue;
+            if (val.includes(oldSuffix)) {
+              el.setAttribute(attr, val.replaceAll(oldSuffix, newSuffix));
+            }
+          }
 
-      // set dropdown
-      const btnDropdown = copyElement.querySelector(`[data-dropdown-toggle^="dropdown-body"]`)
-      btnDropdown.dataset.dropdownToggle = `dropdown-body-${newId}`
-      
-      const bodyDropdown = document.getElementById(`dropdown-body-${idParts.slice(1).join('-')}`)
-      const copyBodyDropdown = bodyDropdown.cloneNode(true)
-      
-      copyBodyDropdown.id = copyBodyDropdown.id.replace(/\d+$/, countNumber.toString());
-      copyBodyDropdown.setAttribute('class', 'w-25 z-40 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700')
-      copyBodyDropdown.setAttribute('data-initialized', '')
+          // Update ID dan duplikasi field di DB
+          if (el.id && el.id.includes(oldSuffix)) {
+            const origId = el.id;
+            const newId = origId.replaceAll(oldSuffix, newSuffix);
 
-      copyBodyDropdown.querySelectorAll('a').forEach(a=>{
-        a.id=a.id.replace(/\d+$/, countNumber.toString()); 
-      })
+            el.id = newId;
 
-      parent.insertAdjacentElement('afterend', copyElement)
-      bodyDropdown.insertAdjacentElement('afterend', copyBodyDropdown)
-      setListener()
-      dropdownInitialized('',`dropdown-body-${newId}`)
+            const originalField = webpageDb.find(f => f.id === origId);
+            if (originalField) {
+              const cloned = structuredClone(originalField);
+              cloned.id = newId;
+              webpageDb.push(cloned);
+            }
+          }
+        });
+      }
 
-      // 1️⃣ Update element_count di container
-      webpageDb.forEach(field => {
-        if (field.id === container.parentElement.id) {
-          field.element_count = countNumber;
+      const oldSuffix = oldId.split('-').slice(1).join('-');
+      const newSuffix = newId.split('-').slice(1).join('-');
+      updateFieldAttributes(copyElement, oldSuffix, newSuffix);
+
+      // --- 6️⃣ Sisipkan hasil duplikasi ke DOM ---
+      parent.insertAdjacentElement('afterend', copyElement);
+
+      // --- 5️⃣ Duplikasi dropdown body-nya ---
+      if(!copyElement.querySelector(`[id*=modal]`)){
+        const bodyDropdown = document.getElementById(`dropdown-body-${idParts.slice(1).join('-')}`);
+        if (bodyDropdown) {
+          const copyBodyDropdown = bodyDropdown.cloneNode(true);
+          copyBodyDropdown.id = replaceTrailingNumber(copyBodyDropdown.id, countNumber);
+          copyBodyDropdown.className = 'w-25 z-40 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700';
+          copyBodyDropdown.setAttribute('data-initialized', '');
+  
+          updateFieldAttributes(copyBodyDropdown, oldSuffix, newSuffix);
+
+          console.log('Dropdown body ditemukan untuk:', oldId, copyBodyDropdown);
+          bodyDropdown.insertAdjacentElement('afterend', copyBodyDropdown)
+        } else {
+          console.warn('Dropdown body tidak ditemukan untuk:', oldId);
         }
-      });
+        console.log('no modal dropdown: ',copyElement.id)
+      }else{
+        const bodyDropdown = copyElement.querySelector('[data-initialized]')
+        bodyDropdown.setAttribute('data-initialized', '')
+        bodyDropdown.setAttribute('class', 'w-25 z-40 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700')
+        console.log('modal dropdown: ',bodyDropdown)
+      }
 
-      // 2️⃣ Temukan elemen lama yang mau diduplikat
-      const originalField = webpageDb.find(field => field.id === oldId);
+      setListener();
+      dropdownInitialized('', `dropdown-body-${newId}`);
+      
 
+      // --- 8️⃣ Update element_count di DB container ---
+      const containerParent = container.parentElement;
+      if (containerParent) {
+        const containerField = webpageDb.find(f => f.id === containerParent.id);
+        if (containerField) containerField.element_count = countNumber;
+      }
+
+      // --- 9️⃣ Duplikat entri utama ke database ---
+      const originalField = webpageDb.find(f => f.id === oldId);
       if (originalField) {
-        // 3️⃣ Duplikat object-nya
-        const clonedField = {
-          ...structuredClone(originalField), // salin semua properti
-          id: newId, // ganti ID jadi ID baru
-          element_order: copyElement.dataset.elementOrder // ganti order-nya
-        };
-
-        // 4️⃣ Tambahkan ke database
+        const clonedField = structuredClone(originalField);
+        clonedField.id = newId;
+        clonedField.element_order = copyElement.dataset.elementOrder;
         webpageDb.push(clonedField);
       }
-      console.log(webpageDb, container.id)
-    }
+
+      console.log('Field duplicated:', newId, '→', webpageDb);
+    };
+
     const copyVideo=()=>{
       // element original
       const element = document.getElementById(idParts.slice(1).join('-'))
@@ -5446,10 +5507,6 @@ document.getElementById('webpage').addEventListener('click', function (event) {
         return JSON.parse(JSON.stringify(o));
       };
 
-      function replaceTrailingNumber(str, newNum) {
-        return str.replace(/\d+$/, String(newNum));
-      }
-
       // --- fungsi utama: duplikat modal ---
       // panggil: duplicateModal({ btnId: 'btn-modal-...'})
       function duplicateModal(btnId) {
@@ -5502,7 +5559,7 @@ document.getElementById('webpage').addEventListener('click', function (event) {
           const oldModalId = modalEl.id;
           const newBtnId = replaceTrailingNumber(oldBtnId, countNumber);
           const newModalId = replaceTrailingNumber(oldModalId, countNumber);
-          console.log('test',countNumber, {oldBtnId, oldModalId, newBtnId,newModalId})
+          // console.log('test',countNumber, {oldBtnId, oldModalId, newBtnId,newModalId})
 
           btnCopy.id = newBtnId;
           modalCopy.id = newModalId;
@@ -5514,61 +5571,75 @@ document.getElementById('webpage').addEventListener('click', function (event) {
 
           // 1) Perbarui element_order pada sibling (hanya direct children container)
           Array.from(container.children).forEach(el => {
-            if (!el.dataset || typeof el.dataset.elementOrder === 'undefined') return;
+            // Pastikan elemen punya data-element-order
+            const currentOrder = parseInt(el.dataset?.elementOrder || '0', 10);
+            if (isNaN(currentOrder)) return;
 
-            const currentOrder = parseInt(el.dataset.elementOrder || '0', 10);
             if (currentOrder >= newOrderBase) {
               const updated = currentOrder + 1;
               el.dataset.elementOrder = String(updated);
 
-              // update di webpageDb bila ada
-              const idx = webpageDb.findIndex(f => f.id === el.id);
-              if (idx !== -1) webpageDb[idx].element_order = String(updated);
+              // --- Cari ID field yang relevan ---
+              let id = el.id;
+
+              // Kalau elemen tidak punya id, cari child yang id-nya diawali "field-"
+              if (!id) {
+                const childWithId = el.querySelector('[id^="field-"]');
+                if (childWithId) id = childWithId.id;
+              }
+
+              // Kalau tetap tidak ketemu ID, skip
+              if (!id) return;
+
+              console.log('Updating order for', id, '=>', updated);
+
+              // --- Update juga di database (webpageDb) ---
+              const idx = webpageDb.findIndex(f => f.id === id);
+              if (idx !== -1) {
+                webpageDb[idx].element_order = String(updated);
+              }
             }
           });
+          function updateModalAttributes(modalCopyElement, oldModalId, newModalId) {
+            // Ambil bagian "unik" dari ID lama dan baru, misal:
+            // oldModalId = "modal-element-accordion-section-2"
+            // newModalId = "modal-element-accordion-section-3"
+            const oldSuffix = oldModalId.split('-').slice(1).join('-');
+            const newSuffix = newModalId.split('-').slice(1).join('-');
 
-          // 2) Update dropdown toggle(s) di dalam btnCopy (kalau ada)
-          // ganti nilai data-dropdown-toggle yang menunjuk ke dropdown-... menjadi versi baru
-          btnCopy.querySelectorAll('[data-dropdown-toggle]').forEach(toggleEl => {
-            const oldTarget = toggleEl.getAttribute('data-dropdown-toggle'); // mis: "dropdown-...-5"
-            if (!oldTarget) return;
-            const newTarget = replaceTrailingNumber(oldTarget, countNumber);
-            toggleEl.setAttribute('data-dropdown-toggle', newTarget);
-          });
+            // Ambil semua elemen di dalam modal yang disalin
+            modalCopyElement.querySelectorAll('*').forEach(el => {
+              // 1️⃣ Cek setiap atribut
+              for (const attr of el.getAttributeNames()) {
+                const val = el.getAttribute(attr);
+                if (!val || typeof val !== 'string') continue;
 
-          btnCopy.querySelectorAll('[data-modal-target]').forEach(toggleEl => {
-            const oldTarget = toggleEl.getAttribute('data-modal-target'); // mis: "dropdown-...-5"
-            if (!oldTarget) return;
-            const newTarget = replaceTrailingNumber(oldTarget, countNumber);
-            toggleEl.setAttribute('data-modal-target', newTarget);
-            toggleEl.setAttribute('data-modal-toggle', newTarget);
-          });
+                // 2️⃣ Kalau value mengandung ID lama, ganti jadi ID baru
+                if (val.includes(oldSuffix)) {
+                  const newVal = val.replaceAll(oldSuffix, newSuffix);
+                  el.setAttribute(attr, newVal);
+                }
+              }
 
-          const btnOldSuffix = oldModalId.split('-').slice(1).join('-'); // contoh: "modal-accordion-element-section-2-4-2-1-5"
-          const btnNewSuffix = newModalId.split('-').slice(1).join('-');
-          btnCopy.querySelectorAll('[id]').forEach(el => {
-            if (!el.id.includes(btnOldSuffix)) return;
-            const origId = el.id;
-            const newId = origId.replace(btnOldSuffix, btnNewSuffix);
+              // 3️⃣ Kalau ID-nya sendiri mengandung substring lama, ganti juga
+              if (el.id && el.id.includes(oldSuffix)) {
+                const newId = el.id.replaceAll(oldSuffix, newSuffix);
 
-            // update DOM id
-            el.id = newId;
+                // Update id di DOM
+                el.id = newId;
 
-            // update dropdown toggles di dalam modalCopy yang mengacu ke old ids
-            if (el.hasAttribute('data-dropdown-toggle')) {
-              const target = el.getAttribute('data-dropdown-toggle');
-              el.setAttribute('data-dropdown-toggle', replaceTrailingNumber(target, countNumber));
-            }
-
-            // update entry di webpageDb: find original record and clone to new id
-            const originalField = webpageDb.find(f => f.id === origId);
-            if (originalField) {
-              const cloned = deepClone(originalField);
-              cloned.id = newId;
-              // jika ada element_order di elemen internal, kita biarkan sama atau bisa diset ulang jika mau
-              webpageDb.push(cloned);
-            }
-          });
+                // 4️⃣ Update juga di database (webpageDb)
+                const originalField = webpageDb.find(f => f.id === el.id);
+                if (originalField) {
+                  const cloned = structuredClone(originalField);
+                  cloned.id = newId;
+                  webpageDb.push(cloned);
+                }
+              }
+            });
+          }
+          updateModalAttributes(btnCopy, oldModalId, newModalId)
+          updateModalAttributes(modalCopy, oldModalId, newModalId)
 
           // 3) clone popup dropdown body (jika ada)
           // asumsikan id dropdown terkait adalah `dropdown-${something-same-as-btnSuffix}`
@@ -5610,70 +5681,6 @@ document.getElementById('webpage').addEventListener('click', function (event) {
             btnBodyDropdown.insertAdjacentElement('afterend', copyBtnBodyDropdown);
           }
 
-          // 5) Update id di dalam modalCopy (elemen field/video yang mengandung oldModal suffix)
-          // mapping oldSuffix -> newSuffix
-          const oldSuffix = oldModalId.split('-').slice(1).join('-'); // contoh: "modal-accordion-element-section-2-4-2-1-5"
-          const newSuffix = newModalId.split('-').slice(1).join('-');
-
-          // untuk setiap elemen yang punya id mengandung oldSuffix: ubah id dan buat clone di webpageDb
-          modalCopy.querySelectorAll('[id]').forEach(el => {
-            if (!el.id.includes(oldSuffix)) return;
-            const origId = el.id;
-            const newId = origId.replace(oldSuffix, newSuffix);
-
-            // update DOM id
-            el.id = newId;
-
-            // update dropdown toggles di dalam modalCopy yang mengacu ke old ids
-            if (el.hasAttribute('data-dropdown-toggle')) {
-              const target = el.getAttribute('data-dropdown-toggle');
-              el.setAttribute('data-dropdown-toggle', replaceTrailingNumber(target, countNumber));
-            }
-
-            // update entry di webpageDb: find original record and clone to new id
-            const originalField = webpageDb.find(f => f.id === origId);
-            if (originalField) {
-              const cloned = deepClone(originalField);
-              cloned.id = newId;
-              // jika ada element_order di elemen internal, kita biarkan sama atau bisa diset ulang jika mau
-              webpageDb.push(cloned);
-            }
-          });
-          modalCopy.querySelectorAll('[id]').forEach(el => {
-            if (!el.id.includes(oldSuffix)) return;
-            const origId = el.id;
-            const newId = origId.replace(oldSuffix, newSuffix);
-
-            // update DOM id
-            el.id = newId;
-
-            // update dropdown toggles di dalam modalCopy yang mengacu ke old ids
-            if (el.hasAttribute('data-dropdown-toggle')) {
-              const target = el.getAttribute('data-dropdown-toggle');
-              el.setAttribute('data-dropdown-toggle', replaceTrailingNumber(target, countNumber));
-            }
-
-            // update entry di webpageDb: find original record and clone to new id
-            const originalField = webpageDb.find(f => f.id === origId);
-            if (originalField) {
-              const cloned = deepClone(originalField);
-              cloned.id = newId;
-              // jika ada element_order di elemen internal, kita biarkan sama atau bisa diset ulang jika mau
-              webpageDb.push(cloned);
-            }
-          });
-
-          // 6) update dropdown-toggle attributes yang mengandung oldSuffix (mis > tombol di modal)
-          modalCopy.querySelectorAll('[data-dropdown-toggle]').forEach(el => {
-            const t = el.getAttribute('data-dropdown-toggle') || '';
-            el.setAttribute('data-dropdown-toggle', t.includes(oldSuffix) ? t.replace(oldSuffix, newSuffix) : replaceTrailingNumber(t, countNumber));
-          });
-
-          modalCopy.querySelectorAll('[data-modal-hide]').forEach(el => {
-            const t = el.getAttribute('data-modal-hide') || '';
-            el.setAttribute('data-modal-hide', t.includes(oldSuffix) ? t.replace(oldSuffix, newSuffix) : replaceTrailingNumber(t, countNumber));
-          });
-
           modalEl.insertAdjacentElement('afterend', modalCopy);
 
           // 7) update webpageDb untuk btn dan modal (clone data)
@@ -5687,10 +5694,10 @@ document.getElementById('webpage').addEventListener('click', function (event) {
           }
 
           // modal (element body)
-          const originalModalObj = webpageDb.find(f => f.id === oldModalId);
+          const originalModalObj = webpageDb.find(f => f.id === `body-${oldModalId.split('-').slice(1).join('-')}`);
           if (originalModalObj) {
             const clonedModalObj = deepClone(originalModalObj);
-            clonedModalObj.id = newModalId;
+            clonedModalObj.id = `body-${newModalId.split('-').slice(1).join('-')}`;
             // update element_count jika perlu
             clonedModalObj.element_count = clonedModalObj.element_count || '0';
             webpageDb.push(clonedModalObj);
