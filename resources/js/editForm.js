@@ -744,7 +744,6 @@ function loadForm(){
                 </svg>
             </a>
         `
-
         const formUtils = document.getElementById('form-utils')
         formUtils.innerHTML=`
             <div class="flex-[1_1_calc(50%-0.5rem)] flex-col justify-center items-center p-4 bg-gradient-to-t from-blue-400 to-teal-300 rounded">
@@ -1199,7 +1198,6 @@ function loadForm(){
             select.removeEventListener('input', changeRuleCheckbox);
             select.addEventListener('input', changeRuleCheckbox);
         });
-
 
         document.querySelectorAll('[id^="answer-"]').forEach(select => {
             select.removeEventListener('input', answerFieldChange);

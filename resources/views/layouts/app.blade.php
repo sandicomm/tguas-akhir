@@ -32,5 +32,6 @@
             </main>
         </div>
         @livewireScripts
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/compressorjs/1.2.1/compressor.min.js"></script>
     </body>
 </html>

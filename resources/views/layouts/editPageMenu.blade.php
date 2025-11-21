@@ -208,7 +208,7 @@
                     </div>
 
                     <!-- ================================ FONT STYLING =============================== -->
-                     <div id="accordion-font-styling" data-accordion="collapse" class="mt-2 w-full"> 
+                     <div id="accordion-font-styling" data-accordion="collapse" class="mt-2 w-full hidden"> 
                         <h2 id="accordion-font-styling-heading-1">
                             <button type="button" class="w-full flex items-center justify-between text-sm rtl:text-right text-white rounded-sm p-1 border-0 border-b-2 border-gray-200 hover:ring-2 hover:ring-gray-200 gap-3 bg-transparent" data-accordion-target="#accordion-font-styling-body-1" aria-expanded="false" aria-controls="accordion-font-styling-body-1">
                                 <span >Font Styling</span>
@@ -296,7 +296,7 @@
                     </div>
 
                     <!-- ================================== BOX ===================================== -->
-                    <div id="accordion-box-field" data-accordion="collapse" class="mt-2 w-full"> 
+                    <div id="accordion-box-field" data-accordion="collapse" class="mt-2 w-full hidden"> 
                         <h2 id="accordion-box-field-heading-1">
                             <button type="button" class="w-full flex items-center justify-between text-sm rtl:text-right text-white rounded-sm p-1 border-0 border-b-2 border-gray-200 hover:ring-2 hover:ring-gray-200 gap-3 bg-transparent" data-accordion-target="#accordion-box-field-body-1" aria-expanded="false" aria-controls="accordion-box-field-body-1">
                                 <span >Box</span>
@@ -306,27 +306,41 @@
                             </button>
                         </h2>
                         <div id="accordion-box-field-body-1" class="hidden py-1.5 px-1 pb-2 border border-white rounded" aria-labelledby="accordion-box-field-heading-1">
-                            <div class="text-white w-full pb-2">
+                            <div class="w-full pb-2">
                                 <table class="w-full">
-                                    <tr id="box-width-field">
+                                    <tr id="box-width-field" class="text-white">
                                         <td>Width</td><td>:</td>
                                         <td>
                                             <input type="number" id="width-field" class="bg-transparent border-2 border-gray-300 text-sm rounded focus:ring-blue-500 focus:border-blue-500 w-[80%] p-1"/>
                                         </td>
                                     </tr>
-                                    <tr id="box-height-field">
+                                    <tr id="box-height-field" class="text-white">
                                         <td>Height</td><td>:</td>
                                         <td>
                                             <input type="number" id="height-field" class="bg-transparent border-2 border-gray-300 text-sm rounded focus:ring-blue-500 focus:border-blue-500 w-[80%] p-1"/>
                                         </td>
-                                    </tr>     
+                                    </tr>       
                                 </table>
+                                <div id="flex-position" class="w-full">
+                                    <h2 class="text-white">Flex Position</h2>
+                                    <div class="flex justify-center items-center w-full">
+                                        <select id="flex-position-section" class="p-1 bg-white rounded m-1 w-full">
+                                            <option value="" class="text-black">-- Pilih Position --</option>
+                                            <option value="top" class="text-black">Top</option>
+                                            <option value="center" class="text-black">Center</option>
+                                            <option value="bottom" class="text-black">Bottom</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div id="reset-box" class="w-full hidden">
+                                    <button id="btn-reset-box" class="bg-blue-500 p-1 rounded hover:bg-green-500 hover:text-white">Reset Box</button>
+                                </div>
                             </div>
                         </div>
                     </div>
 
                     <!-- ============================== BORDER ================================== -->
-                    <div id="accordion-border-field" data-accordion="collapse" class="mt-2 w-full text-white"> 
+                    <div id="accordion-border-field" data-accordion="collapse" class="mt-2 w-full text-white hidden"> 
                         <h2 id="accordion-border-field-heading-1">
                             <button type="button" class="w-full flex items-center justify-between text-sm rtl:text-right text-white rounded-sm p-1 border-0 border-b-2 border-gray-200 hover:ring-2 hover:ring-gray-200 gap-3 bg-transparent" data-accordion-target="#accordion-border-field-body-1" aria-expanded="false" aria-controls="accordion-border-field-body-1">
                                 <span>Border</span>
@@ -495,16 +509,6 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        <!-- <select name="border-wave-type" id="border-wave-type" class="p-1 bg-transparent text-white rounded border-white m-1">
-                                            <option value="type1">
-                                                <div>
-                                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320"><path fill="#0099ff" fill-opacity="1" d="M0,224L30,224C60,224,120,224,180,208C240,192,300,160,360,133.3C420,107,480,85,540,106.7C600,128,660,192,720,197.3C780,203,840,149,900,133.3C960,117,1020,139,1080,176C1140,213,1200,267,1260,282.7C1320,299,1380,277,1410,266.7L1440,256L1440,320L1410,320C1380,320,1320,320,1260,320C1200,320,1140,320,1080,320C1020,320,960,320,900,320C840,320,780,320,720,320C660,320,600,320,540,320C480,320,420,320,360,320C300,320,240,320,180,320C120,320,60,320,30,320L0,320Z"></path></svg>
-                                                </div>
-                                            </option>
-                                            <option value="type2" class="text-black">type2</option>
-                                            <option value="type3" class="text-black">type3</option>
-                                            <option value="type4" class="text-black">type4</option>
-                                        </select> -->
                                     </div>
                                     <div class="flex flex-col gap-2 mb-2">                                        
                                         <div id="accordion-wave-border-section" data-accordion="collapse" class="mt-2 px-1"> 
@@ -521,13 +525,16 @@
                                             </div>
                                         </div>
                                     </div>
+                                    <div class="flex flex-col gap-2 mb-2">
+                                        <button id="btn-reset-border-wave" class="hidden bg-blue-500 p-1  rounded hover:bg-green-500 hover:text-white">Reset</button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                     
                     <!-- ============================== BACKGROUND ================================== -->
-                    <div id="accordion-background" data-accordion="collapse" class="mt-2 w-full"> 
+                    <div id="accordion-background" data-accordion="collapse" class="mt-2 w-full hidden"> 
                         <h2 id="accordion-background-heading-1">
                             <button type="button" class="w-full flex items-center justify-between text-sm rtl:text-right text-white rounded-sm p-1 border-0 border-b-2 border-gray-200 hover:ring-2 hover:ring-gray-200 gap-3 bg-transparent" data-accordion-target="#accordion-background-body-1" aria-expanded="false" aria-controls="accordion-background-body-1">
                                 <span >Background</span>
@@ -579,7 +586,7 @@
                     </div>
                     
                     <!-- ============================== PADDING ================================== -->
-                    <div id="accordion-padding" data-accordion="collapse" class="mt-2 w-full"> 
+                    <div id="accordion-padding" data-accordion="collapse" class="mt-2 w-full hidden"> 
                         <h2 id="accordion-padding-heading-1">
                             <button type="button" class="w-full flex items-center justify-between text-sm rtl:text-right text-white rounded-sm p-1 border-0 border-b-2 border-gray-200 hover:ring-2 hover:ring-gray-200 gap-3 bg-transparent" data-accordion-target="#accordion-padding-body-1" aria-expanded="false" aria-controls="accordion-padding-body-1">
                                 <span >Padding</span>
@@ -645,7 +652,7 @@
                     </div>
 
                     <!-- ============================== MARGIN ================================== -->
-                    <div id="accordion-margin" data-accordion="collapse" class="mt-2 w-full"> 
+                    <div id="accordion-margin" data-accordion="collapse" class="mt-2 w-full hidden"> 
                         <h2 id="accordion-margin-heading-1">
                             <button type="button" class="w-full flex items-center justify-between text-sm rtl:text-right text-white rounded-sm p-1 border-0 border-b-2 border-gray-200 hover:ring-2 hover:ring-gray-200 gap-3 bg-transparent" data-accordion-target="#accordion-margin-body-1" aria-expanded="false" aria-controls="accordion-margin-body-1">
                                 <span >Margin</span>
@@ -709,11 +716,13 @@
                             </div>
                         </div>
                     </div>
+                    <!-- ============================== BTN SAVE ================================ -->
+                    <div id="wrapper-btn-save" class="w-full bg-white p-4 hidden">
+                        <button id="btn-save" class="border-2 border-black px-1 rounded hover:bg-green-500 hover:text-white">Save</button>
+                        <button id="btn-cek" class="border-2 border-black px-1 rounded hover:bg-green-500 hover:text-white">cek</button>
+                    </div>
                 </div>
             </ul>
-            <div class="w-full bg-white p-4">
-                <button id="btn-save" class="border-2 border-black px-1 rounded hover:bg-green-500 hover:text-white">Save</button>
-            </div>
         </div>
     </aside>
 </div>
