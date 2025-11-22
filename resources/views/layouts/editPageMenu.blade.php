@@ -332,8 +332,8 @@
                                         </select>
                                     </div>
                                 </div>
-                                <div id="reset-box" class="w-full hidden">
-                                    <button id="btn-reset-box" class="bg-blue-500 p-1 rounded hover:bg-green-500 hover:text-white">Reset Box</button>
+                                <div id="reset-box" class="w-full hidden mt-3">
+                                    <button id="btn-reset-box" class="w-full bg-blue-500 p-1 rounded hover:bg-green-500 text-white">Reset Box</button>
                                 </div>
                             </div>
                         </div>

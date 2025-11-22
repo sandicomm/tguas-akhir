@@ -4,6 +4,7 @@ import { globals } from '../globals.js';
 // ======== UTILITIES =========
 import { updateContent, updateActionProperty } from '../utils/updateContent.js';
 import { parseStyleObj, stringifyStyleObj } from '../utils/baseStyleObj.js';
+import { updateStylingControls } from './stylingControls.js';
 
 // ======== GLOBAL VARIABLE ASSIGNMENT =========
 let webpageDb = globals.webpageDb,
@@ -918,6 +919,8 @@ function widthHeightField(){
         // console.log('accordion', accordionSelect)
         updateStyle(accordionSelect)
         globals.accordionSelect=accordionSelect
+      }else if(editorFieldSelect.id.startsWith('field')){
+        editorFieldSelect.style.maxWidth=`${this.value}px`
       }else{
         // console.log('another', editorFieldSelect.id)
         editorFieldSelect.style.width=`${this.value}px`
@@ -935,10 +938,17 @@ function widthHeightField(){
   document.getElementById('height-field').addEventListener('keyup', function(){
     editorFieldSelect = globals.editorFieldSelect
     carouselSelect = globals.carouselSelect
+
     if(editorFieldSelect){
-      editorFieldSelect.style.minHeight=`${this.value}px`
+      if(editorFieldSelect.id.startsWith('webpage')){
+        editorFieldSelect.style.minHeight=`${this.value}px`
+      }else{
+        editorFieldSelect.style.maxHeight=`${this.value}px`
+      }
+
       updateStyle(editorFieldSelect)
       globals.editorFieldSelect=editorFieldSelect
+
     }else if(carouselSelect){
       carouselSelect.style.height=`${this.value}px`
       updateStyle(carouselSelect)
@@ -949,8 +959,10 @@ function widthHeightField(){
 
   document.getElementById('btn-reset-box').addEventListener('click', function(){
     editorFieldSelect = globals.editorFieldSelect
-    editorFieldSelect.style.width=''
-    editorFieldSelect.style.height=''
+    editorFieldSelect.style.maxWidth=''
+    editorFieldSelect.style.maxHeight=''
+    updateStyle(editorFieldSelect)
+    updateStylingControls(editorFieldSelect)
   })
 }
 // -------- Field Flex position -------
@@ -2194,8 +2206,9 @@ function borderWave() {
     borderWave.remove()
 
     webpageDb.forEach((field,index)=>{
+      console.log(field)
       if(field.id == borderWave.id){
-        if(field.action.includes('new')){
+        if(field && field.action?.includes('new')){
           field.splice(index,1)
         }else{
           field.action='delete'

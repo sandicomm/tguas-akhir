@@ -98,26 +98,28 @@ function handleElementAction(action, fieldElement, bodyElement, options = {}, id
     const target = action === 'up' ? fieldElement.previousElementSibling : fieldElement.nextElementSibling;
     if (!target) return;
 
-    // Tukar dataset dan posisi DOM
-    [fieldElement.dataset[datasetKey], target.dataset[datasetKey]] = [target.dataset[datasetKey], fieldElement.dataset[datasetKey]];
-    target.insertAdjacentElement(action === 'up' ? 'beforebegin' : 'afterend', fieldElement);
-
-    // Update di DB
-    const fieldId = resolveFieldId(fieldElement);
-    const targetId = resolveFieldId(target);
-    webpageDb.forEach(item => {
-      if (item.id === fieldId) {
-        item.element_order = fieldElement.dataset[datasetKey];
-        item.action = updateActionProperty(item.action, 'update')
-
-      }
-      if (item.id === targetId) {
-        item.element_order = target.dataset[datasetKey];
-        item.action = updateActionProperty(item.action, 'update')
-      }
-    });
-
-    afterMove?.();
+    if(!target.id.includes('footer')){
+      // Tukar dataset dan posisi DOM
+      [fieldElement.dataset[datasetKey], target.dataset[datasetKey]] = [target.dataset[datasetKey], fieldElement.dataset[datasetKey]];
+      target.insertAdjacentElement(action === 'up' ? 'beforebegin' : 'afterend', fieldElement);
+  
+      // Update di DB
+      const fieldId = resolveFieldId(fieldElement);
+      const targetId = resolveFieldId(target);
+      webpageDb.forEach(item => {
+        if (item.id === fieldId) {
+          item.element_order = fieldElement.dataset[datasetKey];
+          item.action = updateActionProperty(item.action, 'update')
+  
+        }
+        if (item.id === targetId) {
+          item.element_order = target.dataset[datasetKey];
+          item.action = updateActionProperty(item.action, 'update')
+        }
+      });
+  
+      afterMove?.();
+    }
   }
 
   // =========================
@@ -177,7 +179,10 @@ function handleElementAction(action, fieldElement, bodyElement, options = {}, id
     // ========== Section Delete ==========
     if (idParts[1] === 'section') {
       console.log(bodyElement, bodyElement.children.length > 1, bodyElement.children.length)
-      if (bodyElement.children.length > 1) {
+      let section = bodyElement.querySelectorAll("[id^='webpage-section-']");
+      let sectionNotFooter = Array.from(section).filter(sec => !sec.id.includes('footer'));
+
+      if (sectionNotFooter.length > 1) {
         const key =
           parseInt(fieldElement.dataset.elementOrder) >= parseInt(bodyElement.dataset.elementCount)
           ? 'elementCount'
@@ -205,6 +210,7 @@ function handleElementAction(action, fieldElement, bodyElement, options = {}, id
         updateStylingControls()
       
       }else{
+        alert('Section Tidak Boleh Terhapus Semua')
         return false
       }
     }

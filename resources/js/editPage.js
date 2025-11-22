@@ -1011,14 +1011,29 @@ if(idParts[0] =='up' || idParts[0] == 'down' || idParts[0] == 'delete'){
     handleElementAction('down', fieldElement, bodyElement, {
       datasetKey: 'elementOrder'
     }, idParts);
-  }else if(idParts[0] == 'delete'){
-    const confirmDelete = confirm("Apakah kamu yakin ingin menghapus elemen ini?");
+  }else if(idParts[0] == 'delete'){ 
+    let sectionDelete=true
 
-    if (confirmDelete) {
-      handleElementAction('delete', fieldElement, bodyElement, {
-        datasetKey: 'elementOrder'
-      }, idParts);
-      event.target.parentElement.parentElement.parentElement.remove()
+    if(idParts[1] ==='section'){
+      let section = bodyElement.querySelectorAll("[id^='webpage-section-']");
+      let sectionNotFooter = Array.from(section).filter(sec => !sec.id.includes('footer'));
+      
+      if (sectionNotFooter.length > 1) {
+        sectionDelete=true
+      }else{
+        sectionDelete=false
+        alert("section tidak boleh terhapus semua")
+      }
+    }
+
+    if(sectionDelete){
+      const confirmDelete = confirm("Apakah kamu yakin ingin menghapus elemen ini?");
+      if (confirmDelete) {
+        handleElementAction('delete', fieldElement, bodyElement, {
+          datasetKey: 'elementOrder'
+        }, idParts);
+        event.target.parentElement.parentElement.parentElement.remove()
+      }
     }
   }
 }

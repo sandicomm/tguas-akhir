@@ -115,8 +115,8 @@ const createSection = (idPrefix,borderWave,order,count,style)=>{
 }
 const createSectionFooter = (idPrefix,order,count,style)=>{
 let section=`
-    <div id="webpage-${idPrefix}" data-element-order="${order}" class="bg-gray-200 flex flex-col justify-center items-center border border-gray-700" style="${style}">
-    <div class="bg-white rounded-full absolute right-1 top-1 z-30 cursor-pointer" data-dropdown-toggle="dropdown-${idPrefix}" data-dropdown-placement="right-end">
+    <div id="webpage-${idPrefix}" data-element-order="${order}" class="relative bg-gray-200 flex flex-col justify-center items-center border border-gray-700" style="${style}">
+    <div class="bg-white rounded-full absolute right-0 top-0 z-50 cursor-pointer" data-dropdown-toggle="dropdown-${idPrefix}" data-dropdown-placement="right-end">
         ${renderSvg()}                 
     </div>
 
@@ -296,7 +296,7 @@ const addSection = (event)=>{
           </div>
       `
 
-      webpage.insertAdjacentHTML('beforeend', newSection)
+      webpage.querySelector('[id="webpage-section-footer"]').insertAdjacentHTML('beforebegin', newSection)
 
       webpageDbParentSection[0].element_count = elementCount
       webpageDbParentSection[0].action =  updateActionProperty(webpageDbParentSection[0].action, 'update')
