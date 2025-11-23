@@ -91,7 +91,7 @@ const addField=(event)=>{
     }
     return `<div data-element-order="${fieldNumber}" style="position:relative;display:flex;justify-content:center;align-items:center;flex-direction:column;">
       ${dropdown}
-      <div id="${idPrefix}" contenteditable="true" style="ol{list-style-type:decimal;}ul{list-style-type:disc;};" class="border border-b-1 border-gray-500 p-1 max-w-[100%] scroll-hidden overflow-scroll"></div>
+      <div id="${idPrefix}" contenteditable="true" style="ol{list-style-type:decimal;}ul{list-style-type:disc;};" class="border border-b-1 border-gray-500 p-1 max-w-[100%] scroll-hidden overflow-scroll">Field Text</div>
     </div>
     `
   }
@@ -195,6 +195,7 @@ const addField=(event)=>{
     type: 'field',
     style: 'ol{list-style-type:decimal;}ul{list-style-type:disc;};',
     action:'new-add',
+    conten:'Field Text',
     element_order: fieldNumber
   });
 

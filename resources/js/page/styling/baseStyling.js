@@ -168,7 +168,7 @@ function updateStyle(editorFieldSelect, indicator, file, indicatorCarousel){
 
           console.log('before',style)
 
-          const match = item.style.match(/url\((['"]?)(.*?)\1\)/);
+          const match = item.style?.match(/url\((['"]?)(.*?)\1\)/);
           if (match) {
             mediaDelete =match[2]
           }
@@ -920,7 +920,7 @@ function widthHeightField(){
         updateStyle(accordionSelect)
         globals.accordionSelect=accordionSelect
       }else if(editorFieldSelect.id.startsWith('field')){
-        editorFieldSelect.style.maxWidth=`${this.value}px`
+        editorFieldSelect.style.width=`${this.value}px`
       }else{
         // console.log('another', editorFieldSelect.id)
         editorFieldSelect.style.width=`${this.value}px`
@@ -943,7 +943,7 @@ function widthHeightField(){
       if(editorFieldSelect.id.startsWith('webpage')){
         editorFieldSelect.style.minHeight=`${this.value}px`
       }else{
-        editorFieldSelect.style.maxHeight=`${this.value}px`
+        editorFieldSelect.style.height=`${this.value}px`
       }
 
       updateStyle(editorFieldSelect)
@@ -959,8 +959,8 @@ function widthHeightField(){
 
   document.getElementById('btn-reset-box').addEventListener('click', function(){
     editorFieldSelect = globals.editorFieldSelect
-    editorFieldSelect.style.maxWidth=''
-    editorFieldSelect.style.maxHeight=''
+    editorFieldSelect.style.width=''
+    editorFieldSelect.style.height=''
     updateStyle(editorFieldSelect)
     updateStylingControls(editorFieldSelect)
   })

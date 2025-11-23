@@ -178,11 +178,6 @@ function handleElementAction(action, fieldElement, bodyElement, options = {}, id
 
     // ========== Section Delete ==========
     if (idParts[1] === 'section') {
-      console.log(bodyElement, bodyElement.children.length > 1, bodyElement.children.length)
-      let section = bodyElement.querySelectorAll("[id^='webpage-section-']");
-      let sectionNotFooter = Array.from(section).filter(sec => !sec.id.includes('footer'));
-
-      if (sectionNotFooter.length > 1) {
         const key =
           parseInt(fieldElement.dataset.elementOrder) >= parseInt(bodyElement.dataset.elementCount)
           ? 'elementCount'
@@ -209,10 +204,7 @@ function handleElementAction(action, fieldElement, bodyElement, options = {}, id
         setDeleteStatus(id.slice(1).join('-'))
         updateStylingControls()
       
-      }else{
-        alert('Section Tidak Boleh Terhapus Semua')
-        return false
-      }
+      
     }
 
     // ========== Accordion Header Delete ==========

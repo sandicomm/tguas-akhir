@@ -95,6 +95,17 @@ export function updateStylingControls(data, field) {
           borderColor = rgbToHex(borderColor[0],borderColor[1],borderColor[2])
         }
 
+        const justifySection = data.querySelector('[id^="editor-container-section-"]').style.justifyContent
+        const flexBoxSection = document.getElementById('flex-position-section')
+        console.log('justify section:',justifySection)
+        if(justifySection === 'start'){
+          flexBoxSection.querySelector('[value="top"]').selected=true
+        }else if(justifySection === 'center'){
+          flexBoxSection.querySelector('[value="center"]').selected=true
+        }else if(justifySection === 'end'){
+          flexBoxSection.querySelector('[value="end"]').selected=true
+        }
+
         document.getElementById('color-field-input').value = fieldColor
         document.getElementById('border-color-field').value = borderColor;
 
@@ -132,8 +143,8 @@ export function updateStylingControls(data, field) {
         })
 
         let fontColor
-        if (field) {
-          fontColor = field.getAttribute('color') ?? field.closest('font')?.getAttribute('color') ?? '';
+        if (data) {
+          fontColor = data.getAttribute('color') ?? data.closest('font')?.getAttribute('color') ?? '';
           // console.log(fontColor);
         } else {
           console.error("Variabel 'field' bernilai null atau tidak ditemukan.");
@@ -221,7 +232,7 @@ export function updateStylingControls(data, field) {
         document.getElementById("heading-text").innerHTML = data.querySelector('span').innerHTML
         console.log('btn head modal accordion')
         let stylingWebpage=['heading-text-wrapper','accordion-head-indicator-wrapper',
-          'accordion-font-styling','accordion-box-field','box-width-field',
+          'accordion-font-styling','accordion-box-field','box-width-field','accordion-modal-type',
           'accordion-border-field','accordion-background','bg-image-styling','accordion-padding',
           'accordion-margin','wrapper-btn-save'
         ]
@@ -229,6 +240,29 @@ export function updateStylingControls(data, field) {
         stylingWebpage.forEach(id=>{
           document.getElementById(id).classList.remove('hidden')
         })
+
+        const headIndicator = document.getElementById('head-indicator-type')
+        let indicatorType = data.dataset.typeIndicator
+        if(data.id.startsWith('btn-heading')){
+          indicatorType = data.parentElement.parentElement.parentElement.parentElement.dataset.typeIndicator
+          console.log(indicatorType, )
+        }else{
+          indicatorType = data.dataset.typeIndicator
+        }
+        console.log(indicatorType, data)
+        if(indicatorType === "question"){
+          headIndicator.querySelector('[value="question"]').selected=true
+          
+        }else if(indicatorType === "icon"){
+          headIndicator.querySelector('[value="icon"]').selected=true
+          
+        }else if(indicatorType === "none"){
+          headIndicator.querySelector('[value="none"]').selected=true
+          
+        }else{
+          headIndicator.querySelector('[value="default"]').selected=true
+
+        }
 
         let fieldColor= data.style.backgroundImage || data.style.backgroundColor
         let borderColor= data.style.borderColor
@@ -261,6 +295,13 @@ export function updateStylingControls(data, field) {
         let fieldColor= data.style.backgroundImage || data.style.backgroundColor
         let borderColor= data.style.borderColor
 
+        const modalSelect = document.getElementById('modal-type')
+        if(data.parentElement.dataset.modalBackdrop){
+          modalSelect.querySelector('[value="static"]').selected=true
+        }else{
+          modalSelect.querySelector('[value="default"]').selected=true
+        }
+
         fieldColor = getRgbArray(fieldColor)
 
         if(fieldColor){
@@ -279,7 +320,8 @@ export function updateStylingControls(data, field) {
       }else if(data.id.startsWith('section-accordion')){
 
         let stylingWebpage=['accordion-box-field','box-width-field','box-height-field','accordion-border-field',
-          'accordion-background','bg-image-styling','accordion-padding','accordion-margin','wrapper-btn-save'
+          'accordion-background','bg-image-styling','accordion-accordion-type','accordion-padding','accordion-margin',
+          'wrapper-btn-save'
         ]
         
         stylingWebpage.forEach(id=>{
@@ -288,6 +330,15 @@ export function updateStylingControls(data, field) {
 
         let fieldColor= data.style.backgroundImage || data.style.backgroundColor
         let borderColor= data.style.borderColor
+
+        const parentAccoridon = data.parentElement.parentElement.parentElement
+        const accordionType = document.getElementById('accordion-type')
+
+        if(parentAccoridon.dataset.accordion==='open'){
+          accordionType.querySelector('[value="open"]').selected=true
+        }else if(parentAccoridon.dataset.accordion==='collapse'){
+          accordionType.querySelector('[value="collapse"]').selected=true
+        }
 
         fieldColor = getRgbArray(fieldColor)
 

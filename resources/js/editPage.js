@@ -199,7 +199,7 @@ function setListener(){
         globals.carouselSelect = null
 
         updateStylingControls(editorFieldSelect)
-        // console.log('parent modal', editorFieldSelect, accordionSelect)
+        console.log('parent modal', editorFieldSelect)
       }
     })
   })
@@ -208,10 +208,10 @@ function setListener(){
     carouselElement.addEventListener('click', function(e){
       carouselSelect = carouselElement
       globals.carouselSelect = carouselElement
-
+      
       editorFieldSelect=null
       globals.editorFieldSelect=null
-
+      
       accordionSelect =null
       globals.accordionSelect =null
       console.log('carousel:', globals.carouselSelect)
@@ -1015,9 +1015,13 @@ if(idParts[0] =='up' || idParts[0] == 'down' || idParts[0] == 'delete'){
     let sectionDelete=true
 
     if(idParts[1] ==='section'){
-      let section = bodyElement.querySelectorAll("[id^='webpage-section-']");
+      let section = bodyElement.querySelectorAll("[id^='section-accordion']");
       let sectionNotFooter = Array.from(section).filter(sec => !sec.id.includes('footer'));
       
+      if(idParts.includes('webpage')){
+        section = bodyElement.querySelectorAll("[id^='webpage-section']");
+        sectionNotFooter = Array.from(section).filter(sec => !sec.id.includes('footer'));
+      }
       if (sectionNotFooter.length > 1) {
         sectionDelete=true
       }else{

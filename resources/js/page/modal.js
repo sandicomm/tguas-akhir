@@ -31,9 +31,11 @@ function arraySubsequenceMatch(parts, targetParts) {
 
 function modalTypeStyling(){
   document.getElementById('modal-type').addEventListener('change', function(){
+    editorFieldSelect=globals.editorFieldSelect
+    webpageDb=globals.webpageDb
     let id = `body-${editorFieldSelect.parentElement.id.split('-').slice(1).join('-')}`
     if(this.value === 'default'){
-      editorFieldSelect.parentElement.removeAttribute('data-modal-backdrop')
+      editorFieldSelect.parentElement.dataset.modalBackdrop=''
       webpageDb.forEach(page=>{
         if(page.id === id){
           page.action =  updateActionProperty(page.action, 'update')
@@ -41,7 +43,7 @@ function modalTypeStyling(){
         }
       })
     }else if(this.value === 'static'){
-      editorFieldSelect.parentElement.setAttribute('data-modal-backdrop', 'static')
+      editorFieldSelect.parentElement.dataset.modalBackdrop='static'
       webpageDb.forEach(page=>{
         if(page.id === id){
           page.action =  updateActionProperty(page.action, 'update')
