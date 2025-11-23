@@ -70,11 +70,19 @@ export function updateStylingControls(data, field) {
       // document.getElementById('border-wave-position-bottom').cheked = false
 
       if(idParts[0] == 'webpage'){
-        let stylingWebpage=[ 
-          'accordion-box-field','box-height-field','flex-position','accordion-border-field',
-          'accordion-border-wave-section','accordion-background','bg-image-styling','accordion-padding',
-          'accordion-margin','wrapper-btn-save'
-        ]
+        let stylingWebpage
+        if(idParts.includes('prolog')){
+          stylingWebpage=[ 
+            'accordion-box-field','flex-position','accordion-border-wave-section',
+            'accordion-background','bg-image-styling','accordion-padding','wrapper-btn-save'
+          ]
+        }else{
+          stylingWebpage=[ 
+            'accordion-box-field','box-height-field','flex-position','accordion-border-field',
+            'accordion-border-wave-section','accordion-background','bg-image-styling','accordion-padding',
+            'accordion-margin','wrapper-btn-save'
+          ]
+        }
 
         stylingWebpage.forEach(id=>{
           document.getElementById(id).classList.remove('hidden')

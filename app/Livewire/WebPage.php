@@ -6,6 +6,7 @@ use Livewire\Component;
 use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\File;
 use App\Models\Webpage as Page;
 use Illuminate\Support\ItemNotFoundException;
 
@@ -50,9 +51,18 @@ class WebPage extends Component
                     'element_count' => 'nullable|string',
                 ])->validate();
                 if($request->hasFile("items.$index.file") && $item['type'] === 'file'){
-                    $path = $request->file("items.$index.file")->store('media', 'public');
-                    $filename = basename($path);
-                    $newUrl = asset('storage/media/' . $filename);
+                    //shared hosting ver
+                    $filename = time().'_'.$request->file("items.$index.file")->getClientOriginalName();
+                    $request->file("items.$index.file")->move(public_path('media'), $filename);
+
+                    $path = 'media/' . $filename;
+
+                    $newUrl = asset('media/' . $filename);
+
+                    //local ver
+                    //$path = $request->file("items.$index.file")->store('media', 'public');
+                    //$filename = basename($path);
+                    //$newUrl = asset('storage/media/' . $filename);
 
                     $urlMap[$item['id']] = $newUrl;
 
@@ -114,7 +124,10 @@ class WebPage extends Component
 
                             // Kalau tidak ada yang pakai, baru hapus
                             if (!$isUsedDB && !$isUsedRequest) {
-                                \Storage::disk('public')->delete("media/" . $filename);
+                                //local ver
+                                //Storage::disk('public')->delete("media/" . $filename);
+                                //hosting ver
+                                File::delete(public_path('media/' . $filename));
                             }
                             
                         }
@@ -154,7 +167,11 @@ class WebPage extends Component
 
                                     // Hapus file jika tidak digunakan di mana pun
                                     if (!$isUsedDB && !$isUsedRequest) {
-                                        Storage::disk('public')->delete("media/" . $filename);
+                                        //local ver
+                                        //Storage::disk('public')->delete("media/" . $filename);
+                                        //hosting ver
+                     
+                                        File::delete(public_path('media/' . $filename));
                                     }
                                 }
                             }
@@ -206,7 +223,10 @@ class WebPage extends Component
                                         });
 
                                         if(!$isUsedDB && !$isUsedRequest){
-                                            Storage::disk('public')->delete("media/" . $filename);
+                                            //local ver
+                                            //Storage::disk('public')->delete("media/" . $filename);
+                                            //hosting ver
+                                            File::delete(public_path('media/' . $filename));
                                         }
                                     }
                                 }
@@ -272,8 +292,15 @@ class WebPage extends Component
                                             (!empty($item['style']) && str_contains($item['style'], $filename));
                                     });
 
-                                if (!$isUsedDB && !$isUsedRequest && Storage::disk('public')->exists("media/" . $filename)) {
-                                    Storage::disk('public')->delete("media/" . $filename);
+                                $filePath = public_path('media/' . $filename);
+                                if (!$isUsedDB && !$isUsedRequest && file_exists($filePath)) {
+                                    //local ver
+                                    //Storage::disk('public')->delete("media/" . $filename);
+                                    //hosting ver
+                     
+                                    //unlink($path);
+                                    
+                                    File::delete(public_path('media/' . $filename));
                                 }
                             }
                         }
@@ -307,8 +334,15 @@ class WebPage extends Component
                                             (!empty($item['style']) && str_contains($item['style'], $filename));
                                     });
     
-                                    if (!$isUsedDB && !$isUsedRequest && Storage::disk('public')->exists("media/" . $filename)) {
-                                        Storage::disk('public')->delete("media/" . $filename);
+                                    $filePath = public_path('media/' . $filename);
+                                    if (!$isUsedDB && !$isUsedRequest && file_exists($filePath)) {
+                                        //local ver
+                                        //Storage::disk('public')->delete("media/" . $filename);
+                                        //hosting ver
+                    
+                                        //unlink($path);
+                                        
+                                        File::delete(public_path('media/' . $filename));
                                     }
                                 }
                             }
@@ -332,8 +366,13 @@ class WebPage extends Component
                                         return !empty($item['style']) && str_contains($item['style'], $filename) && $item['action'] !=='delete';
                                     });
     
-                                    if (!$isUsedDB && !$isUsedRequest && Storage::disk('public')->exists("media/" . $filename)) {
-                                        Storage::disk('public')->delete("media/" . $filename);
+                                   $filePath = public_path('media/' . $filename);
+                                    if (!$isUsedDB && !$isUsedRequest && file_exists($filePath)) {
+                                        //local ver
+                                        //Storage::disk('public')->delete("media/" . $filename);
+                                        //hosting ver
+                               
+                                        File::delete(public_path('media/' . $filename));
                                     }
                                 }
                             }

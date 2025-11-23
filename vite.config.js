@@ -8,14 +8,14 @@ export default defineConfig({
             refresh: true,
         })
     ],
-    build: {
-        // output langsung ke folder build di public_html (karena public_path() sudah di-override)
-        outDir: 'build',
-        emptyOutDir: true,
-        manifest: true,
-        assetsDir: 'assets',
-        rollupOptions: {
+    // build: {
+    //     // output langsung ke folder build di public_html (karena public_path() sudah di-override)
+    //     outDir: 'build',
+    //     emptyOutDir: true,
+    //     manifest: true,
+    //     assetsDir: 'assets',
+    //     rollupOptions: {
 
-        },
-      },
+    //     },
+    //   },
 });

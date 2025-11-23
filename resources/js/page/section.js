@@ -66,7 +66,7 @@ const createSection = (idPrefix,borderWave,order,count,style)=>{
               <a id="add-carousel-element-${idPrefix}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Carousel</a>
               </li>`
 
-    if(param.includes('prolog') || idPrefix.includes('footer')){
+    if(idPrefix.includes('prolog') || idPrefix.includes('footer')){
       dropdownSection = ``
       dropdownElement=`
          <li>
@@ -95,7 +95,7 @@ const createSection = (idPrefix,borderWave,order,count,style)=>{
     styleWebpage = styleWebpage.replace(/\s{2,}/g, ' ');
 
     section=`
-      <div id="webpage-${idPrefix}" data-element-order="${order}" class="bg-gray-200 flex flex-col justify-center items-center border border-gray-700" style="${styleWebpage}">
+      <div id="webpage-${idPrefix}" data-element-order="${order}" class="bg-gray-200 flex flex-col ${idPrefix.includes('prolog') ? 'min-h-[100dvh]' : ''} justify-center items-center border border-gray-700" style="${styleWebpage}">
         <div class="bg-white rounded-full absolute right-1 top-1 z-30 cursor-pointer" data-dropdown-toggle="dropdown-${idPrefix}" data-dropdown-placement="right-end">
           ${renderSvg()}               
         </div>

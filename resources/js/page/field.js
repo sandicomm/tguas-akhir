@@ -116,7 +116,7 @@ const addField=(event)=>{
     idPrefix = `${idParts.slice(1, idParts.length).join('-')}-${fieldNumber}`
 
   }else{
-    if(param.includes('prolog-web')){
+    if(idParts.join('-').includes('prolog-web')){
       idAppendField = `editor-container-section-prolog-web-${idParts[6]}`
       bodyAppend = document.getElementById(idAppendField)
 
@@ -124,7 +124,7 @@ const addField=(event)=>{
       bodyAppend.dataset.elementCount = fieldNumber
       idPrefix = `field-${idParts.slice(2, idParts.length).join('-')}-${fieldNumber}`
       
-    }else if(param.includes('prolog-emodul')){
+    }else if(idParts.join('-').includes('prolog-emodul')){
       idAppendField = `editor-container-section-prolog-emodul-${idParts[6]}`
       bodyAppend = document.getElementById(idAppendField)
 
@@ -174,9 +174,9 @@ const addField=(event)=>{
   if(idParts.includes('modal')){
     document.getElementById(idAppendField).parentElement.parentElement.insertAdjacentHTML('beforeend', bodyDropdown)
   }else{
-    if(param.includes('prolog-web')){
+    if(idParts.join('-').includes('prolog-web')){
       document.getElementById(`webpage-section-prolog-web-${idParts.find(part => !isNaN(part))}`).insertAdjacentHTML('beforeend', bodyDropdown)
-    }else if(param.includes('prolog-emodul')){
+    }else if(idParts.join('-').includes('prolog-emodul')){
       document.getElementById(`webpage-section-prolog-emodul-${idParts.find(part => !isNaN(part))}`).insertAdjacentHTML('beforeend', bodyDropdown)
 
     }else if(idPrefix.includes('footer')){
@@ -248,6 +248,7 @@ const copyField = (idParts) => {
   // --- 2️⃣ Buat ID baru dan clone node ---
   const newId = replaceTrailingNumber(oldId, countNumber);
   const copyElement = parent.cloneNode(true);
+  console.log('prolog:', newId)
 
   copyElement.dataset.elementOrder = String(parseInt(copyElement.dataset.elementOrder || '0', 10) + 1);
 

@@ -1128,7 +1128,7 @@ document.getElementById('btn-save').addEventListener('click', async function() {
       await sendBatch(
           fileChunks[i],
           `batch file ${i + 1}/${fileChunks.length}`,
-          "http://127.0.0.1:8000/webpage/store",
+          "https://shd.smartdiabetes.my.id/webpage/store",
           false
       );
   }
@@ -1150,13 +1150,14 @@ document.getElementById('btn-save').addEventListener('click', async function() {
       await sendBatch(
           nonFileChunks[i],
           `batch data ${i + 1}/${nonFileChunks.length}`,
-          "http://127.0.0.1:8000/webpage/store",
+          "https://shd.smartdiabetes.my.id/webpage/store",
           true
       );
   }
-
+  // https://shd.smartdiabetes.my.id/webpage/store
   document.getElementById('loading-overlay').style.display = 'none';
   alert('✅ Semua data berhasil disimpan.');
+  window.location.reload();
 });
 
 document.getElementById('btn-cek').addEventListener('click', function(){
