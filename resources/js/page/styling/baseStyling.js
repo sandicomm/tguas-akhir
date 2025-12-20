@@ -4,10 +4,11 @@ import { globals } from '../globals.js';
 // ======== UTILITIES =========
 import { updateContent, updateActionProperty } from '../utils/updateContent.js';
 import { parseStyleObj, stringifyStyleObj } from '../utils/baseStyleObj.js';
-import { updateStylingControls } from './stylingControls.js';
+import { updateStylingControls, isLightColor } from './stylingControls.js';
 
 // ======== GLOBAL VARIABLE ASSIGNMENT =========
 let webpageDb = globals.webpageDb,
+  fileDb = globals.file,
   editorFieldSelect = globals.editorFieldSelect,
   editCarouselItem = globals.editCarouselItem,
   carouselSelect = globals.carouselSelect,
@@ -57,6 +58,7 @@ function hexToRgb(hex) {
     b: bigint & 255
   };
 }
+
 function applyListStyle() {
   editorFieldSelect.querySelectorAll('ol').forEach(ol => {
     ol.style.listStyleType = 'decimal';
@@ -81,36 +83,35 @@ function applyListStyle() {
   });
   globals.editorFieldSelect=editorFieldSelect
 }
-function updateStyle(editorFieldSelect, indicator, file, indicatorCarousel){
+
+function updateStyle(editorFieldSelect, indicator, file, indicatorCarousel, url, uniqueKey){
   webpageDb = globals.webpageDb
-  let mediaDelete=''
+  fileDb = globals.file
+
+  let mediaDelete=null
   let id
-  webpageDb.forEach(item=>{
-    if(editorFieldSelect.id.startsWith('btn-modal-')){
-      id=editorFieldSelect.id.split('-').slice(1).join('-')
-    }else if(editorFieldSelect.id.startsWith('parent-modal-')){
-      id=`body-${editorFieldSelect.id.split('-').slice(1).join('-')}`
-    }else{
-      id=editorFieldSelect.id
-    }
-    console.log(id)
-    // console.log(indicatorCarousel)
+
+  if(editorFieldSelect.id.startsWith('btn-modal-')){
+    id=editorFieldSelect.id.split('-').slice(1).join('-')
+  }else if(editorFieldSelect.id.startsWith('parent-modal-')){
+    id=`body-${editorFieldSelect.id.split('-').slice(1).join('-')}`
+  }else{
+    id=editorFieldSelect.id
+  }
+  
+  webpageDb.some(item=>{
     if(item.id === id){
       if(indicator === 'bg-image'){
         if(indicatorCarousel === 'on-image'){
           let style = editorFieldSelect.style.cssText
+
           if(style.includes('background-color')){
             style = style.replace(/background-color:\s*[^;]+;/, '');
           }
 
-          // Buat kode unik berdasarkan file
-          const randomKey = Math.random().toString(36).substring(2, 8);
-          const safeName = file.name.replace(/\s+/g, '_'); // hindari spasi
-          const uniqueKey = `__temp_media_${randomKey}_${safeName}__`;
-
           const match = item.style.match(/url\((['"]?)(.*?)\1\)/);
           if (match) {
-            mediaDelete =match[2]
+            mediaDelete = match[2]
           }
 
           style = style.replace(
@@ -119,55 +120,45 @@ function updateStyle(editorFieldSelect, indicator, file, indicatorCarousel){
           );
 
           item.style=style
-          webpageDb.push({
-            id:uniqueKey,
-            action:'add',
-            file:file,
-            type:'file'
-          })
+          if(url){
+            fileDb.push({
+              id:uniqueKey,
+              type:'file',
+              filetype:'img',
+              action:'add',
+              file:file,
+              url:url
+            })
+          }
 
         }else if(indicatorCarousel === 'below-image'){
-          let imgTextOnImage = webpageDb.findIndex(field => field.id===`img-text-on-image-${item.id}`)
+          let imgTextOnImage = webpageDb.find(field => field.id===`img-text-on-image-${item.id}`)
           if(file){
-            const randomKey = Math.random().toString(36).substring(2, 8);
-            const safeName = file.name.replace(/\s+/g, '_'); // hindari spasi
-            const uniqueKey = `__temp_media_${randomKey}_${safeName}__`;
-           
-            const match = item.style.match(/url\((['"]?)(.*?)\1\)/);
-            if (match) {
-              mediaDelete =match[2]
+            mediaDelete = imgTextOnImage.content
+    
+            if(url){
+              fileDb.push({
+                id:uniqueKey,
+                type:'file',
+                filetype:'img',
+                action:'add',
+                file:file,
+                url:url
+              })
             }
 
-            webpageDb.push({
-              id:uniqueKey,
-              file:file,
-              action:'add',
-              type:'file'
-            })
-
-            console.log(imgTextOnImage, `img-text-on-image-${item.id}`,webpageDb[imgTextOnImage])
-            webpageDb[imgTextOnImage].content=uniqueKey
-            webpageDb[imgTextOnImage].action=updateActionProperty(webpageDb[imgTextOnImage].action, 'update')
+   
+            imgTextOnImage.content=uniqueKey
+            imgTextOnImage.action=updateActionProperty(imgTextOnImage.action, 'update')
           }
 
           let style = editorFieldSelect.children[1]
-          console.log(style, editorFieldSelect.children[1], editorFieldSelect)
-          
           let bgColor = style.style.backgroundColor
-          
           item.style = `background-color: ${bgColor};`;
-
+          id=`img-text-on-image-${item.id}`
         }else{
           // Ambil style awal
           let style = editorFieldSelect.style.cssText || '';
-
-          // Buat kode unik berdasarkan file
-          const randomKey = Math.random().toString(36).substring(2, 8);
-          const safeName = file.name.replace(/\s+/g, '_'); // hindari spasi
-          const uniqueKey = `__temp_media_${randomKey}_${safeName}__`;
-
-          console.log('before',style)
-
           const match = item.style?.match(/url\((['"]?)(.*?)\1\)/);
           if (match) {
             mediaDelete =match[2]
@@ -177,22 +168,36 @@ function updateStyle(editorFieldSelect, indicator, file, indicatorCarousel){
             /url\((['"]?)([^'")]+)\1\)/gi,
             `url('${uniqueKey}')`
           );
+
           let editorStyle=''
           if(editorFieldSelect.id.startsWith('webpage')){
             editorStyle=editorFieldSelect.querySelector('[id^="editor-container"]').style.cssText
           }
+
           item.style=style+editorStyle
 
-          webpageDb.push({
-            id:uniqueKey,
-            file:file,
-            action:'add',
-            type:'file'
-          })
+          if(url){
+            fileDb.push({
+              id:uniqueKey,
+              type:'file',
+              filetype:'img',
+              file:file,
+              action:'add',
+              url:url
+            })
+          }else{
+            fileDb.push({
+              id:uniqueKey,
+              type:'file',
+              action:'add',
+              filetype:'img',
+              file:file,
+            })
+          }
         }
 
       }else{
-        console.log('field section')
+
         if(item.type === "carousel") {
           // khusus carousel
           let styleObj = parseStyleObj(item.style);
@@ -218,15 +223,19 @@ function updateStyle(editorFieldSelect, indicator, file, indicatorCarousel){
           item.style = stringifyStyleObj(styleObj);
           
         }else{
-          console.log('bukan carousel')
+          // console.log('bukan carousel')
           if(id.startsWith('item-carousel')){
-            console.log(editorFieldSelect, editorFieldSelect.children[1])
+       
             let baseStyle = editorFieldSelect.style.cssText
+            if(editorFieldSelect.querySelector('[id^="img-text"]')){
+          
+              baseStyle = editorFieldSelect.children[1].style.cssText
+            }
             let oldUrl = null;
   
             let urlMatch = (item.style || '').match(/url\(['"]?([^'")]+)['"]?\)/);
             if (urlMatch) oldUrl = urlMatch[1];
-            console.log(oldUrl, baseStyle)
+       
   
             if (oldUrl) {
               baseStyle = baseStyle.replace(
@@ -234,14 +243,17 @@ function updateStyle(editorFieldSelect, indicator, file, indicatorCarousel){
                 `url(${oldUrl})`
               );
             }
+
             item.style = baseStyle;
+    
+
           }else{
             let baseStyle = editorFieldSelect.style.cssText;
             let oldUrl = null;
   
             let urlMatch = (item.style || '').match(/url\(['"]?([^'")]+)['"]?\)/);
             if (urlMatch) oldUrl = urlMatch[1];
-            console.log(oldUrl, baseStyle)
+         
   
             if (oldUrl) {
               baseStyle = baseStyle.replace(
@@ -251,19 +263,18 @@ function updateStyle(editorFieldSelect, indicator, file, indicatorCarousel){
             }
   
             if (editorFieldSelect.id.startsWith('webpage')) {
-              console.log('webpage:', baseStyle)
               let styleEditor = editorFieldSelect.querySelector('[id^="editor"]');
               let styleEditorAttr = styleEditor ? styleEditor.style.cssText : '';
               item.style = styleEditorAttr + baseStyle;
+
             } else {
-              console.log('bukan webpage:', baseStyle)
               item.style = baseStyle;
             }
           }
         }
       }
       item.action=updateActionProperty(item.action, 'update')
-      return
+      return true
     }
   })
 
@@ -277,36 +288,47 @@ function updateStyle(editorFieldSelect, indicator, file, indicatorCarousel){
           content.includes(mediaDelete)
   });
 
-  if (mediaDelete && !checkUsedMedia) {
-    webpageDb = webpageDb.filter(el => el.id !== mediaDelete);
+  const target = fileDb.find(el => el.id === mediaDelete);
+  if (target && !checkUsedMedia) {
+    delete target.action;
   }
 
-  console.log(webpageDb)
   globals.webpageDb=webpageDb
+  globals.file=fileDb
 }
 // ------- Font Styling --------
 function fontStylingField(){
   document.getElementById('heading-text').addEventListener('keyup', function () {
     editorFieldSelect = globals.editorFieldSelect
-    // console.log(this.textContent)
-    // console.log(editorFieldSelect)
-    editorFieldSelect.querySelector('span').innerHTML = this.innerHTML;
-    updateContent(editorFieldSelect)
+
+    if(editorFieldSelect.id.startsWith('section-accordion')){
+      const heading = document.getElementById(`btn-heading-${editorFieldSelect.id.split('-').slice(1,-1).join('-')}`)
+      heading.children[0].outerHTML = this.innerHTML
+      updateContent(heading)
+    }else{
+      editorFieldSelect.children[0].outerHTML = this.innerHTML;
+      updateContent(editorFieldSelect)
+    }
+
     globals.editorFieldSelect=editorFieldSelect
   });
 
   document.getElementById('font-color-input').addEventListener('change', function () {
     editorFieldSelect = globals.editorFieldSelect
     savedSelection = globals.savedSelection
+
+    let headingTextWrapper = document.getElementById('heading-text-wrapper')
+    let headingText = document.getElementById('heading-text')
+
     const sel = window.getSelection();
-    // console.log(document.getElementById('heading-text-wrapper').classList.)
+ 
     let fontField = null
-    if(document.getElementById('heading-text-wrapper').classList.contains('hidden')){
+    if(headingTextWrapper.classList.contains('hidden')){
       fontField = editorFieldSelect
     }else{
       fontField = document.getElementById('heading-text')
     }
-    // console.log(savedSelection)
+  
   
     if (savedSelection) {
       sel.removeAllRanges();
@@ -320,8 +342,10 @@ function fontStylingField(){
       if (startInside && endInside && !range.collapsed) {
         fontField.dataset.fieldFontColor = this.value;
 
-        if(!(document.getElementById('heading-text-wrapper').classList.contains('hidden'))){
+        if(!(headingTextWrapper.classList.contains('hidden'))){
           editorFieldSelect.dataset.fieldFontColor = this.value;
+          let bgColor = isLightColor(this.value) ? '#000000' : '#ffffff';
+          headingText.style.backgroundColor = bgColor;
         }
 
         document.execCommand('foreColor', false, this.value);
@@ -336,8 +360,10 @@ function fontStylingField(){
         // Terapkan warna ke seluruh teks dalam fontField
         fontField.dataset.fieldFontColor = this.value;
 
-        if(!(document.getElementById('heading-text-wrapper').classList.contains('hidden'))){
+        if(!(headingTextWrapper.classList.contains('hidden'))){
           editorFieldSelect.dataset.fieldFontColor = this.value;
+          let bgColor = isLightColor(this.value) ? '#000000' : '#ffffff';
+          headingText.style.backgroundColor = bgColor;
         }
 
         document.execCommand('foreColor', false, this.value);
@@ -354,12 +380,12 @@ function fontStylingField(){
       }
 
       if(!fontField.id.startsWith('field-')){
-        editorFieldSelect.querySelector('span').innerHTML = fontField.innerHTML;
+        editorFieldSelect.children[0].outerHTML = fontField.innerHTML;
       }
       updateContent(editorFieldSelect)
       globals.editorFieldSelect = editorFieldSelect
     } else {
-      console.log('Tidak ada seleksi tersimpan');
+     alert('Tidak ada seleksi tersimpan');
     }
   });
 
@@ -422,12 +448,12 @@ function fontStylingField(){
       }
 
       if(!fontField.id.startsWith('field-')){
-        editorFieldSelect.querySelector('span').innerHTML = fontField.innerHTML;
+        editorFieldSelect.children[0].outerHTML = fontField.innerHTML;
       }
       updateContent(editorFieldSelect)
       globals.editorFieldSelect=editorFieldSelect
     } else {
-      console.log('Tidak ada seleksi tersimpan');
+     alert('Tidak ada seleksi tersimpan');
     }
   })
 
@@ -496,12 +522,12 @@ function fontStylingField(){
       }
 
       if(!fontField.id.startsWith('field-')){
-        editorFieldSelect.querySelector('span').innerHTML = fontField.innerHTML;
+        editorFieldSelect.children[0].outerHTML = fontField.innerHTML;
       }
       updateContent(editorFieldSelect)
       globals.editorFieldSelect=editorFieldSelect
     } else {
-      console.log('Tidak ada seleksi tersimpan');
+      alert('Tidak ada seleksi tersimpan');
     }
   })
 
@@ -516,7 +542,6 @@ function fontStylingField(){
     }else{
       fontField = editorFieldSelect
     }
-    // console.log(savedSelection)
 
     if (savedSelection) {
       sel.removeAllRanges();
@@ -554,12 +579,13 @@ function fontStylingField(){
       }
 
       if(!fontField.id.startsWith('field-')){
-        editorFieldSelect.querySelector('span').innerHTML = fontField.innerHTML;
+        editorFieldSelect.children[0].outerHTML = fontField.innerHTML;
       }
+
       updateContent(editorFieldSelect)
       globals.editorFieldSelect=editorFieldSelect
     } else {
-      console.log('Tidak ada seleksi tersimpan');
+     alert('Tidak ada seleksi tersimpan');
     }
   })
   
@@ -609,12 +635,13 @@ function fontStylingField(){
       }
 
       if(!fontField.id.startsWith('field-')){
-        editorFieldSelect.querySelector('span').innerHTML = fontField.innerHTML;
+        editorFieldSelect.children[0].outerHTML = fontField.innerHTML;
       }
+
       updateContent(editorFieldSelect)
       globals.editorFieldSelect=editorFieldSelect
     } else {
-      console.log('Tidak ada seleksi tersimpan');
+      alert('Tidak ada seleksi tersimpan');
     }
   })
   
@@ -657,13 +684,13 @@ function fontStylingField(){
       }
 
       if(!fontField.id.startsWith('field-')){
-        editorFieldSelect.querySelector('span').innerHTML = fontField.innerHTML;
+        editorFieldSelect.children[0].outerHTML = fontField.innerHTML;
       }
 
       updateContent(editorFieldSelect)
       globals.editorFieldSelect=editorFieldSelect
     } else {
-      console.log('Tidak ada seleksi tersimpan');
+      alert('Tidak ada seleksi tersimpan');
     }
   })
   
@@ -702,13 +729,14 @@ function fontStylingField(){
       }
 
       if(!fontField.id.startsWith('field-')){
-        editorFieldSelect.querySelector('span').innerHTML = fontField.innerHTML;
+  
+        editorFieldSelect.children[0].outerHTML = fontField.innerHTML;
       }
 
       updateContent(editorFieldSelect)
       globals.editorFieldSelect=editorFieldSelect
     }else{
-      console.log('not range')
+      alert('tidak ada seleksi tersimpan')
     }
   })
   
@@ -746,13 +774,14 @@ function fontStylingField(){
       }
       
       if(!fontField.id.startsWith('field-')){
-        editorFieldSelect.querySelector('span').innerHTML = fontField.innerHTML;
+    
+        editorFieldSelect.children[0].outerHTML = fontField.innerHTML;
       }
 
       updateContent(editorFieldSelect)
       globals.editorFieldSelect=editorFieldSelect
     }else{
-       console.log('not range')
+       alert('tidak ada seleksi tersimpan')
     }
 
   })
@@ -794,13 +823,13 @@ function fontStylingField(){
       }
 
       if(!fontField.id.startsWith('field-')){
-        editorFieldSelect.querySelector('span').innerHTML = fontField.innerHTML;
+        editorFieldSelect.children[0].outerHTML = fontField.innerHTML;
       }
       
       updateContent(editorFieldSelect)
       globals.editorFieldSelect=editorFieldSelect
     }else{
-       console.log('not range')
+       alert('tidak ada seleksi tersimpan')
     }
   })
   
@@ -808,12 +837,11 @@ function fontStylingField(){
     editorFieldSelect = globals.editorFieldSelect
     const sel = window.getSelection();
 
-    if(!fontField.id.startsWith('field-')){
-      if(editorFieldSelect.id.startsWith('btn-heading-accordion')){
-        editorFieldSelect.querySelector('span').innerHTML = fontField.innerHTML;
-      }else{
-        editorFieldSelect.innerHTML = fontField.innerHTML;
-      }
+    let fontField = null
+    if(!(document.getElementById('heading-text-wrapper').classList.contains('hidden'))){
+      fontField = document.getElementById('heading-text')
+    }else{
+      fontField = editorFieldSelect
     }
 
     if (sel.rangeCount){
@@ -841,12 +869,12 @@ function fontStylingField(){
       }
       
       if(!fontField.id.startsWith('field-')){
-        editorFieldSelect.querySelector('span').innerHTML = fontField.innerHTML;
+        editorFieldSelect.children[0].outerHTML = fontField.innerHTML;
       }
 
       updateContent(editorFieldSelect)
     }else{
-       console.log('not range')
+       alert('tidak ada seleksi tersimpan')
     }
     globals.editorFieldSelect=editorFieldSelect
   })
@@ -916,13 +944,13 @@ function widthHeightField(){
         // console.log('video')
       }else if(accordionSelect){
         accordionSelect.style.width=`${this.value}px`
-        // console.log('accordion', accordionSelect)
+      
         updateStyle(accordionSelect)
         globals.accordionSelect=accordionSelect
       }else if(editorFieldSelect.id.startsWith('field')){
         editorFieldSelect.style.width=`${this.value}px`
       }else{
-        // console.log('another', editorFieldSelect.id)
+ 
         editorFieldSelect.style.width=`${this.value}px`
       }
 
@@ -959,8 +987,13 @@ function widthHeightField(){
 
   document.getElementById('btn-reset-box').addEventListener('click', function(){
     editorFieldSelect = globals.editorFieldSelect
-    editorFieldSelect.style.width=''
-    editorFieldSelect.style.height=''
+ 
+    if(editorFieldSelect.id.startsWith('webpage')){
+      editorFieldSelect.style.minHeight='100dvh'
+    }else{
+      editorFieldSelect.style.width=''
+      editorFieldSelect.style.height=''
+    }
     updateStyle(editorFieldSelect)
     updateStylingControls(editorFieldSelect)
   })
@@ -969,7 +1002,7 @@ function widthHeightField(){
 function flexPosition(){
   document.getElementById('flex-position-section').addEventListener('change', function(){
     editorFieldSelect=globals.editorFieldSelect
-    // console.log('flex', this.value, globals.editorFieldSelect, editorFieldSelect.id)
+
     let section=''
 
     if(editorFieldSelect.id.startsWith('webpage')){
@@ -990,7 +1023,7 @@ function flexPosition(){
       section.style.alignItems = 'center'
       
       // console.log('ini center')
-    }else if(this.value == 'bottom'){
+    }else if(this.value == 'end'){
       editorFieldSelect.style.justifyContent = 'end'
       editorFieldSelect.style.alignItems = 'center'
       section.style.justifyContent = 'end'
@@ -1096,7 +1129,7 @@ function borderField(){
   document.getElementById('border-field-rounded').addEventListener('change', function(){
     editorFieldSelect = globals.editorFieldSelect
     accordionPartSelect = globals.accordionPartSelect
-    console.log(editorFieldSelect)
+
     if(editorFieldSelect.id === 'heading-text'){
       accordionPartSelect.style.borderRadius=`${this.value}px`
       updateStyle(accordionPartSelect)
@@ -1181,13 +1214,9 @@ function paddingMarginField(){
 
       if(topVal === bottomVal && bottomVal === leftVal && leftVal === rightVal){
         document.getElementById('padding-field').value = document.getElementById('padding-top').value
-        // console.log('test if')
       }else{
         document.getElementById('padding-field').value = ''
-        // console.log('test else')
       }
-      // console.log(document.getElementById('padding-field-top').value, document.getElementById('padding-field-bottom').value, document.getElementById('padding-field-left').value, document.getElementById('padding-field-right').value)
-      // console.log(topVal === bottomVal && bottomVal === leftVal && leftVal === rightVal)
     })
   })
 
@@ -1396,6 +1425,129 @@ function paddingMarginField(){
   })
 }
 // --------------- Color ---------------
+function showLoader(v = true) {
+  document.getElementById('loading-overlay').style.display = v ? 'flex' : 'none';
+}
+
+function isValidImage(file, maxMB = 5) {
+  if (!file || !file.type.startsWith('image/')) {
+    alert('Please select a valid image file.');
+    return false;
+  }
+  if (file.size > maxMB * 1024 * 1024) {
+    alert(`Ukuran file terlalu besar. Maksimal ${maxMB}MB.`);
+    return false;
+  }
+  return true;
+}
+
+function shortenName(name, maxLength = 20) {
+  if (name.length <= maxLength) return name;
+  const ext = name.split('.').pop();
+  return name.substring(0, maxLength - ext.length - 3) + '...' + ext;
+}
+
+async function compressToWebPFlow(file) {
+  return new Promise((resolve, reject) => {
+    new Compressor(file, {
+      quality: 0.7,
+      maxWidth: 1920,
+      convertSize: 0,
+      async success(result) {
+        try {
+          const compressed = new File([result], file.name, { type: result.type });
+          const webp = await compressToWebP(compressed, 0.7);
+          resolve(webp);
+        } catch (err) {
+          reject(err);
+        }
+      },
+      error(err) { reject(err) }
+    });
+  });
+}
+
+function extractRGBA(style) {
+  const gradient = style.match(/linear-gradient\(([^)]+)\)/);
+  if (gradient) return `${gradient[1].trim()})`;
+
+  const bg = style.match(/background-color:\s*([^;]+)/);
+  if (bg) return `${bg[1].trim()}, ${bg[1].trim()}`;
+
+  return 'rgba(0,0,0,0), rgba(0,0,0,0)';
+}
+
+async function handleFieldBgUpload(file) {
+  const preview = document.getElementById('preview-image');
+  const nameFile = document.getElementById('file-name-display');
+
+  let field = globals.editorFieldSelect;
+  if (field?.id === 'heading-text') field = globals.accordionPartSelect;
+
+  const webp = await compressToWebPFlow(file);
+  const blob = URL.createObjectURL(webp);
+
+  // update UI
+  nameFile.textContent = webp.name;
+  preview.src = blob;
+  preview.classList.remove('hidden');
+
+  field.dataset.nameBg = webp.name;
+  field.style.backgroundSize = 'cover';
+  field.style.backgroundPosition = 'center';
+
+  const css = field.style.cssText;
+  const rgba = extractRGBA(css);
+
+  field.style.backgroundColor = '';
+  field.style.backgroundImage = `linear-gradient(${rgba}), url(${blob})`;
+
+  const randomKey = Math.random().toString(36).substring(2, 8);
+  const safeName = shortenName(webp.name.replace(/\s+/g, '_')); // hindari spasi
+  const uniqueKey = `__temp_media_${randomKey}_${safeName}__`;
+
+  document.getElementById('btn-reset-bg-image').parentElement.classList.remove('hidden');
+  updateStyle(field, 'bg-image', webp, '', blob, uniqueKey);
+}
+
+async function handleCarouselBgUpload(file) {
+  const webp = await compressToWebPFlow(file);
+  const blob = URL.createObjectURL(webp);
+  
+  const editItem = globals.editCarouselItem;
+  const itemId = editItem.id.split('-').slice(1).join('-');
+  const item = document.getElementById(itemId);
+  
+  const rgba = extractRGBA(editItem.style.cssText);
+  const imgUrl = `url(${blob})`;
+  
+  const short = webp.name;
+  editItem.dataset.nameBg = short;
+  item.dataset.nameBg = short;
+  
+  const carousel = document.getElementById(item.id.split('-').slice(1, -1).join('-'));
+  
+  if (carousel.dataset.textPosition === 'on-image') {
+    editItem.style.backgroundImage = `linear-gradient(${rgba}), ${imgUrl}`;
+    item.style.backgroundImage = `linear-gradient(${rgba}), ${imgUrl}`;
+
+  } else {
+    item.querySelector('img').src = blob;
+    editItem.style.backgroundImage = `linear-gradient(${rgba}), ${imgUrl}`;
+
+  }
+
+  editItem.style.backgroundColor = '';
+  item.style.backgroundColor = '';
+
+  const randomKey = Math.random().toString(36).substring(2, 8);
+  const safeName = shortenName(webp.name.replace(/\s+/g, '_')); // hindari spasi
+  const uniqueKey = `__temp_media_${randomKey}_${safeName}__`;
+
+  updateStyle(item, 'bg-image', webp, carousel.dataset.textPosition, blob, uniqueKey);
+  carousel.click();
+}
+
 function colorBackgroundField(){
   document.getElementById('color-field-input').addEventListener('change', function(){
     editorFieldSelect = globals.editorFieldSelect
@@ -1458,20 +1610,11 @@ function colorBackgroundField(){
               urlPart = match[2]; // isi di dalam url(...)
             }
 
-            // let newStyle = setInlineStyle(Style, 'background-image', 
-            //             `linear-gradient(rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${alpha}), 
-            //             rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${alpha})), 
-            //             url(${urlPart})`);
-            // item.setAttribute('style', newStyle)
-
             item.style.backgroundImage=`linear-gradient(rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${alpha}), 
                         rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${alpha})), 
                         url(${urlPart})`
 
           }else{
-            // let newStyle = setInlineStyle(Style, 'background-color', 
-            //             `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${alpha})`);
-            // item.setAttribute('style', newStyle)
 
             item.style.backgroundColor = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${alpha})`
           }
@@ -1489,20 +1632,11 @@ function colorBackgroundField(){
           urlPart = match[2]; // isi di dalam url(...)
         }
 
-        // let newStyle = setInlineStyle(Style, 'background-image', 
-        //             `linear-gradient(rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${alpha}), 
-        //             rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${alpha})), 
-        //             url(${urlPart})`);
-        // fieldEditor.setAttribute('style', newStyle)
-
         fieldEditor.style.backgroundImage=`linear-gradient(rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${alpha}), 
                     rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${alpha})), 
                     url(${urlPart})`
 
       }else{
-        // let newStyle = setInlineStyle(Style, 'background-color', 
-        //                               `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${alpha})`);
-        // fieldEditor.setAttribute('style', newStyle)
 
         fieldEditor.style.backgroundColor=`rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${alpha})`
 
@@ -1586,7 +1720,7 @@ function colorBackgroundField(){
     }else{
       let Style = fieldEditor.style.cssText
       if(Style.includes('background-image')){
-        console.log('ada bgImage')
+        // console.log('ada bgImage')
         let urlPart = '';
 
         const match = Style.match(/url\(([^)]+)\)/i);
@@ -1612,252 +1746,34 @@ function colorBackgroundField(){
 
   })
 
-  document.getElementById('bg-image-input').addEventListener('change', function () {
-    document.getElementById('loading-overlay').style.display = 'flex';
-    const previewImageField = document.getElementById('preview-image');
-    const nameFile = document.getElementById('file-name-display');
-
+  document.getElementById('bg-image-input').addEventListener('change', async function () {
     const file = this.files[0];
-    const maxFileSize = 5 * 1024 * 1024; // 5 MB
-    console.log(file.size)
-    if (!file || !file.type.startsWith('image/')) {
-        alert('Please select a valid image file.');
-        document.getElementById('loading-overlay').style.display = 'none';
-        return;
+    this.value = "";
+    if (!isValidImage(file)) return;
+
+    showLoader(true);
+    try {
+      await handleFieldBgUpload(file);
+    } catch (err) {
+      console.error(err);
+      alert("Gagal memproses gambar");
     }
-
-    if (file.size > maxFileSize) {
-        alert('Ukuran file terlalu besar. Maksimal 5MB.');
-        document.getElementById('loading-overlay').style.display = 'none';
-        return;
-    }
-
-    let fieldEditor
-    editorFieldSelect = globals.editorFieldSelect
-    accordionPartSelect = globals.accordionPartSelect
-
-    if(editorFieldSelect && editorFieldSelect.id === 'heading-text'){
-      fieldEditor = accordionPartSelect
-    }else{
-      fieldEditor = editorFieldSelect
-    }
-    console.log(fieldEditor)
-
-    if (file && file.type.startsWith('image/')) {
-      new Compressor(file, {
-        quality: 0.7,
-        maxWidth: 1920,
-        convertSize: 0,
-
-        async success(result) {
-          // STEP 1 — hasil compress (JPEG/PNG compressed)
-          try{
-            const compressedFile = new File([result], file.name, {
-                type: result.type
-            });
-
-            // STEP 2 — convert ke WebP
-            const compressedWebP = await compressToWebP(compressedFile, 0.7);
-
-            console.log("Original:", (file.size/1024).toFixed(1),"KB");
-            console.log("Compressed:", (compressedWebP.size/1024).toFixed(1),"KB");
-            // =============== PREVIEW ===============
-            const blob = URL.createObjectURL(compressedWebP);
-            const imgUrl = `url(${blob})`;
-
-            // Tampilkan nama file pendek
-            let fileName = file.name;
-            const maxLength = 20;
-            if (fileName.length > maxLength) {
-              const ext = fileName.split('.').pop();
-              fileName = fileName.substring(0, maxLength - ext.length - 3) + '...' + ext;
-            }
-            nameFile.textContent = fileName;
-
-            fieldEditor.dataset.nameBg = fileName
-            fieldEditor.style.backgroundSize='cover'
-            fieldEditor.style.backgroundPosition='center'
-
-            previewImageField.src = blob;
-            previewImageField.classList.remove('hidden');
-
-            let styleEditor = fieldEditor.style.cssText
-
-            if (!styleEditor.includes('linear-gradient')) {
-              const styleAttr = fieldEditor.style.cssText || '';
-              let rgb = 'rgba(0,0,0,0)'
-              const match = styleAttr.match(/background-color\s*:\s*([^;]+);?/i);
-              if (match) {
-                rgb = match[1].trim();
-              }
-              
-              fieldEditor.style.backgroundColor=''
-              fieldEditor.style.backgroundImage=`linear-gradient(${rgb}, ${rgb}), url(${blob})`
-
-            } else if (styleEditor.includes('linear-gradient')) {
-              let rgba = '';
-              let styleAttr = fieldEditor.style.cssText
-              // console.log('styleAttr:',styleAttr, fieldEditor.getAttribute('style'))
-              const match = styleAttr.match(/linear-gradient\(([^)]+)\)/i);
-              if (match) {
-                rgba = match[1].trim();
-              }
-
-              fieldEditor.style.backgroundColor=''
-              fieldEditor.style.backgroundImage = `linear-gradient(${rgba})), url(${blob})`
-              console.log('after set attr:',fieldEditor.getAttribute('style'), fieldEditor.style.cssText)
-              
-              console.log('ada includes')
-
-            } else {
-              fieldEditor.style.backgroundColor=''
-              fieldEditor.style.backgroundImage = `url(${blob})`
-              console.log('gk tau')
-            }
-
-            document.getElementById('btn-reset-bg-image').parentElement.classList.remove('hidden')
-            updateStyle(fieldEditor,'bg-image', compressedWebP)
-
-            if(editorFieldSelect && editorFieldSelect.id === 'heading-text'){
-              globals.accordionPartSelect=accordionPartSelect
-            }else{
-              globals.editorFieldSelect=editorFieldSelect
-            }
-            document.getElementById('loading-overlay').style.display = 'none';
-
-          }catch(err){
-            console.error(err);
-            alert("Gagal memroses gambar");
-            document.getElementById('loading-overlay').style.display = 'none';
-
-          }
-        }
-      })
-    } else {
-      previewImageField.src = '';
-      previewImageField.classList.add('hidden');
-      alert('Please select a valid image file.');
-    }
-    this.value=''
+    showLoader(false);
   });
 
-  document.getElementById('bg-image-carousel').addEventListener('change', function (e) {
-    document.getElementById('loading-overlay').style.display = 'flex';
+  document.getElementById('bg-image-carousel').addEventListener('change', async function () {
     const file = this.files[0];
-    const maxFileSize = 5 * 1024 * 1024; // 5 MB
-    console.log(file.size)
-    if (!file || !file.type.startsWith('image/')) {
-        alert('Please select a valid image file.');
-        document.getElementById('loading-overlay').style.display = 'none';
-        return;
+    this.value = "";
+    if (!isValidImage(file)) return;
+
+    showLoader(true);
+    try {
+      await handleCarouselBgUpload(file);
+    } catch (err) {
+      console.error(err);
+      alert("Gagal memproses gambar");
     }
-
-    if (file.size > maxFileSize) {
-        alert('Ukuran file terlalu besar. Maksimal 5MB.');
-        document.getElementById('loading-overlay').style.display = 'none';
-        return;
-    }
-
-    new Compressor(file, {
-      quality: 0.7,
-      maxWidth: 1920,
-      convertSize: 0,
-
-      async success(result) {
-        try{
-          const compressedFile = new File([result], file.name, {
-              type: result.type
-          });
-  
-          // STEP 2 — convert ke WebP
-          const compressedWebP = await compressToWebP(compressedFile, 0.7);
-  
-          console.log("Original:", (file.size/1024).toFixed(1),"KB");
-          console.log("Compressed:", (compressedWebP.size/1024).toFixed(1),"KB");
-  
-          // =============== PREVIEW ===============
-          const blob = URL.createObjectURL(compressedWebP);
-          const imgUrl = `url(${blob})`;
-  
-          // --------------------------------------------------
-          // =================== kode asli kamu
-          // --------------------------------------------------
-          const editCarouselItem = globals.editCarouselItem;
-          const editId = editCarouselItem.id.split('-').slice(1).join('-');
-          const carouselItem = document.getElementById(editId);
-  
-          // ambil RGBA lama
-          const currentStyle = editCarouselItem.style.cssText || '';
-          let rgbaPart = 'rgba(0, 0, 0, 0.0), rgba(0, 0, 0, 0.0)';
-  
-          const gradientMatch = currentStyle.match(/linear-gradient\(([^)]+)\)/);
-          if (gradientMatch && gradientMatch[1]) {
-            rgbaPart = gradientMatch[1].trim();
-          } else {
-            const bgColorMatch = currentStyle.match(/background-color:\s*([^;]+)/);
-            if (bgColorMatch && bgColorMatch[1]) {
-              rgbaPart = `${bgColorMatch[1].trim()}, ${bgColorMatch[1].trim()}`;
-            }
-          }
-          console.log(currentStyle, compressedWebP.name, rgbaPart)
-  
-          // tampilkan nama file
-          let fileName = compressedWebP.name;
-          if (fileName.length > 20) {
-              const ext = fileName.split('.').pop();
-              fileName = fileName.substring(0, 20 - ext.length - 3) + '...' + ext;
-          }
-  
-          editCarouselItem.dataset.nameBg = fileName;
-          carouselItem.dataset.nameBg = fileName;
-  
-          const carousel = document.getElementById(
-              carouselItem.id.split('-').slice(1, -1).join('-')
-          );
-  
-          const bgValue = `linear-gradient(${rgbaPart})), ${imgUrl}`;
-  
-          if (carousel.dataset.textPosition === 'on-image') {
-            console.log('on-image bg-image:',editCarouselItem, carouselItem, `linear-gradient(${rgbaPart}), ${imgUrl}`)
-            if(carouselItem.style.cssText.includes('background-color')){
-              editCarouselItem.style.backgroundImage=`linear-gradient(${rgbaPart}), ${imgUrl}`
-              carouselItem.style.backgroundImage=`linear-gradient(${rgbaPart}), ${imgUrl}`
-            }else{
-              editCarouselItem.style.backgroundImage=bgValue
-              carouselItem.style.backgroundImage=bgValue
-            }
-            console.log('after on-image bg-image:','-',editCarouselItem,':',editCarouselItem.style.backgroundImage,'-',carouselItem,':',carouselItem.style.backgroundImage,`-linear-gradient(${rgbaPart}), ${imgUrl}`)
-            
-          } else {
-            carouselItem.querySelector('img').src = blob;
-            editCarouselItem.style.backgroundImage=`linear-gradient(${rgbaPart}), ${imgUrl}`
-            console.log(editCarouselItem, bgValue)
-          }
-          editCarouselItem.style.backgroundColor=''
-          carouselItem.style.backgroundColor=''
-  
-          // === kirim file hasil compress, bukan original ===
-          updateStyle(carouselItem, 'bg-image', compressedWebP, carousel.dataset.textPosition);
-          
-          globals.editCarouselItem = editCarouselItem;
-          carousel.click();
-          document.getElementById('loading-overlay').style.display = 'none';
-        }catch(err){
-          console.error(err);
-          alert("Gagal memroses gambar");
-          document.getElementById('loading-overlay').style.display = 'none';
-        }
-          // STEP 1 — hasil compress (JPEG/PNG compressed)
-      },
-
-      error(err) {
-          console.error('Compress failed:', err);
-          alert('Gagal compress gambar');
-      }
-  });
-
-  this.value = "";
-
+    showLoader(false);
   });
 
   document.querySelectorAll('[name="bg-image-size"]').forEach(bgImageSize =>{
@@ -1893,6 +1809,7 @@ function colorBackgroundField(){
   document.getElementById("btn-reset-bg-image").addEventListener('click', function(event){
     editorFieldSelect = globals.editorFieldSelect
     webpageDb=globals.webpageDb
+    fileDb=globals.file
     let styleField = editorFieldSelect.style.cssText; // ambil sebagai string
 
     if (styleField && styleField.includes("background-image")) {
@@ -1932,8 +1849,9 @@ function colorBackgroundField(){
               content.includes(mediaDelete)
       });
 
-      if (mediaDelete && !checkUsedMedia) {
-        webpageDb = webpageDb.filter(el => el.id !== mediaDelete);
+      const target = fileDb.find(el => el.id === mediaDelete);
+      if (target && !checkUsedMedia) {
+        delete target.action;
       }
 
     } else {
@@ -1956,11 +1874,41 @@ function colorBackgroundField(){
     // Reset input file juga (opsional)
     document.getElementById('bg-image-input').value = '';
     globals.webpageDb=webpageDb
+    globals.file=fileDb
   })
+}
+// -------------- Set Image From Recent Carousel -------------
+function setImageGallery(indicator){
+  fileDb=globals.file
+
+
+  let mediaGallery='-- Belum Ada Gambar --'
+  if(fileDb.length > 0){
+    mediaGallery=''
+  }
+  fileDb.forEach(file =>{
+    if(file.filetype === 'img' || file.type === 'img'){
+      let url=`https://shd-admin.smartdiabetes.my.id/media/${file.id}`
+      if(file.url){
+        url=file.url
+      }
+      mediaGallery +=`
+        <div class="w-[100px] h-[100px] overflow-hidden rounded relative cursor-pointer group">
+          <img id="media-recent-${file.id}" data-media="${file.id}" src="${url}" 
+          class="w-full h-full object-cover transition-transform duration-200 group-hover:scale-105">
+        </div>
+      `
+    }
+  })
+
+  document.getElementById('body-media-recent').innerHTML=mediaGallery
+
+  setImageRecent()
 }
 // -------------- BORDER WAVE ----------
 function borderWave() {
   webpageDb=globals.webpageDb
+  
   editorFieldSelect=globals.editorFieldSelect
   let idWave = null;
   let currentWaveColor = document.getElementById('border-wave-color').value; // Default warna awal
@@ -1980,10 +1928,11 @@ function borderWave() {
         path.setAttribute('fill', color);
       });
 
-      webpageDb.forEach(field=>{
+      webpageDb.some(field=>{
         if(field.id === svg.id){
           field.action='update'
           field.style = svg.outerHTML
+          return true
         }
       })
       globals.webpageDb=webpageDb
@@ -2005,7 +1954,7 @@ function borderWave() {
     if (!svg) return null;
 
     const svgClone = svg.cloneNode(true);
-    svgClone.setAttribute('style', `z-index: 50; ${position}: 0; position: absolute;`);
+    svgClone.setAttribute('style', `z-index: 40; ${position}: 0; position: absolute;`);
     svgClone.setAttribute('class', '');
 
     if (position === 'top') {
@@ -2050,10 +1999,11 @@ function borderWave() {
       path.setAttribute('d', flippedD);
     });
 
-    webpageDb.forEach(field=>{
+    webpageDb.some(field=>{
       if(field.id === svgElement.id){
         field.action='update'
         field.style = svgElement.outerHTML
+        return true
       }
     })
     globals.webpageDb=webpageDb
@@ -2074,7 +2024,7 @@ function borderWave() {
         svg.remove()
       }
     });
-    console.log(position)
+
     svgClone.id = `border-wave-${position}-section-${editorFieldSelect.id.split('-')[2]}`;
 
     let color = document.getElementById('border-wave-color').value
@@ -2100,7 +2050,7 @@ function borderWave() {
       style: svgClone.outerHTML,
     });
     
-    console.log(webpageDb)
+  
     globals.webpageDb=webpageDb
   };
 
@@ -2122,7 +2072,7 @@ function borderWave() {
     radio.addEventListener('change', function () {
       editorFieldSelect=globals.editorFieldSelect
         const borderWave = editorFieldSelect.querySelector('[id^="border-wave-"]')
-        // console.log(borderWave.getAttribute('style').includes(this.value))
+      
         if(!borderWave.getAttribute('style').includes(this.value)){
           flipPathVertically(borderWave, this.value);
         }
@@ -2134,10 +2084,10 @@ function borderWave() {
     currentWaveColor = this.value;
     editorFieldSelect=globals.editorFieldSelect
     webpageDb=globals.webpageDb
-    console.log(editorFieldSelect)
+
     editorFieldSelect.querySelectorAll('svg').forEach(svg => {
       if(!svg.id.startsWith('btn')){
-        // console.log(svg)
+     
         applyColorToSVG(svg, currentWaveColor);
 
         webpageDb.map(page=>{
@@ -2146,7 +2096,7 @@ function borderWave() {
             page.action= updateActionProperty(page.action, 'update')
           }
         })
-        // console.log(webpageDb)
+     
       }
     });
     globals.webpageDb=webpageDb
@@ -2189,7 +2139,7 @@ function borderWave() {
           page.action= updateActionProperty(page.action, 'update')
         }
       })
-      // console.log(webpageDb)
+    
       globals.webpageDb=webpageDb
       globals.editorFieldSelect=editorFieldSelect
 
@@ -2205,23 +2155,25 @@ function borderWave() {
     let borderWave = editorFieldSelect.querySelector('[id^="border-wave"]')
     borderWave.remove()
 
-    webpageDb.forEach((field,index)=>{
-      console.log(field)
-      if(field.id == borderWave.id){
-        if(field && field.action?.includes('new')){
-          field.splice(index,1)
-        }else{
-          field.action='delete'
-        }
+    const findWave = webpageDb.findIndex(field=>field.id === borderWave.id)
+    if(findWave > 0){
+      if(findWave.action?.includes('new')){
+        webpageDb.splice(findWave,1)
+      }else{
+        webpageDb[findWave].action='delete'
       }
-    })
+    }
+
   })
 }
 
 function resetImage(idParts){
-  let editCarouselItem = globals.editCarouselItem
   webpageDb = globals.webpageDb
+  fileDb = globals.file
+  
   let bodyItem=globals.bodyItem
+  let editCarouselItem = globals.editCarouselItem
+
   let carouselItem = document.getElementById(`${idParts.slice(2).join('-')}`)
   editCarouselItem = document.getElementById(`edit-${idParts.slice(2).join('-')}`) 
 
@@ -2261,14 +2213,222 @@ function resetImage(idParts){
             content.includes(mediaDelete)
     });
 
-    if (mediaDelete && !checkUsedMedia) {
-      webpageDb = webpageDb.filter(el => el.id !== mediaDelete);
+    const target = fileDb.find(el => el.id === mediaDelete);
+    if (target && !checkUsedMedia) {
+      delete target.action;
     }
 
-    console.log(webpageDb)
     globals.webpageDb=webpageDb
+    globals.file=fileDb
   } else {
     carouselItem.style.backgroundColor = "";
   }
 }
-export { fontStylingField, widthHeightField, borderField, paddingMarginField, colorBackgroundField, borderWave, flexPosition, resetImage }
+
+function applyFieldBgFromUrl(field, imgUrl) {
+  let css = field.style.cssText || "";
+  let rgba = extractRGBA(css);
+
+  field.style.backgroundSize = 'cover';
+  field.style.backgroundPosition = 'center';
+  field.style.backgroundColor = '';
+  field.style.backgroundImage = `linear-gradient(${rgba}), url(${imgUrl})`;
+
+}
+
+function applyCarouselBgFromUrl(editItem, targetItem, carousel, imgUrl) {
+  let css = editItem.style.cssText || "";
+  let rgba = extractRGBA(css);
+
+  const bg = `linear-gradient(${rgba}), url(${imgUrl})`;
+
+  if (carousel.dataset.textPosition === 'on-image') {
+    editItem.style.backgroundImage = bg;
+    targetItem.style.backgroundImage = bg;
+  } else {
+    targetItem.querySelector('img').src = imgUrl;
+    editItem.style.backgroundImage = bg;
+  }
+
+  editItem.style.backgroundColor = "";
+  targetItem.style.backgroundColor = "";
+}
+
+function setImageRecent() {
+  document.querySelectorAll('[id^="media-recent"]').forEach(media => {
+    if (media.dataset.listenerAdded === "true") return;
+    webpageDb=globals.webpageDb
+    fileDb=globals.file
+    media.dataset.listenerAdded = "true";
+    media.addEventListener('click', async function () {
+      showLoader(true);
+
+      const src = media.getAttribute("src");
+      const name = media.dataset.media;
+ 
+      let id = globals.itemCarouselId ?? globals.editorFieldSelect.id;
+
+
+      const targetElement = document.getElementById(id);
+
+      let editorFieldSelect = globals.editorFieldSelect;
+      let itemCarouselId = globals.itemCarouselId;
+      if (editorFieldSelect?.id === "heading-text") editorFieldSelect = globals.accordionPartSelect;
+
+      const webpitem = webpageDb.find(item => item.id === id)
+      const match = webpitem.style?.match(/url\((['"]?)(.*?)\1\)/)
+
+      let oldUrl = match ? match[2] : null;
+
+      // ============= CAROUSEL =============
+      if (id.includes("item-carousel")) {
+
+        const editItem = document.getElementById(`edit-${id}`);
+        const carousel = document.getElementById(
+          id.split('-').slice(1, -1).join('-')
+        );
+
+        if (carousel.dataset.textPosition === 'below-image') {
+          const webpitem = webpageDb.find(item => item.id === `img-text-on-image-${id}`)
+          id=`img-text-on-image-${id}`
+          oldUrl = webpitem.content
+        }
+
+        applyCarouselBgFromUrl(
+          editItem,
+          targetElement,
+          carousel,
+          src
+        );
+
+        globals.editCarouselItem = editItem;
+      }
+
+      // ============== FIELD ===============
+      else {
+        document.getElementById('btn-reset-bg-image').parentElement.classList.remove('hidden');
+
+        const preview = document.getElementById("preview-image");
+        const fileNameDisplay = document.getElementById("file-name-display");
+
+        preview.src = src;
+        preview.classList.remove("hidden");
+        fileNameDisplay.textContent = name;
+
+        applyFieldBgFromUrl(editorFieldSelect, src);
+        globals.editorFieldSelect = editorFieldSelect;
+      }
+
+      // ====== Update ke database local =====
+      function getBaseUrl(styleText) {
+        const urlMatch = styleText.match(/url\((['"]?)([^'")]+)\1\)/i);
+        if (!urlMatch) return '';
+
+        const fullUrl = urlMatch[2];
+        const idx = fullUrl.indexOf('media/');
+        if (idx === -1) return '';
+
+        return fullUrl.substring(0, idx + 'media/'.length);
+      }
+      const targetNew = fileDb.find(f => f.id === name && f.file);
+      if (targetNew) targetNew.action = "add";
+
+      if(oldUrl){
+        const checkUsedMedia = webpageDb.some(el => {
+          if (el.id === id) return false; // skip elemen yg sedang kita proses
+  
+          const style = el.style || "";
+          const content = el.content || "";
+  
+          return style.includes(oldUrl) || 
+                content.includes(oldUrl)
+        });
+  
+        const target = fileDb.find(el => el.id === oldUrl);
+        if (target && !checkUsedMedia) {
+          delete target.action;
+        }
+      }
+
+      webpageDb.some(item => {
+        if (item.id === id) {
+          
+          let belowImageCarousel=false
+          if(targetElement.querySelector('[id^="img-text-on"]') && targetElement.children.length == 2){
+            belowImageCarousel = true
+          }
+
+          let baseUrl = getBaseUrl(targetElement.style.cssText);
+          let newUrl = baseUrl + name;
+
+          let newStyle = targetElement.style.cssText.replace(
+            /url\((['"]?)([^'")]+)\1\)/gi,
+            `url('${newUrl}')`
+          );
+
+          // untuk field (bukan carousel)
+          if (!id.includes("item-carousel")) {
+            baseUrl = getBaseUrl(editorFieldSelect.style.cssText);
+            newUrl = baseUrl + name;
+            newStyle = editorFieldSelect.style.cssText.replace(
+              /url\((['"]?)([^'")]+)\1\)/gi,
+              `url('${newUrl}')`
+            );
+          }
+
+          // tambahkan style dari editor-container (jika ada)
+          let editorExt = "";
+          if (editorFieldSelect?.id.startsWith("webpage")) {
+            const cont = editorFieldSelect.querySelector('[id^="editor-container"]');
+            if (cont) editorExt = cont.style.cssText;
+          }
+
+          if(belowImageCarousel){
+            const indexTextOnImahe = webpageDb.findIndex(field=>field.id === item.id)
+            const textOnImage = webpageDb[indexTextOnImahe]
+            let newContent=name
+
+            if(media.src.includes('http:/') && !media.src.includes('blob')){
+              const match = media.src.match(/^(http?:\/\/[^"]*?media\/)/);
+              const base = match ? match[1] : null;
+              newContent = base+name
+            }
+
+            textOnImage.content = newContent
+            textOnImage.action = updateActionProperty(textOnImage.action, "update");
+          }else{
+            item.style = newStyle + editorExt;
+            item.action = updateActionProperty(item.action, "update");
+          }
+          return true
+        }
+      });
+
+      globals.file = fileDb;
+      globals.webpageDb=webpageDb
+      showLoader(false);
+    });
+  });
+}
+
+function setListenerSetImage(){
+  document.querySelectorAll('[id^="set-image-from-recent"]').forEach(btn=>{
+    if (btn.dataset.listenerAdded === "true") return;
+    btn.dataset.listenerAdded = "true";
+    btn.addEventListener('click', function(e){
+      if(e.target.id.includes('item-carousel')){
+        globals.itemCarouselId=btn.id.split('-').slice(4).join('-')
+      }else{
+        globals.itemCarouselId=null
+      }
+
+      setImageGallery()
+    })
+  })
+}
+
+export { fontStylingField, widthHeightField, 
+  borderField, paddingMarginField, 
+  colorBackgroundField, borderWave, 
+  flexPosition, resetImage,setListenerSetImage,
+  setImageGallery,updateStyle, setImageRecent }

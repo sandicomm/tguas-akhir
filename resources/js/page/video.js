@@ -5,24 +5,9 @@ import { renderSvg } from './utils/svgEdit.js';
 // ======== updateContent ========
 import { updateActionProperty } from './utils/updateContent.js';
 
+import {arraySubsequenceMatch, generateUniqueId, handleElementCount, replaceIdSuffix} from './utils/elementNumberingId.js'
+
 let webpageDb=  globals.webpageDb
-
-function arraySubsequenceMatch(parts, targetParts) {
-  for (let i = 0; i <= parts.length - targetParts.length; i++) {
-    let match = true;
-
-    for (let j = 0; j < targetParts.length; j++) {
-      if (parts[i + j] !== targetParts[j]) {
-        match = false;
-        break;
-      }
-    }
-
-    if (match) return true;
-  }
-
-  return false;
-}
 
 const createVideo = (page) => `
 <div id="${page.id}" data-element-order="${page.element_order}" style="${page.style}" class="border border-b-1 border-gray-500 max-w-[100%] cursor-pointer relative">
@@ -57,8 +42,10 @@ const createDropdownVideo = (idPrefix) => `
     </ul>
 </div>
 `
+
 const addVideo = (event)=>{
   webpageDb=globals.webpageDb
+  
   const idParts = event.target.id.split('-');
   const videoField = document.createElement('div');
   let idAppendVideo, idPrefix, fieldNumber=0,bodyAppend, bodyDropdown
@@ -92,10 +79,10 @@ const addVideo = (event)=>{
     idAppendVideo = `wrapper-section-${idParts.slice(2, idParts.length).join('-')}`;
     bodyAppend = document.getElementById(idAppendVideo);
 
-    fieldNumber = parseInt(bodyAppend.getAttribute('data-element-count')) + 1;
+    fieldNumber = handleElementCount(bodyAppend,  parseInt(bodyAppend.dataset.elementCount))
     bodyAppend.dataset.elementCount = fieldNumber;
     
-    idPrefix = `${idParts.slice(1, idParts.length).join('-')}-${fieldNumber}`;
+    idPrefix =  generateUniqueId(`${idParts.slice(1).join('-')}-${fieldNumber}`,bodyAppend)
     videoField.id = idPrefix;
 
     bodyDropdown = createBodyDropdown(idPrefix);
@@ -104,21 +91,21 @@ const addVideo = (event)=>{
     idAppendVideo = `body-${idParts.slice(2, idParts.length).join('-')}`;
     bodyAppend = document.getElementById(idAppendVideo);
 
-    fieldNumber = parseInt(bodyAppend.getAttribute('data-element-count')) + 1;
+    fieldNumber = handleElementCount(bodyAppend,  parseInt(bodyAppend.dataset.elementCount))
     bodyAppend.dataset.elementCount = fieldNumber;
     
-    idPrefix = `${idParts.slice(1, idParts.length).join('-')}-${fieldNumber}`;
+    idPrefix = generateUniqueId(`${idParts.slice(1).join('-')}-${fieldNumber}`,bodyAppend)
     videoField.id = idPrefix;
 
   }else{
     idAppendVideo = `editor-container-section-${idParts[4]}`;
     const section = document.getElementById(idAppendVideo)
 
-    fieldNumber = section.dataset.elementCount
-    fieldNumber++
+    fieldNumber = handleElementCount(section,  parseInt(section.dataset.elementCount))
+ 
     section.dataset.elementCount = fieldNumber
     
-    idPrefix = `${idParts.slice(1, idParts.length).join('-')}-${fieldNumber}`;
+    idPrefix =  generateUniqueId(`${idParts.slice(1).join('-')}-${fieldNumber}`,section)
     videoField.id = idPrefix;
 
   }
@@ -126,7 +113,7 @@ const addVideo = (event)=>{
   bodyDropdown = createBodyDropdown(idPrefix);
 
   if(idParts.includes('modal')){
-    videoField.innerHTML += bodyDropdown;
+    document.getElementById(`parent-${idParts.slice(2, idParts.length).join('-')}`).insertAdjacentHTML('afterbegin',bodyDropdown)
   }else{
     document.getElementById(`webpage-section-${idParts.find(part => !isNaN(part))}`).insertAdjacentHTML('beforeend', bodyDropdown)
   }
@@ -150,20 +137,23 @@ const addVideo = (event)=>{
     action:'new-add'
   });
 
-  webpageDb.forEach(item=>{
-    if(item.id === `webpage-section-${idParts.find(part => !isNaN(part))}` && idParts.filter(part => !isNaN(part)).length == 1){
-      item.element_count++
-      item.action= updateActionProperty(item.action, 'update')
-    }else if(item.id === `section-${idParts.slice(2).join('-')}` && idParts.join('-').includes('accordion')){
-      item.element_count++
-      item.action= updateActionProperty(item.action, 'update')
-    }else if(item.id === `body-${idParts.slice(2).join('-')}` && idParts.join('-').includes('modal-element')){
-      item.element_count++
-      item.action= updateActionProperty(item.action, 'update')
-    }
-  })
+  let wrapperId=''
+  if(idParts.filter(part => !isNaN(part)).length == 1){
+    wrapperId = `webpage-section-${idParts.find(part => !isNaN(part))}`
+  }else if(idParts.join('-').includes('accordion') && !idParts.includes('modal')){
+    wrapperId = `section-${idParts.slice(2).join('-')}`
+  }else if(idParts.join('-').includes('modal')){
+    wrapperId = `body-${idParts.slice(2).join('-')}`
+  }
+  const item = webpageDb.find(item=>item.id === wrapperId)
+
+  if(item){
+    item.element_count=parseInt(item.element_count)+1
+    item.action = updateActionProperty(item.action, 'update')
+  }
+
   globals.webpageDb=webpageDb
-  console.log(webpageDb)
+
 }
 const copyVideo=(idParts)=>{
   webpageDb=globals.webpageDb
@@ -175,19 +165,17 @@ const copyVideo=(idParts)=>{
     }
     
     const container = element.parentElement;
-    // console.log('element: ',element)
-    // console.log('container: ',container)
     if (!container) {
       console.error('Container tidak ditemukan');
       return;
     }
 
     const oldId = element.id;
-    const countNumber = (parseInt(container.dataset.elementCount || '0', 10)) + 1;
+    const countNumber = handleElementCount(container, parseInt(container.dataset.elementCount || '0', 10));
     container.dataset.elementCount = countNumber;
 
     // --- 2️⃣ Buat ID baru dan clone node ---
-    const newId = replaceTrailingNumber(oldId, countNumber);
+    const newId = generateUniqueId(oldId,container);
     const copyElement = element.cloneNode(true);
 
     copyElement.dataset.elementOrder = String(parseInt(copyElement.dataset.elementOrder || '0', 10) + 1);
@@ -220,7 +208,7 @@ const copyVideo=(idParts)=>{
           }
       }
     });
-
+ 
     // --- 4️⃣ Fungsi bantu untuk update semua atribut yang mengandung ID lama ---
     function updateFieldAttributes(rootEl, oldSuffix, newSuffix) {
       rootEl.querySelectorAll('*').forEach(el => {
@@ -255,29 +243,34 @@ const copyVideo=(idParts)=>{
     // --- 6️⃣ Sisipkan hasil duplikasi ke DOM ---
     element.insertAdjacentElement('afterend', copyElement);
 
+    copyElement.removeAttribute('data-listener-added')
+    copyElement
+      .querySelectorAll('[data-listener-added]')
+      .forEach(el => el.removeAttribute('data-listener-added'));
+
     // --- 5️⃣ Duplikasi dropdown body-nya ---
     if(!copyElement.querySelector(`[id*=modal]`)){
       const bodyDropdown = document.getElementById(`dropdown-${idParts.slice(1).join('-')}`);
       bodyDropdown.className= "w-25 z-40 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700"
       if (bodyDropdown) {
           const copyBodyDropdown = bodyDropdown.cloneNode(true);
-          copyBodyDropdown.id = replaceTrailingNumber(copyBodyDropdown.id, countNumber);
+          copyBodyDropdown.id = replaceIdSuffix(copyBodyDropdown.id, oldId, newId)
           copyBodyDropdown.className = 'w-25 z-40 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700';
           copyBodyDropdown.setAttribute('data-initialized', '');
 
           updateFieldAttributes(copyBodyDropdown, oldId, newId);
 
-          // console.log('Dropdown body ditemukan untuk:', oldId, copyBodyDropdown);
+       
           bodyDropdown.insertAdjacentElement('afterend', copyBodyDropdown)
       } else {
           console.warn('Dropdown body tidak ditemukan untuk:', oldId);
       }
-      // console.log('no modal dropdown: ',copyElement.id)
+
     }else{
       const bodyDropdown = document.querySelector(`[id="dropdown-${idParts.slice(1).join('-')}"]`).cloneNode(true)
       bodyDropdown.setAttribute('data-initialized', '')
       bodyDropdown.setAttribute('class', 'w-25 z-40 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700')
-      // console.log('modal dropdown: ',bodyDropdown)
+   
     }
     
     // --- 8️⃣ Update element_count di DB container ---
@@ -317,6 +310,6 @@ const copyVideo=(idParts)=>{
     }
     dropdownInitialized('', `dropdown-${newId}`);
     globals.webpageDb=webpageDb
-    // console.log('Field duplicated:', newId, '→', webpageDb);
+ 
 }
 export { createVideo, createDropdownVideo, addVideo, copyVideo }

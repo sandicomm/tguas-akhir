@@ -8,13 +8,7 @@ class Emodul extends Model
 {
     protected $fillable = [
         'judul',
-        'penulis',
-        'pengarang',
-        'penerbit',
-        'tahun_terbit',
-        'halaman',
-        'deskripsi',
-        'thumbnail',
+        'penyusun',
         'file_path',
     ];
 }

@@ -42,7 +42,7 @@ function getTargetElement(idParts) {
     globals.actualField = document.getElementById(fieldElement.id)
     globals.actualBodyItem = document.getElementById(fieldElement.id).parentElement.parentElement
     type = 'item carousel';
-    // console.log('item', idParts, fieldElement)
+
 
   } else if(idParts[1] === 'carousel'){
     fieldElement = document.getElementById(idParts.slice(1).join('-'));
@@ -79,13 +79,13 @@ function getTargetElement(idParts) {
     type = 'modal';
   }
 
-  //  console.log(type, idParts, fieldElement)
 
   return { fieldElement, bodyElement, type };
 }
 
 function handleElementAction(action, fieldElement, bodyElement, options = {}, idParts) {
-  let webpageDb = globals.webpageDb;
+  let webpageDb = globals.webpageDb; 
+  let fileDb = globals.file; 
   let webpageDbParentSection = globals.webpageDbParentSection;
   const { datasetKey = 'elementOrder', reinitFlowbite = false, updateIndicators = null, afterMove = null } = options;
 
@@ -104,20 +104,22 @@ function handleElementAction(action, fieldElement, bodyElement, options = {}, id
       target.insertAdjacentElement(action === 'up' ? 'beforebegin' : 'afterend', fieldElement);
   
       // Update di DB
+   
       const fieldId = resolveFieldId(fieldElement);
       const targetId = resolveFieldId(target);
       webpageDb.forEach(item => {
         if (item.id === fieldId) {
           item.element_order = fieldElement.dataset[datasetKey];
           item.action = updateActionProperty(item.action, 'update')
-  
+    
         }
+
         if (item.id === targetId) {
           item.element_order = target.dataset[datasetKey];
           item.action = updateActionProperty(item.action, 'update')
+      
         }
       });
-  
       afterMove?.();
     }
   }
@@ -146,7 +148,7 @@ function handleElementAction(action, fieldElement, bodyElement, options = {}, id
     const actual = fieldElement.id ? fieldElement : fieldElement.querySelector('[id^="field"]');
     if (!actual) return;
 
-    // console.log('Delete:', fieldElement, actual);
+
 
     const updateElementCount = (el, key = 'elementCount') => {
       el.dataset[key] = Math.max(0, parseInt(el.dataset[key]) - 1);
@@ -155,13 +157,41 @@ function handleElementAction(action, fieldElement, bodyElement, options = {}, id
 
     // Hapus dari DB
     const setDeleteStatus = (id)=>{
-      console.log(id)
+    
+      let matchItem=[]
       const targetParts=id.split('-')
+
       webpageDb = webpageDb.filter(item => {
         const parts = item.id.split('-')
         if (arraySubsequenceMatch(parts,targetParts)) {
           const update = updateActionProperty(item.action, 'delete');
-          console.log('matched item:', item);
+          matchItem.push(item.id)
+
+          const match = item.style?.match(/url\((['"]?)(.*?)\1\)/)
+
+          let mediaId = match ? match[2] : null;
+
+          if (item.type === 'img-carousel') {
+            mediaId = item.content
+          }
+
+          if(mediaId){
+          
+            const checkUsedMedia = webpageDb.some(el => {
+              if (el.id === item.id) return false; // skip elemen yg sedang kita proses
+
+              const style = el.style || "";
+              const content = el.content || "";
+
+              return style.includes(mediaId) || 
+                    content.includes(mediaId)
+            });
+
+            const target = fileDb.find(el => el.id === mediaId);
+            if (target && !checkUsedMedia) {
+              delete target.action;
+            }
+          }
 
           if (update.includes('new')) {
             // hapus dari array (jangan disertakan)
@@ -170,10 +200,12 @@ function handleElementAction(action, fieldElement, bodyElement, options = {}, id
             // ubah action lalu simpan lagi
             item.action = update;
           }
+
         }
         return true; // tetap dipertahankan
       });
       fieldElement.remove()
+  
     }
 
     // ========== Section Delete ==========
@@ -182,7 +214,9 @@ function handleElementAction(action, fieldElement, bodyElement, options = {}, id
           parseInt(fieldElement.dataset.elementOrder) >= parseInt(bodyElement.dataset.elementCount)
           ? 'elementCount'
           : null;
-
+        
+        
+        
         if(key && bodyElement.id === 'webpage'){
           webpageDbParentSection[0].element_count = Math.max(
             0,
@@ -192,10 +226,11 @@ function handleElementAction(action, fieldElement, bodyElement, options = {}, id
           updateElementCount(bodyElement, 'elementCount')
         }else if(key){
           updateElementCount(bodyElement, 'elementCount')
-          webpageDb.forEach(page => {
+          webpageDb.some(page => {
             if (page.id === `btn-heading-${bodyElement.id.split('-').slice(1).join('-')}`) {
               page.element_count = bodyElement.dataset[key];
               page.action = updateActionProperty( page.action, 'update')
+              return true
             }
           });
         }
@@ -203,8 +238,6 @@ function handleElementAction(action, fieldElement, bodyElement, options = {}, id
         const id = fieldElement.id.split('-');
         setDeleteStatus(id.slice(1).join('-'))
         updateStylingControls()
-      
-      
     }
 
     // ========== Accordion Header Delete ==========
@@ -213,25 +246,29 @@ function handleElementAction(action, fieldElement, bodyElement, options = {}, id
           parseInt(fieldElement.dataset.elementOrder) >= parseInt(bodyElement.dataset.itemAccordion)
           ? 'itemAccordion'
           : null;
-      console.log(key)
+      
       if(key){
         updateElementCount(bodyElement, 'itemAccordion');
-        webpageDb.forEach(page => {
+        webpageDb.some(page => {
           if (page.id === bodyElement.id.split('-').slice(1).join('-')) {
             page.element_count = bodyElement.dataset.itemAccordion;
             page.action = updateActionProperty(page.action, 'update')
+            return true
           }
         });
         globals.bodyElement = bodyElement;
       }
-      setDeleteStatus(fieldElement.id.split('-').slice(2).join('-'))
+      setDeleteStatus(fieldElement.id)
       updateStylingControls()
     }
-
+    
     // ========== Carousel Item Delete ==========
     else if (idParts[1] === 'item') {
       const actualBodyItem = globals.actualBodyItem;
       const editCarousel = document.getElementById('edit-carousel-item-wrapping')
+
+      if(editCarousel.children.length <= 1 ) return
+      
       const indicatorWrapper = document.getElementById(`slide-indicator-${idParts.slice(2, -1).join('-')}`);
       const items = [...fieldElement.parentElement.querySelectorAll('[data-item-order]')];
 
@@ -249,15 +286,16 @@ function handleElementAction(action, fieldElement, bodyElement, options = {}, id
       });
 
       // Update count
-      console.log(+actualBodyItem.dataset.itemCount >= targetOrder, +actualBodyItem.dataset.itemCount, targetOrder, actualBodyItem)
+
       if (+actualBodyItem.dataset.itemCount <= targetOrder)
         actualBodyItem.dataset.itemCount = +actualBodyItem.dataset.itemCount - 1;
         editCarousel.dataset.itemCount = actualBodyItem.dataset.itemCount
 
-      webpageDb.forEach(f => {
+      webpageDb.some(f => {
         if (f.id === fieldElement.id.split('-').slice(1, -1).join('-')) {
           f.element_count = actualBodyItem.dataset.itemCount;
           f.action = updateActionProperty(f.action, 'update')
+          return true
         }
       });
 
@@ -272,29 +310,78 @@ function handleElementAction(action, fieldElement, bodyElement, options = {}, id
       }, 100);
     }
 
-    // ========== Field in Section / Normal Field ==========
-    else {
-      console.log('field delete:', fieldElement,actual)
+    // ========== Modal Delete =============
+    else if(idParts[2] == 'modal'){
+     
+      let elementOrder = actual.dataset.elementOrder
+
       const key =
-        (bodyElement.id.startsWith('editor-container-section-') || bodyElement.id.startsWith('wrapper-section-')) &&
+        (bodyElement.id.startsWith('editor-container-section-') || bodyElement.id.startsWith('wrapper-section-'))  &&
         (!['head', 'section'].includes(idParts[1]) &&
-          parseInt(actual.dataset.elementOrder) >= parseInt(bodyElement.dataset.elementCount))
+          parseInt(elementOrder) >= parseInt(bodyElement.dataset.elementCount))
           ? 'elementCount'
           : null;
 
-      console.log(key ,bodyElement)
+
       if (key) {
         updateElementCount(bodyElement, key);
         let itemId
         if(bodyElement.id === 'webpage'){
           itemId = `webpage-${bodyElement.id.split('-').slice(2).join('-')}`
+        }else if(bodyElement.id.startsWith('body-modal')){
+          itemId = bodyElement.id
+        }else if(bodyElement.id.startsWith('editor-container')){
+          itemId = `webpage-${bodyElement.id.split('-').slice(2).join('-')}`
         }else{
           itemId = bodyElement.id.split('-').slice(1).join('-')
         }
-        webpageDb.forEach(page => {
+   
+        webpageDb.some(page => {
           if (page.id === itemId) {
             page.element_count = bodyElement.dataset[key];
             page.action =  updateActionProperty(page.action, 'update')
+            return true
+          }
+        });
+      }
+  
+      document.getElementById(`element-${fieldElement.id}`).remove()
+      setDeleteStatus(actual.id)
+      updateStylingControls()
+    }
+
+    // ========== Field in Section / Normal Field ==========
+    else {
+  
+      let elementOrder = actual.dataset.elementOrder
+      if(actual.id.startsWith('field')){
+        elementOrder = actual.parentElement.dataset.elementOrder
+      }
+      const key =
+        (bodyElement.id.startsWith('editor-container-section-') || bodyElement.id.startsWith('wrapper-section-') || bodyElement.id.startsWith('body-modal-')) &&
+        (!['head', 'section'].includes(idParts[1]) &&
+          parseInt(elementOrder) >= parseInt(bodyElement.dataset.elementCount))
+          ? 'elementCount'
+          : null;
+
+      if (key) {
+        updateElementCount(bodyElement, key);
+        let itemId
+        if(bodyElement.id === 'webpage'){
+          itemId = `webpage-${bodyElement.id.split('-').slice(2).join('-')}`
+        }else if(bodyElement.id.startsWith('body-modal')){
+          itemId = bodyElement.id
+        }else if(bodyElement.id.startsWith('editor-container')){
+          itemId = `webpage-${bodyElement.id.split('-').slice(2).join('-')}`
+        }else{
+          itemId = bodyElement.id.split('-').slice(1).join('-')
+        }
+     
+        webpageDb.some(page => {
+          if (page.id === itemId) {
+            page.element_count = bodyElement.dataset[key];
+            page.action =  updateActionProperty(page.action, 'update')
+            return true
           }
         });
       }
@@ -304,6 +391,11 @@ function handleElementAction(action, fieldElement, bodyElement, options = {}, id
     
     globals.webpageDb = webpageDb;
     globals.webpageDbParentSection = webpageDbParentSection;
+
+    if(!idParts.join('-').startsWith('delete-section')){
+      
+      document.getElementById(idParts.join('-')).parentElement.parentElement.parentElement.remove()
+    }
   }
 
   // =========================
@@ -319,6 +411,6 @@ function handleElementAction(action, fieldElement, bodyElement, options = {}, id
     }, 100);
   }
 
-  console.log('📘 DB sync:', webpageDb, globals.webpageDb, webpageDbParentSection, globals.webpageDbParentSection);
+
 }
 export { getTargetElement,handleElementAction }

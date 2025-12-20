@@ -5,6 +5,7 @@ namespace App\Livewire;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\File;
 use App\Models\Media;
 
 class MediaManager extends Component
@@ -25,35 +26,46 @@ class MediaManager extends Component
 
     protected $rules = [
         'title' => 'required|string|max:255',
-        'file' => 'required|mimes:jpg,jpeg,png,mp4,mov,avi|max:12288',
+        'file' => 'required|mimes:jpg,jpeg,png,mp4,mov,avi|max:20048',
     ];
 
     public function store()
     {
         $this->validate();
 
-        $filePath = $this->file->store('media', 'public');
-        //dev_ver
-        //$filePath = $this->file->store('', 'media_public');
-        $isImage = @exif_imagetype($this->file->getRealPath());
+        // pastikan folder ada
+        if (!file_exists(public_path('media'))) {
+            mkdir(public_path('media'), 0755, true);
+        }
+
+        // ambil nama asli
+        $originalName = $this->file->getClientOriginalName();
+        $ext = $this->file->getClientOriginalExtension();
+
+        // pastikan judul aman dijadikan filename
+        $safeTitle = preg_replace('/[^A-Za-z0-9_\-]/', '_', $this->title);
+
+        // final filename
+        $filename = $safeTitle . '_' . time() . '.' . $ext;
+
+        // pindahkan dari tmp livewire ke PUBLIC/media
+        $this->file->storeAs('/', $filename, [
+            'disk' => 'public_uploads'
+        ]);
+
+        // deteksi tipe file (image/video)
+        $isImage = @exif_imagetype(public_path('media/' . $filename));
         $type = $isImage ? 'image' : 'video';
 
         Media::create([
-            'title' => $this->title,
-            'file_path' => $filePath,
-            'type' => $type,
+            'title'     => $this->title,
+            'file_path' => 'media/' . $filename,
+            'type'      => $type,
         ]);
 
-        try {
-          $this->file->delete(); // cara resmi dari Livewire 3
-        } catch (\Exception $e) {
-            // kalau gagal hapus, abaikan
-        }
-
-        // Reset form setelah upload
+        // reset
         $this->dispatch('resetForm');
         $this->reset(['title', 'file']);
-
         session()->flash('success', 'File berhasil diunggah!');
     }
 
@@ -61,11 +73,10 @@ class MediaManager extends Component
     {
         $media = Media::find($id);
         if ($media) {
-            Storage::disk('public')->delete($media->file_path);
-            //dev_version
-            //Storage::disk('media_public')->delete($media->file_path);
+            File::delete(public_path($media->file_path));
             $media->delete();
         }
+
         session()->flash('success', 'File berhasil dihapus!');
     }
 

@@ -8,7 +8,11 @@ use Livewire\Component;
 use Illuminate\Support\Facades\DB;
 use App\Models\Responses as Response;
 use App\Models\Responden as Responden;
-use App\Exports\ResponsesExport;
+
+use App\Exports\ScoringExport;
+use App\Exports\FormResponseExport;
+use App\Exports\RekapExport;
+use App\Exports\ScoringPersonalExport;
 use Maatwebsite\Excel\Facades\Excel;
 
 class Dashboard extends Component
@@ -162,23 +166,76 @@ class Dashboard extends Component
         }
     }
 
-    public function exportExcel($type, $formId)
+     public function exportExcel($type, $formId)
     {
-        if ($type === 'response') {
-            $data = Response::with(['responden', 'answer.question'])
-            ->whereHas('form', fn($q) => $q->where('id',(int) $formId))
+         if ($type === 'response') {
+            
+            $data = Response::with([
+                'responden',
+                'answer.question.section.form'
+            ])
+            ->whereHas('form', fn($q) => $q->where('id', (int) $formId))
             ->get();
-            $viewName = 'exports.responses';
-        }else if ($type === 'rekap') {
-            $data = Response::with(['responden', 'answer.question.section.form'])->get();
-            $viewName = 'exports.responses-rekap';
-        } else if($type === 'scoring') {
-            $data = Response::with(['responden', 'answer.question.section.form'])->get();
-            $viewName = 'exports.scoring';
-        } else {
-            return abort(404, 'Form type not found');
+
+            return Excel::download(
+                new FormResponseExport($data),
+                "responses-{$formId}.xlsx"
+            );
         }
-        return Excel::download(new ResponsesExport($data, $viewName), "{$type}-{$formId}_responses.xlsx");
+
+        else if ($type === 'rekap') {
+
+            $forms = Form::with('sections.questions.answers')->get();
+
+            // filter form yang jawaban unik <= 6
+            $validForms = $forms->filter(function($form) {
+                $unique = $form->sections
+                    ->flatMap->questions
+                    ->flatMap->answers
+                    ->pluck('value')
+                    ->unique();
+
+                return $unique->count() <= 6;
+            });
+
+            return Excel::download(
+                new RekapExport($validForms),
+                "rekap.xlsx"
+            );
+        }
+
+        else if ($type === 'scoring') {
+
+            $data = Response::with(['responden', 'answer.question.section.form'])->get();
+
+            // Group: EMAIL → FORM
+            $groupedByEmail = $data
+                ->groupBy('responden.email')
+                ->map(function ($rows) {
+                    return $rows->groupBy('answer.question.section.form_id');
+                });
+
+            return Excel::download(
+                new ScoringExport($groupedByEmail),
+                "scoring.xlsx"
+            );
+        }
+
+        else if ($type === 'scoringPersonal') {
+            $data = Response::with(['responden', 'answer.question.section.form'])
+                ->whereHas('responden', fn ($q) => $q->where('email', $formId))
+                ->get();
+
+            // Grouping per form
+            $groupedForms = $data->groupBy('answer.question.section.form_id');
+
+            return Excel::download(
+                new ScoringPersonalExport($groupedForms),
+                "scoring-personal-{$formId}.xlsx"
+            );
+        }
+
+        abort(404);
     }
 
     public function deleteResponse($formId)

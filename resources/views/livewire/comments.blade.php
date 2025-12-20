@@ -1,12 +1,26 @@
 <div class="sm:ml-64">
-    <div class="comments-section bg-white rounded p-4 shadow-md">
+    <div class="comments-section dark:bg-slate-100 bg-slate-600 rounded p-4 shadow-md">
     <x-loading wire:loading.flex />
-        <h2 class="text-center mb-4 text-2xl font-bold">Comments Section</h2>
+        <div class="hidden" id='jsLoader'>
+            <x-loading />
+        </div>
+        <script>
+            document.getElementById('jsLoader').classList.remove('hidden');
+            setTimeout(()=>{
+                document.getElementById('jsLoader').classList.add('hidden');
+            },2750)
+        </script>
+        <h2 class="text-center mb-4 text-2xl font-bold dark:text-black text-white">Comments Section</h2>
         
         <div class="w-100 flex justify-center">
-            <div class="bg-blue-300 p-4 rounded w-1/2 shadow-sm mb-3">
+            <div class="bg-slate-700 dark:bg-blue-300 p-4 rounded-md w-1/2 shadow-sm mb-3">
                 <div class="mb-5">
-                    <textarea wire:model="comment" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Tulis komentar..." required></textarea>
+                    <textarea wire:model="comment" 
+                            class="dark:bg-gray-50 border border-gray-300 dark:text-gray-900 text-sm rounded-lg focus:ring-blue-500 
+                                focus:border-blue-500 block w-full p-2.5 bg-gray-600 dark:border-gray-600 dark:placeholder-gray-400 
+                                text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" 
+
+                            placeholder="Tulis komentar..." required></textarea>
                 </div>
                 <button type="submit" wire:click="store('new')" class="text-white bg-blue-500 hover:bg-blue-600 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">Kirim Komentar</button>
             </div>
@@ -35,14 +49,14 @@
             </div>
         @endif
         @foreach ($comments->where('parent_id', null) as $comment)
-            <div class="p-6 border border-slate-300 rounded-lg shadow-md dark:bg-gray-800 dark:border-gray-700 mt-2">
-                <div class="p-4 border border-slate-300 rounded-lg dark:bg-gray-800 dark:border-gray-700 {{ $comment->is_admin ? 'bg-blue-200' : 'bg-white' }}">
-                    <strong>{{ $comment->name }}
+            <div class="p-6 border rounded-lg shadow-md dark:bg-transparent border-gray-400 mt-2">
+                <div class="p-4 border border-slate-300 rounded-lg dark:border-gray-700 {{ $comment->is_admin ? 'bg-indigo-900 dark:bg-blue-200' : 'dark:bg-white bg-slate-600' }}">
+                    <strong class="text-white dark:text-black">{{ $comment->name }}
                         @if ($comment->is_admin)
-                            <span class="text-blue-600">(admin)</span>
+                            <span class="dark:text-blue-600 text-blue-400">(admin)</span>
                         @endif
                     </strong>
-                    <p>{{ $comment->comment }}</p>
+                    <p class="text-white dark:text-black">{{ $comment->comment }}</p>
 
                     <button class="reply-btn text-white bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-blue-300 dark:focus:ring-blue-800 font-medium rounded-lg text-sm px-3.5 py-1.5 text-center me-2 mb-2 mt-4" wire:click="edit({{ $comment->id }}, 'reply')">             
                         Reply
@@ -51,20 +65,20 @@
                     {{-- @dd($parent_id) --}}
                     @if ($comment->is_admin)
                         <button wire:click="edit({{ $comment->id }}, 'edit')"
-                            class="text-yellow-500 hover:underline mr-2">Edit</button>
+                            class="dark:text-violet-600 text-blue-300 hover:underline mr-2 font-bold p-2">Edit</button>
                     @endif
-                    <button wire:click="delete({{ $comment->id }})" class="text-red-500 hover:underline">Delete</button>
+                    <button wire:click="delete({{ $comment->id }})" class="dark:text-red-500 text-red-500 font-bold p-2 hover:underline">Delete</button>
                 </div>
 
                 @if ($editingId === $comment->id)
-                    <div class="mt-4">
+                    <div class="my-4 bg-slate-600 dark:bg-white rounded-md p-4">
                         @if($state == 'edit')
-                            <h3 class="text-lg font-semibold">Edit Komentar</h3>
+                            <h3 class="text-lg font-semibold text-white dark:text-black">Edit Komentar</h3>
                         @else
-                            <h3 class="text-lg font-semibold">Balas Komentar</h3>
+                            <h3 class="text-lg font-semibold text-white dark:text-black">Balas Komentar</h3>
                         @endif
                             
-                        <textarea wire:model="comment" class="form-textarea w-full mb-2" placeholder="Komentar"></textarea>
+                        <textarea wire:model="comment" class="form-textarea w-full mb-2 rounded-md bg-slate-500 dark:bg-white text-white dark:text-black" placeholder="Komentar"></textarea>
 
                         @if($state == 'reply')
                             <button wire:click="store('none')"
@@ -79,14 +93,14 @@
                 @endif
                     
                 @foreach ($comment->replies as $reply)
-                    <div class="p-6 border rounded-lg dark:bg-gray-800 dark:border-gray-700">
-                        <div class="p-4 border border-slate-300 rounded-lg dark:bg-gray-800 dark:border-gray-700 {{ $reply->is_admin ? 'bg-blue-200' : 'bg-white' }}">
-                            <strong>{{ $reply->name }}
+                    <div class="p-6 border rounded-lg dark:bg-gray-200 bg-slate-700 dark:border-gray-700">
+                        <div class="p-4 border border-slate-300 rounded-lg dark:border-gray-700 {{ $reply->is_admin ? 'bg-indigo-900 dark:bg-blue-200' : 'dark:bg-white bg-slate-600' }}">
+                            <strong class="text-white dark:text-black">{{ $reply->name }}
                                 @if ($reply->is_admin)
-                                    <span class="text-blue-600">(admin)</span>
+                                    <span class="dark:text-blue-600 text-blue-400">(admin)</span>
                                 @endif
                             </strong>
-                            <p>{{ $reply->comment }}</p>
+                            <p class="text-white dark:text-black">{{ $reply->comment }}</p>
                             
                             <button class="reply-btn text-white bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-blue-300 dark:focus:ring-blue-800 font-medium rounded-lg text-sm px-3.5 py-1.5 text-center me-2 mb-2 mt-4" wire:click="edit({{ $reply->id }}, 'reply')">            
                                 Reply
@@ -94,21 +108,21 @@
         
                             @if ($reply->is_admin)
                                 <button wire:click="edit({{ $reply->id }}, 'edit')"
-                                    class="text-yellow-500 hover:underline mr-2">Edit</button>
+                                    class="dark:text-violet-600 text-blue-300 hover:underline mr-2 font-bold p-2">Edit</button>
                             @endif
         
                             <button wire:click="delete({{ $reply->id }})"
-                                class="text-red-500 hover:underline">Delete</button>
+                                class="dark:text-red-500 text-red-500 font-bold p-2 hover:underline">Delete</button>
 
                             @if ($editingId === $reply->id)
-                                <div class="mt-4">
+                                <div class="my-4 bg-slate-600 dark:bg-white rounded-md p-4">
                                     @if($state == 'edit')
-                                        <h3 class="text-lg font-semibold">Edit Komentar</h3>
+                                        <h3 class="text-lg font-semibold text-white dark:text-black">Edit Komentar</h3>
                                     @else
-                                        <h3 class="text-lg font-semibold">Balas Komentar</h3>
+                                        <h3 class="text-lg font-semibold text-white dark:text-black">Balas Komentar</h3>
                                     @endif
                                         
-                                    <textarea wire:model="comment" class="form-textarea w-full mb-2" placeholder="Komentar"></textarea>
+                                    <textarea wire:model="comment" class="form-textarea w-full mb-2 rounded-md bg-slate-600 dark:bg-white text-white dark:text-black" placeholder="Komentar"></textarea>
     
                                     @if($state == 'reply')
                                         <button wire:click="store('none')"
@@ -124,22 +138,22 @@
                         </div>
 
                         @foreach ($reply->replies as $reply_replys)
-                            <div class="p-6 border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700 mt-2 ms-4 {{ $reply_replys->is_admin ? 'bg-blue-200' : 'bg-white' }}">
+                            <div class="p-6 border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700 mt-2 ms-4 {{ $reply_replys->is_admin ? 'bg-indigo-900 dark:bg-blue-200' : 'dark:bg-white bg-slate-600' }}">
                                 <div class="card-body">
-                                    <strong>{{ $reply_replys->name }}
+                                    <strong class="text-white dark:text-black">{{ $reply_replys->name }}
                                         @if ($reply_replys->is_admin)
-                                            <span class="text-blue-600">(admin)</span>
+                                            <span  class="dark:text-blue-600 text-blue-400">(admin)</span>
                                         @endif
                                     </strong>
-                                    <p>{{ $reply_replys->comment }}</p>
+                                    <p class="text-white dark:text-black">{{ $reply_replys->comment }}</p>
                 
                                     @if ($reply_replys->is_admin)
                                         <button wire:click="edit({{ $reply_replys->id }}, 'edit')"
-                                            class="text-yellow-500 hover:underline mr-2">Edit</button>
+                                            class="dark:text-violet-600 text-blue-300 hover:underline mr-2 font-bold p-2">Edit</button>
                                     @endif
                 
                                     <button wire:click="delete({{ $reply_replys->id }})"
-                                        class="text-red-500 hover:underline">Delete</button>
+                                        class="dark:text-red-500 text-red-500 font-bold p-2 hover:underline">Delete</button>
 
                                     @if ($editingId === $reply_replys->id)
                                         <div class="mt-4">

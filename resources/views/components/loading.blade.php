@@ -1,9 +1,10 @@
 <div {{ $attributes->merge([
-    'class' => 'loadingScreenScoring overflow-y-auto overflow-x-hidden fixed top-0 left-0 right-0 z-50 justify-center items-center w-full md:inset-0 h-full',
+    'class' => 'loadingScreenScoring overflow-y-auto overflow-x-hidden fixed top-0 left-0 right-0 z-[80] flex justify-center items-center w-full md:inset-0 h-full',
     'data-modal-backdrop' => 'static',
     'tabindex' => '-1',
-    'aria-hidden' => 'true'
-]) }}>
+    'aria-hidden' => 'true',
+    'style'=>'background-color:rgba(0,0,0,0.7);'
+]) }} >
     <div class="relative p-4 max-w-2xl max-h-full">
         <!-- Modal content -->
         <div class="relative">

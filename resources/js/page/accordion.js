@@ -7,26 +7,11 @@ import { copyModal } from './modal.js';
 import { dropdownInitialized } from './utils/dropdownInit.js';
 import { renderSvg } from './utils/svgEdit.js';
 
+import {arraySubsequenceMatch, generateUniqueId, handleElementCount, replaceIdSuffix} from './utils/elementNumberingId.js'
+
 let webpageDb=  globals.webpageDb
 let editorFieldSelect=globals.editorFieldSelect
 let accordionSelect=globals.accordionSelect
-
-function arraySubsequenceMatch(parts, targetParts) {
-  for (let i = 0; i <= parts.length - targetParts.length; i++) {
-    let match = true;
-
-    for (let j = 0; j < targetParts.length; j++) {
-      if (parts[i + j] !== targetParts[j]) {
-        match = false;
-        break;
-      }
-    }
-
-    if (match) return true;
-  }
-
-  return false;
-}
 
 function accordionStyling(){
   document.getElementById('head-indicator-type').addEventListener('change', function(){
@@ -36,7 +21,7 @@ function accordionStyling(){
     if(this.value !== ''){
       if(accordionSelect){
         accordionSelect.querySelectorAll('[id^="btn-heading-"]').forEach(head =>{
-          let spanHead = head.querySelector('span')
+          let spanHead = head.children[0]
           let indicator=''
           if(spanHead.nextElementSibling){
             spanHead.nextElementSibling.remove()
@@ -106,7 +91,6 @@ function accordionStyling(){
         }
   
         if(this.value !== 'none'){
-          // console.log(editorFieldSelect)
           editorFieldSelect.insertAdjacentHTML('beforeend', indicator)
         }
         editorFieldSelect.dataset.typeIndicator=indicatorType
@@ -140,7 +124,7 @@ function accordionStyling(){
         }
       })
     }
-    // console.log(webpageDb)
+
     globals.webpageDb=webpageDb
     setTimeout(() => {
       try {
@@ -171,20 +155,18 @@ const createItemAccordion = (itemId, item, accordionEl)=>{
 
     return`
         <div id="${itemId}" class="relative z-10" data-element-order="${item.element_order}">
-          <div type="button" class="bg-red-400 rounded-full absolute right-0 top-0 z-10 cursor-pointer" data-dropdown-toggle="dropdown-head-${itemId}" data-dropdown-placement="right-end">
+          <div type="button" class="bg-red-400 rounded-full absolute right-0 top-0 z-20 cursor-pointer" data-dropdown-toggle="dropdown-head-${itemId}" data-dropdown-placement="right-end">
             ${renderSvg()}   
           </div>
     
           <h2 id="heading-${itemId}">
             <button type="button" id="btn-heading-${itemId}" style="${item.style}"
-            class="flex items-center justify-between w-full p-5 font-medium text-left text-gray-500 border border-gray-400"
+            class="flex items-center justify-between w-full p-5 font-medium text-left text-gray-500 border border-gray-400 dark:!text-inherit"
             data-accordion-target="#body-${itemId}"
             aria-expanded="false"
             aria-controls="body-${itemId}">
-            <span style="width:100%;">
-            ${item.content}
-            </span>
-            ${indicator}
+              ${item.content}
+              ${indicator}
             </button>
           </h2>
     
@@ -196,7 +178,7 @@ const createItemAccordion = (itemId, item, accordionEl)=>{
 }
 const createAccordion = (accordion)=>`
   <div id="${accordion.id}" class="relative cursor-pointer" data-element-order="${accordion.element_order}" data-type-indicator="${parseStyleObj(accordion.content).headType}" style="${accordion.style}">
-    <div type="button" class="bg-white rounded-full absolute right-[-1.7rem] top-[0.2rem] z-10 cursor-pointer" data-dropdown-toggle="dropdown-${accordion.id}" data-dropdown-placement="right-end">
+    <div type="button" class="bg-white rounded-full absolute right-[-1.7rem] top-[0.2rem] z-20 cursor-pointer" data-dropdown-toggle="dropdown-${accordion.id}" data-dropdown-placement="right-end">
       ${renderSvg()}                 
     </div>
     <div id="parent-${accordion.id}" data-item-accordion="${accordion.element_count}" data-accordion="${parseStyleObj(accordion.content).accordionType}">
@@ -309,7 +291,7 @@ const createBodyDropdownAccordion =(idPrefix, idParts)=>`
       </ul>
       <ul class="py-2 text-sm text-gray-700 dark:text-gray-200 border-0 border-t-1 border-gray-500 " aria-labelledby="dropdownDefaultButton">
         <li>
-            <a id="delete-${idPrefix}" class="cursor-pointer font-bold block text-red-700 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white cursor-pointer">Delete</a>
+            <a id="delete-${idPrefix}" class="cursor-pointer font-bold block text-red-700 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Delete</a>
         </li>
       </ul>
     </div>
@@ -319,18 +301,25 @@ const addAccordion=(event)=>{
   const idParts = event.target.id.split('-');
   let bodyAppend, accordionWidth,idPrefix, accordionId, idAppendAccordion, fieldNumber, accordionParentBody, itemCount, dropdownBody
   
-  const createItemAccordionHTML = (idPrefix, i, content)=>{
+  const createItemAccordionHTML = (idPrefix, i, content, lastNumberId)=>{
+    let newHeadId = `btn-heading-${idPrefix}-${i}`
+    let newPrefix = `${idPrefix}-${i}`
+    if(lastNumberId){
+      i = lastNumberId
+      newHeadId =idPrefix
+      newPrefix=newHeadId.split('-').slice(2).join('-')
+    }
     webpageDb.push({
-      id:`btn-heading-${idPrefix}-${i}`,
+      id:newHeadId,
       type: "head-accordion",
       style: 'background-color:rgba(255,255,255,1);padding:15px;border-bottom: 1px solid black;',
-      content:`section-${i}`,
+      content:`<div style="width:100%;text-align:left;"><font size="3">Section ${i}</font></div>`,
       element_order: i,
       element_count: 1,
       action:'new-add'
     },
     {
-      id: `section-${idPrefix}-${i}-1`,
+      id: `section-${newPrefix}-1`,
       type: 'section-accordion',
       style: 'background-color:rgba(237,237,237,1);padding:10px;',
       element_order: 1,
@@ -338,9 +327,9 @@ const addAccordion=(event)=>{
       action:'new-add'
     },
     {
-      id: `field-${idPrefix}-${i}-1-${1}`,
+      id: `field-${newPrefix}-1-${1}`,
       type: 'field',
-      content: `text ${i}`,
+      content: `<font size="3">isi section ${1} di field ${1}</font>`,
       element_order:1,
       style:`ol{list-style-type:decimal;}ul{list-style-type:disc;}`,
       action:'new-add'
@@ -362,38 +351,40 @@ const addAccordion=(event)=>{
     }
 
     return`
-    <div id="${idPrefix}-${i}" class="relative z-10" data-element-order="${i}">
-      <div type="button" class="bg-red-400 rounded-full absolute right-0 top-0 z-10 cursor-pointer" data-dropdown-toggle="dropdown-head-${idPrefix}-${i}" data-dropdown-placement="right-end">
+    <div id="${newPrefix}" class="relative z-10" data-element-order="${i}">
+      <div type="button" class="bg-red-400 rounded-full absolute right-0 top-0 z-20 cursor-pointer" data-dropdown-toggle="dropdown-head-${newPrefix}" data-dropdown-placement="right-end">
         ${renderSvg()}  
       </div>
 
-      <h2 id="heading-${idPrefix}-${i}">
-        <button type="button" id="btn-heading-${idPrefix}-${i}"
-        class="flex justify-between w-full"
+      <h2 id="heading-${newPrefix}">
+        <button type="button" id="btn-heading-${newPrefix}"
+        class="flex justify-between w-full dark:!text-inherit"
         style="background-color:rgba(255,255,255,1);padding:15px;border-bottom: 1px solid black;"
-        data-accordion-target="#body-${idPrefix}-${i}"
+        data-accordion-target="#body-${newPrefix}"
         aria-expanded="false"
-        aria-controls="body-${idPrefix}-${i}">
-          <span style="width:100%;text-align:left;">Section ${i}</span>
+        aria-controls="body-${newPrefix}">
+          <div style="width:100%;text-align:left;">
+            <font size="3">Section ${i}</font>
+          </div>
           ${indicator}
         </button>
       </h2>
 
-      <div id="body-${idPrefix}-${i}" data-element-count="1" class="z-30 hidden relative flex flex-col justify-center items-center">
-        <div id="section-${idPrefix}-${i}-1" data-element-order="1" style="background-color:rgba(237,237,237,1);padding:10px;" class="relative w-full flex flex-col justify-center items-center border border-gray-400">
-          <div type="button" class="bg-blue-400 rounded-full absolute right-0 top-0 z-10 cursor-pointer" data-dropdown-toggle="dropdown-body-${idPrefix}-${i}-1" data-dropdown-placement="right-end">
+      <div id="body-${newPrefix}" data-element-count="1" class="z-30 hidden relative flex flex-col justify-center items-center">
+        <div id="section-${newPrefix}-1" data-element-order="1" style="background-color:rgba(237,237,237,1);padding:10px;" class="relative w-full flex flex-col justify-center items-center border border-gray-400">
+          <div type="button" class="bg-blue-400 rounded-full absolute right-0 top-0 z-20 cursor-pointer" data-dropdown-toggle="dropdown-body-${newPrefix}-1" data-dropdown-placement="right-end">
             ${renderSvg()}   
           </div>
 
-          <div id="wrapper-section-${idPrefix}-${i}-1" data-element-count="1" class="p-4 flex justify-start items-center flex-col">
+          <div id="wrapper-section-${newPrefix}-1" data-element-count="1" class="p-4 flex justify-start items-center flex-col">
             <!-- Body Accordion -->
             <div data-element-order="1" style="position: relative;" class="my-1">
-              <div type="button" class="bg-white rounded-full absolute  right-[-1.5rem] top-[1rem] z-10 cursor-pointer" data-dropdown-toggle="dropdown-body-field-${idPrefix}-${i}-1-${1}" data-dropdown-placement="right-end">
+              <div type="button" class="bg-white rounded-full absolute  right-[-1.5rem] top-[1rem] z-20 cursor-pointer" data-dropdown-toggle="dropdown-field-${newPrefix}-1-${1}" data-dropdown-placement="right-end">
                 ${renderSvg()}   
               </div>
               
-              <div id="field-${idPrefix}-${i}-1-${1}" style="ol{list-style-type:decimal;}ul{list-style-type:disc;}" class="border border-b-1 border-gray-500 px-1 max-w-[100%] scroll-hidden overflow-scroll" contenteditable="true">
-                isi section ${1} di field ${1}
+              <div id="field-${newPrefix}-1-${1}" style="ol{list-style-type:decimal;}ul{list-style-type:disc;}" class="border border-b-1 border-gray-500 px-1 max-w-[100%] scroll-hidden overflow-scroll" contenteditable="true">
+                <font size="3">isi section ${1} di field ${1}</font>
               </div>
             </div>  
           </div>
@@ -419,7 +410,7 @@ const addAccordion=(event)=>{
     }
     return `
     <div id="${idPrefix}" class="relative cursor-pointer" data-element-order="${fieldNumber}" data-type-indicator="default" style="overflow-anchor:none;height:auto;width:${accordionWidth}">
-      <div type="button" class="bg-white rounded-full absolute right-[-1.7rem] top-[0.2rem] z-10 cursor-pointer" data-dropdown-toggle="dropdown-${idPrefix}" data-dropdown-placement="right-end">
+      <div type="button" class="bg-white rounded-full absolute right-[-1.7rem] top-[0.2rem] z-20 cursor-pointer" data-dropdown-toggle="dropdown-${idPrefix}" data-dropdown-placement="right-end">
         ${renderSvg()}                 
       </div>
       <div id="parent-${idPrefix}" data-item-accordion="3" data-accordion="collapse">
@@ -427,7 +418,12 @@ const addAccordion=(event)=>{
       </div>
     </div>
   `}
-  const createItemBodyDropdownHTML = (idPrefix,idParts,i)=>{
+  const createItemBodyDropdownHTML = (idPrefix,idParts,i, lastNumberId)=>{
+    if(lastNumberId){
+      newHeadId =idPrefix
+      newPrefix=newHeadId.split('-').slice(2).join('-')
+    }
+
     let bodyDropdown =``
     bodyDropdown += `
         <div id="dropdown-head-${idPrefix}-${i}" data-accordion="open" class="absolute mt-2 left-0 w-20 z-30 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700">
@@ -441,7 +437,7 @@ const addAccordion=(event)=>{
           </ul>
         </div>
         
-        <div id="dropdown-body-field-${idPrefix}-${i}-1-${1}" data-accordion="open" class="absolute mt-2 left-0 w-25 z-30 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700">
+        <div id="dropdown-field-${idPrefix}-${i}-1-${1}" data-accordion="open" class="absolute mt-2 left-0 w-25 z-30 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700">
           <ul class="py-2 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownDefaultButton">
               <li>
                   <a id="up-field-${idPrefix}-${i}-1-${1}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Move Up</a>
@@ -472,7 +468,7 @@ const addAccordion=(event)=>{
             <a id="down-section-${idPrefix}-${i}-1" class="font-bold cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Move Down</a>
           </li>
           <li>
-            <a id="copy-${idPrefix}-${i}-1" class="cursor-pointer text-blue-600 block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-red-400">Duplikat</a>
+            <a id="copy-section-${idPrefix}-${i}-1" class="cursor-pointer text-blue-600 block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-red-400">Duplikat</a>
           </li>
           <li>
             <a id="delete-section-${idPrefix}-${i}-1" class="text-red-600 font-bold cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-red-400">Delete Section</a>
@@ -565,21 +561,22 @@ const addAccordion=(event)=>{
   }
 
   if(idParts[2] === 'head'){
-    // console.log("add item accordion")
 
     let parentAccordionId=`parent-${idParts.slice(3, idParts.length).join('-')}`
     accordionParentBody = document.getElementById(parentAccordionId)
-    itemCount = parseInt(accordionParentBody.getAttribute('data-item-accordion')) + 1;
+    itemCount = handleElementCount(accordionParentBody, accordionParentBody.dataset.itemAccordion)
     
     accordionId = `${idParts.slice(3, idParts.length).join('-')}`
     idPrefix = `${idParts.slice(3, idParts.length).join('-')}`
-    
+
+    let newBtnId = generateUniqueId(`btn-heading-${idPrefix}-${itemCount}`,itemCount ,true)
+    let lastNumberId = newBtnId.split('-').slice(-1)
     event.target.parentElement.parentElement.parentElement.classList.add('hidden')
     
-    accordionParentBody.innerHTML += createItemAccordionHTML(idPrefix,itemCount, accordionParentBody.parentElement.dataset.typeIndicator);
+    accordionParentBody.innerHTML += createItemAccordionHTML(newBtnId,itemCount, accordionParentBody.parentElement.dataset.typeIndicator, lastNumberId);
     accordionParentBody.setAttribute('data-item-accordion', itemCount.toString());
 
-    document.getElementById(`webpage-section-${idParts.find(part => !isNaN(part))}`).insertAdjacentHTML('beforeend',createItemBodyDropdownHTML(idPrefix,idParts,itemCount))
+    document.getElementById(`webpage-section-${idParts.find(part => !isNaN(part))}`).insertAdjacentHTML('beforeend',createItemBodyDropdownHTML(idPrefix,idParts,lastNumberId))
     webpageDb.forEach(page =>{
       if(page.id === idParts.slice(3, idParts.length).join('-')){
         page.element_count = itemCount
@@ -593,13 +590,11 @@ const addAccordion=(event)=>{
       idAppendAccordion = `wrapper-section-${idParts.slice(3, idParts.length).join('-')}`
       bodyAppend = document.getElementById(idAppendAccordion)
 
-      fieldNumber = parseInt(bodyAppend.getAttribute('data-element-count'))+1
+      fieldNumber = handleElementCount(bodyAppend, bodyAppend.dataset.elementCount)
       bodyAppend.dataset.elementCount = fieldNumber;
 
-      idPrefix = `${idParts.slice(1, idParts.length).join('-')}-${fieldNumber}`;
+      idPrefix = generateUniqueId(`${idParts.slice(1, idParts.length).join('-')}-${fieldNumber}`, bodyAppend);
       accordionId = idPrefix
-  
-      // console.log('accordion in accordion')
 
       event.target.parentElement.parentElement.parentElement.classList.add('hidden')
       accordionWidth= '300px'
@@ -608,24 +603,18 @@ const addAccordion=(event)=>{
       idAppendAccordion = `editor-container-section-${idParts[4]}`
       const section = document.getElementById(idAppendAccordion)
 
-      fieldNumber = section.dataset.elementCount
-      fieldNumber++
+      fieldNumber = handleElementCount(section, section.dataset.elementCount)
       section.dataset.elementCount = fieldNumber
-      
-      idPrefix = `${idParts.slice(1, idParts.length).join('-')}-${fieldNumber}`;
-      
+      idPrefix = generateUniqueId(`${idParts.slice(1, idParts.length).join('-')}-${fieldNumber}`, section)
+
       accordionId = idPrefix
-      
-      // console.log('accordion biasa')
       accordionWidth= '400px'
-      
     }
 
     document.getElementById(`webpage-section-${idParts.find(part => !isNaN(part))}`).insertAdjacentHTML('beforeend', createBodyDropdownHTML(idPrefix,idParts))
 
     document.getElementById(idAppendAccordion).insertAdjacentHTML('beforeend',createAccordionHTML(idPrefix,fieldNumber,accordionWidth));
 
-    // console.log('accoridon',idParts.filter(part => !isNaN(part)).length == 1, `section-${idParts.slice(1).join('-')}`)
     webpageDb.forEach(item=>{
       if(item.id === `webpage-section-${idParts.find(part => !isNaN(part))}` && idParts.filter(part => !isNaN(part)).length == 1){
         item.element_count++
@@ -635,9 +624,11 @@ const addAccordion=(event)=>{
         item.action = updateActionProperty(item.action, 'update')
       }
     })
-
-    // console.log(webpageDb, idParts)
   }
+
+  document.getElementById(accordionId).querySelectorAll('[data-listener-added]').forEach(el =>{
+    el.dataset.listenerAdded=''
+  })
 
   setTimeout(() => {
       try {
@@ -650,7 +641,7 @@ const addAccordion=(event)=>{
               });
               console.log('✅ Accordion berhasil diinisialisasi:', accordionElement.id);
           } else {
-              console.warn('⚠️ Elemen Accordion tidak ditemukan setelah appendChild');
+              // console.warn('⚠️ Elemen Accordion tidak ditemukan setelah appendChild');
           }
 
           // Panggil initFlowbite setelah inisialisasi accordion spesifik ini
@@ -664,7 +655,6 @@ const addAccordion=(event)=>{
   dropdownInitialized('multi', idPrefix)
 
   globals.webpageDb=webpageDb
-  console.log('add accordion',globals.webpageDb)
 }
 const copyAccordion=(idAccordion, mode="all")=>{
   try {
@@ -683,17 +673,18 @@ const copyAccordion=(idAccordion, mode="all")=>{
       }
 
       // hitung count baru & simpan
-      const countNumber = (parseInt(container.dataset.elementCount || '0', 10) || 0) + 1;
+      const countNumber = handleElementCount(container, container.dataset.elementCount)
 
       // clone elemen (btn + modal body)
       const accordionCopy = accordionEl.cloneNode(true);
 
       // buat id baru dengan mengganti angka terakhir
       const oldAccId = accordionEl.id;
-      const newAccId = replaceTrailingNumber(oldAccId, countNumber);
-      // console.log('test',countNumber, {oldBtnId, oldModalId, newBtnId,newModalId})
-
-      accordionCopy.id = newAccId;
+      let newAccId = ''
+      if(mode != 'all'){
+        newAccId = generateUniqueId(oldAccId, container)
+        accordionCopy.id = newAccId;
+      }
 
       function updateAccordionAttributes(accordionCopyElement, oldAccId, newAccId) {
         const oldSuffix = oldAccId.split('-').slice(1).join('-');
@@ -708,14 +699,14 @@ const copyAccordion=(idAccordion, mode="all")=>{
 
             // 2️⃣ Kalau value mengandung ID lama, ganti jadi ID baru
             if (arraySubsequenceMatch(val.split('-'), oldSuffix.split('-'))) {
-              const newVal = val.replaceAll(oldSuffix, newSuffix);
+              const newVal = replaceIdSuffix(val, oldSuffix, newSuffix);
               el.setAttribute(attr, newVal);
             }
           }
 
           // 3️⃣ Kalau ID-nya sendiri mengandung substring lama, ganti juga
           if (el.id && arraySubsequenceMatch(el.id.split('-'), oldSuffix.split('-'))) {
-            const newId = el.id.replaceAll(oldSuffix, newSuffix);
+            const newId = replaceIdSuffix(el.id, oldSuffix, newSuffix);;
 
             // Update id di DOM
             el.id = newId;
@@ -744,6 +735,8 @@ const copyAccordion=(idAccordion, mode="all")=>{
         // update element order btnCopy: +1 dari original (jika ada)
         accordionCopy.dataset.elementOrder = String(newOrderBase);
         container.dataset.elementCount = String(countNumber);
+        newAccId = generateUniqueId(oldAccId, container)
+        accordionCopy.id = newAccId;
 
         // 1) Perbarui element_order pada sibling (hanya direct children container)
         Array.from(container.children).forEach(el => {
@@ -782,7 +775,7 @@ const copyAccordion=(idAccordion, mode="all")=>{
             }
           })
         })
-
+          
         updateAccordionAttributes(accordionCopy, oldAccId, newAccId)
 
         // ✅ Duplikasi semua elemen di webpageDb yang terkait dengan oldBtnId
@@ -793,7 +786,7 @@ const copyAccordion=(idAccordion, mode="all")=>{
           if(clonedObj.file){
             delete clonedObj.file
           }
-          clonedObj.id = clonedObj.id.replaceAll(oldAccId, newAccId);
+          clonedObj.id = replaceIdSuffix(clonedObj.id, oldAccId, newAccId);
           clonedObj.action = 'new-add'
 
           if (clonedObj.id.startsWith('accordion')) {
@@ -824,19 +817,24 @@ const copyAccordion=(idAccordion, mode="all")=>{
         }
       }
 
+      accordionCopy.removeAttribute('data-listener-added')
+      accordionCopy
+        .querySelectorAll('[data-listener-added]')
+        .forEach(el => el.removeAttribute('data-listener-added'));
+
+      accordionCopy
+      .querySelectorAll('[data-listener-mouse-added]')
+      .forEach(el => el.removeAttribute('data-listener-mouse-added'));
+
       // Duplikat body Dropdowns
       const bodyDropdown = accordionEl.querySelectorAll(`[data-dropdown-toggle]`);
       bodyDropdown.forEach(dropdown=>{
         let bodyDropdown = document.getElementById(dropdown.dataset.dropdownToggle)
         let copyBodyDropdown = bodyDropdown.cloneNode(true);
-        copyBodyDropdown.id = copyBodyDropdown.id.replaceAll(oldAccId, newAccId);
-
-        // if(copyBodyDropdown.id.includes('head')){
-        //   console.log('id Dropdown:',copyBodyDropdown)
-        // }
+        copyBodyDropdown.id = replaceIdSuffix(copyBodyDropdown.id, oldAccId, newAccId);
         
         copyBodyDropdown.querySelectorAll('[id]').forEach(el => {
-          el.id = el.id.replaceAll(oldAccId,newAccId)
+          el.id = replaceIdSuffix(el.id, oldAccId, newAccId)
         });
         copyBodyDropdown.dataset.initialized = ''; 
         copyBodyDropdown.className = 'w-25 z-40 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700';
@@ -854,8 +852,6 @@ const copyAccordion=(idAccordion, mode="all")=>{
           })
         }
       }
-
-      console.log('duplicated modal success', { oldAccId, newAccId}, webpageDb);
 
       // init accordion
       setTimeout(() => {
@@ -886,7 +882,7 @@ const copyAccordion=(idAccordion, mode="all")=>{
 }
 const copyHeadAccordion=(idHeadAcc, mode="all")=>{
   try {
-    console.log(idHeadAcc)
+    
     webpageDb=globals.webpageDb
       let headAccordionId = idHeadAcc
       const headAccordionEl = document.getElementById(headAccordionId);
@@ -902,14 +898,14 @@ const copyHeadAccordion=(idHeadAcc, mode="all")=>{
       }
 
       // hitung count baru & simpan
-      const countNumber = (parseInt(container.dataset.itemAccordion || '0', 10) || 0) + 1;
+      const countNumber = handleElementCount(container, container.dataset.itemAccordion)
       container.dataset.itemAccordion = String(countNumber);
-      // console.log('head dupli',countNumber, container)
 
       // buat id baru dengan mengganti angka terakhir
       const oldHeadAccId = headAccordionEl.id;
-      const newHeadAccId = replaceTrailingNumber(oldHeadAccId, countNumber);
-      // console.log('test',countNumber, {oldHeadAccId,newHeadAccId})
+      let headAccId = generateUniqueId(`btn-heading-${oldHeadAccId}`, countNumber, true)
+      const newHeadAccId = headAccId.split('-').slice(2).join('-')
+     
 
       function updateAccordionAttributes(headAccordionCopyElement, oldHeadAccId, newHeadAccId) {
         const oldSuffix = oldHeadAccId.split('-').slice(1).join('-');
@@ -924,27 +920,12 @@ const copyHeadAccordion=(idHeadAcc, mode="all")=>{
 
             // 2️⃣ Kalau value mengandung ID lama, ganti jadi ID baru
             if (arraySubsequenceMatch(val.split('-'), oldSuffix.split('-'))) {
-              // console.log(val)
-              const newVal = val.replaceAll(oldSuffix, newSuffix);
+         
+              const newVal = replaceIdSuffix(val, oldSuffix, newSuffix);
               el.setAttribute(attr, newVal);
-              // console.log(newVal, newSuffix, el.getAttribute(attr))
+          
             }
           }
-
-          // 4️⃣ Update juga di database (webpageDb)
-          // const originalField = webpageDb.find(f => f.id === el.id);
-          // if (originalField) {
-          //   const cloned = structuredClone(originalField);
-
-          //   if(cloned.file){
-          //     delete cloned.file
-          //   }
-
-          //   cloned.id = newId;
-          //   cloned.action='new-add'
-          //   webpageDb.push(cloned);
-          //   console.log(cloned, webpageDb)
-          // }
         });
       }
 
@@ -958,7 +939,7 @@ const copyHeadAccordion=(idHeadAcc, mode="all")=>{
 
       // 1) Perbarui element_order pada sibling (hanya direct children container)
       Array.from(container.children).forEach(el => {
-        const currentOrder = parseInt(el.dataset?.elementOrder || '0', 10);
+        const currentOrder = parseInt(el.dataset?.elementOrder);
         if (isNaN(currentOrder)) return;
 
         if (currentOrder >= newOrderBase) {
@@ -984,14 +965,10 @@ const copyHeadAccordion=(idHeadAcc, mode="all")=>{
       bodyDropdown.forEach(dropdown=>{
         let bodyDropdown = document.getElementById(dropdown.dataset.dropdownToggle)
         let copyBodyDropdown = bodyDropdown.cloneNode(true);
-        copyBodyDropdown.id = copyBodyDropdown.id.replaceAll(oldHeadAccId, newHeadAccId);
-
-        // if(copyBodyDropdown.id.includes('head')){
-        //   console.log('id Dropdown:',copyBodyDropdown)
-        // }
+        copyBodyDropdown.id= replaceIdSuffix(copyBodyDropdown.id, oldHeadAccId, newHeadAccId);
         
         copyBodyDropdown.querySelectorAll('[id]').forEach(el => {
-          el.id = el.id.replaceAll(oldHeadAccId,newHeadAccId)
+          el.id = replaceIdSuffix(el.id, oldHeadAccId, newHeadAccId)
         });
         copyBodyDropdown.dataset.initialized = ''; 
         copyBodyDropdown.className = 'w-25 z-40 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700';
@@ -1015,9 +992,17 @@ const copyHeadAccordion=(idHeadAcc, mode="all")=>{
         })
       })
 
+      headAccordionCopy.removeAttribute('data-listener-added')
+      headAccordionCopy
+        .querySelectorAll('[data-listener-added]')
+        .forEach(el => el.removeAttribute('data-listener-added'));
+
+      headAccordionCopy
+        .querySelectorAll('[data-listener-mouse-added]')
+        .forEach(el => el.removeAttribute('data-listener-mouse-added'));
+
       // ✅ Duplikasi semua elemen di webpageDb yang terkait dengan oldBtnId
       const relatedObjects = webpageDb.filter(obj => arraySubsequenceMatch(obj.id.split('-'), oldHeadAccId.split('-')));
-      console.log('relatedobj:', relatedObjects, oldHeadAccId)
 
       relatedObjects.forEach(originalObj => {
         const clonedObj = deepClone(originalObj);
@@ -1025,16 +1010,16 @@ const copyHeadAccordion=(idHeadAcc, mode="all")=>{
         if(clonedObj.file){
           delete clonedObj.file
         }
-
-        clonedObj.id = clonedObj.id.replaceAll(oldHeadAccId, newHeadAccId);
-        clonedObj.action = 'new-add'
-
-        if(clonedObj.id.startsWith('btn-heading')){
+        if(clonedObj.id === `btn-heading-${oldHeadAccId}`){
           clonedObj.element_order = String(newOrderBase);
         }
 
+        clonedObj.id = replaceIdSuffix(clonedObj.id, oldHeadAccId, newHeadAccId);
+        clonedObj.action = 'new-add'
+
+
         webpageDb.push(clonedObj);
-        console.log(clonedObj,webpageDb)
+
       });    
 
       //update element count container
@@ -1072,15 +1057,13 @@ const copyHeadAccordion=(idHeadAcc, mode="all")=>{
           dropdownInitialized('', newDropdownTarget);
         })
       }
-      // let webpageDbParentSection = globals.webpageDbParentSection
-      // CheckData(webpageDb, webpageDbParentSection)
+
       globals.webpageDb=webpageDb
-      console.log('duplicated head accordion success', { oldHeadAccId, newHeadAccId}, webpageDb);
 
       // init accordion
       setTimeout(() => {
         try {
-          // console.log(document.getElementById(newHeadAccId.split('-').slice(0,-1).join('-')), newHeadAccId,newHeadAccId.split('-').slice(0,-1).join('-') )
+          
           const accordionElement = document.getElementById(newHeadAccId.split('-').slice(0,-1).join('-'));
           if (accordionElement) {
             new Accordion(accordionElement, {
@@ -1088,11 +1071,11 @@ const copyHeadAccordion=(idHeadAcc, mode="all")=>{
               activeClasses: 'bg-gray-100 text-gray-900',
               inactiveClasses: 'text-gray-500'
             });
-            console.log('✅ Accordion berhasil diinisialisasi:', newHeadAccId.split('-').slice(0,-1).join('-'));
+            // console.log('✅ Accordion berhasil diinisialisasi:', newHeadAccId.split('-').slice(0,-1).join('-'));
           }
           initFlowbite();
         } catch (error) {
-          console.error('❌ Gagal inisialisasi accordion', error);
+          // console.error('❌ Gagal inisialisasi accordion', error);
         }
       }, 100);
 

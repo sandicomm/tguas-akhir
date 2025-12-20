@@ -2,10 +2,13 @@ export const globals = {
   webpageDb: null,
   param:'',
   webpageDbRaw: null,
+  file: null,
   webpageDbParentSection: null,
   editorFieldSelect: null,
   editCarouselItem: null,
   carouselSelect: null,
+  itemCarouselId:null,
+  
   accordionPartSelect: null,
   accordionSelect: null,
   savedSelection: null,

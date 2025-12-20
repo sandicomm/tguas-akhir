@@ -48,8 +48,8 @@ class FormController extends Controller
             'sections.*.questions.*.question' => 'required',
             'sections.*.questions.*.input_type' => 'required|string',
             'sections.*.questions.*.rule' => 'required|integer',
-            'sections.*.questions.*.answer' => 'required_if:sections.*.questions.*.input_type,radio,checkbox|array',
-            'sections.*.questions.*.answer.*.answer' => 'required_if:sections.*.questions.*.input_type,radio,checkbox|string',
+            'sections.*.questions.*.answer' => 'required_if:sections.*.questions.*.input_type,pilgan|array',
+            'sections.*.questions.*.answer.*.answer' => 'required_if:sections.*.questions.*.input_type,pilgan|string',
         ]);
 
         // Upsert Form
@@ -122,7 +122,7 @@ class FormController extends Controller
                     $questionsToDelete[] = $questionData['question_id'];
                 }
 
-                if (in_array($questionData['input_type'], ['radio', 'checkbox'])) {
+                if (in_array($questionData['input_type'], ['pilgan'])) {
                     foreach ($questionData['answer'] as $answerData) {
                         if ($answerData['changeContent'] == 'update') {
                             $answersToUpdate[] = [

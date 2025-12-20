@@ -1,52 +1,36 @@
 import { globals } from './globals.js';
-import { replaceTrailingNumber } from './utils/utilsDuplikatFunction.js';
 import { dropdownInitialized } from './utils/dropdownInit.js';
 import { renderSvg } from './utils/svgEdit.js';
 // ======== updateContent ========
 import { updateActionProperty } from './utils/updateContent.js';
 
+import {arraySubsequenceMatch, generateUniqueId, handleElementCount, replaceIdSuffix} from './utils/elementNumberingId.js'
+
 let webpageDb=  globals.webpageDb, param=globals.param
-
-function arraySubsequenceMatch(parts, targetParts) {
-  for (let i = 0; i <= parts.length - targetParts.length; i++) {
-    let match = true;
-
-    for (let j = 0; j < targetParts.length; j++) {
-      if (parts[i + j] !== targetParts[j]) {
-        match = false;
-        break;
-      }
-    }
-
-    if (match) return true;
-  }
-
-  return false;
-}
 
 const createField = (page) =>{
     let field=''
     if(page){
       let dropdown=`
-          <div type="button" class="bg-white rounded-full absolute right-[-0.5rem] top-[-0.5rem] z-0 cursor-pointer" data-dropdown-toggle="dropdown-body-${page.id}" data-dropdown-placement="right-end">   
+          <div type="button" class="bg-white rounded-full absolute right-[-0.5rem] top-[-0.5rem] z-0 cursor-pointer" data-dropdown-toggle="dropdown-${page.id}" data-dropdown-placement="right-end">   
             ${renderSvg()}      
           </div>`
       if(page.id.includes('carousel')){
         dropdown=''
         field = `
-          <div id="${page.id}" contenteditable="true" style="ol{list-style-type:decimal;}ul{list-style-type:disc;};${page.style}" class="border border-b-1 border-gray-500 p-1 max-w-[100%] scroll-hidden overflow-scroll" >${page.content ?? ''}</div>
+          <div id="${page.id}" contenteditable="true" style="ol{list-style-type:decimal;}ul{list-style-type:disc;};${page.style}" class="border border-b-1 border-gray-500 p-1 max-w-[100%] max-h-[100%] scroll-hidden overflow-scroll" >${page.content ?? ''}</div>
         `
       }else{
         if(page.id.includes('accordion') && !page.id.includes('modal')){
           dropdown=`
-          <div type="button" class="bg-white rounded-full absolute right-[-1.5rem] top-[1rem] z-0 cursor-pointer" data-dropdown-toggle="dropdown-body-${page.id}" data-dropdown-placement="right-end">   
+          <div type="button" class="bg-white rounded-full absolute right-[-1.5rem] top-[1rem] z-0 cursor-pointer" data-dropdown-toggle="dropdown-${page.id}" data-dropdown-placement="right-end">   
             ${renderSvg()}      
           </div>`
         }
         field = `
           <div data-element-order="${page.element_order}" style="z-index:10;position:relative;display:flex;justify-content:center;align-items:center;flex-direction:column;">
             ${dropdown}
-            <div id="${page.id}" contenteditable="true" style="ol{list-style-type:decimal;}ul{list-style-type:disc;};${page.style}" class="border border-b-1 border-gray-500 p-1 max-w-[100%] scroll-hidden overflow-scroll" >${page.content ?? ''}</div>
+            <div id="${page.id}" contenteditable="true" style="ol{list-style-type:decimal;}ul{list-style-type:disc;};${page.style}" class="border border-b-1 border-gray-500 p-1 max-w-[100%] max-h-[100%] scroll-hidden overflow-scroll" >${page.content ?? ''}</div>
           </div>
         `
       }
@@ -54,7 +38,7 @@ const createField = (page) =>{
     return field
 }
 const createDropdownField = (idPrefix)=>`
-    <div id="dropdown-body-${idPrefix}" data-accordion="open" class="w-25 z-50 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700">
+    <div id="dropdown-${idPrefix}" data-accordion="open" class="w-25 z-50 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700">
     <ul class="py-2 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownDefaultButton">
         <li>
             <a id="up-${idPrefix}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Move Up</a>
@@ -80,81 +64,97 @@ const addField=(event)=>{
     let dropdown=``
     if(idPrefix.includes('accordion') && !idPrefix.includes('modal')){
       dropdown=`
-        <div type="button" class="bg-white rounded-full absolute right-[-1.5rem] top-[1rem] z-0 cursor-pointer" data-dropdown-toggle="dropdown-body-${idPrefix}" data-dropdown-placement="right-end">   
+        <div type="button" class="bg-white rounded-full absolute right-[-1.5rem] top-[1rem] z-0 cursor-pointer" data-dropdown-toggle="dropdown-${idPrefix}" data-dropdown-placement="right-end">   
           ${renderSvg()}      
         </div>`
     }else{
       dropdown=`
-        <div type="button" class="bg-white rounded-full absolute right-[-0.5rem] top-[-0.5rem] z-0 cursor-pointer" data-dropdown-toggle="dropdown-body-${idPrefix}" data-dropdown-placement="right-end">   
+        <div type="button" class="bg-white rounded-full absolute right-[-0.5rem] top-[-0.5rem] z-0 cursor-pointer" data-dropdown-toggle="dropdown-${idPrefix}" data-dropdown-placement="right-end">   
           ${renderSvg()}      
         </div>`
     }
     return `<div data-element-order="${fieldNumber}" style="position:relative;display:flex;justify-content:center;align-items:center;flex-direction:column;">
       ${dropdown}
-      <div id="${idPrefix}" contenteditable="true" style="ol{list-style-type:decimal;}ul{list-style-type:disc;};" class="border border-b-1 border-gray-500 p-1 max-w-[100%] scroll-hidden overflow-scroll">Field Text</div>
+      <div id="${idPrefix}" contenteditable="true" style="ol{list-style-type:decimal;}ul{list-style-type:disc;};" 
+          class="border border-b-1 border-gray-500 p-1 max-w-[100%] scroll-hidden overflow-scroll">
+          <font size="3">Type Here</font>
+        </div>
     </div>
     `
   }
-
+  let sectionId=''
   if(idParts[2] === 'accordion'){
     idAppendField = `wrapper-section-${idParts.slice(2,idParts.length).join('-')}`
     bodyAppend = document.getElementById(idAppendField)
-    fieldNumber = parseInt(bodyAppend.getAttribute('data-element-count'))+1
+
+    fieldNumber = handleElementCount(bodyAppend, bodyAppend.dataset.elementCount)
+
+    sectionId = `section-${idParts.slice(2,idParts.length).join('-')}`
 
     bodyAppend.dataset.elementCount = fieldNumber
   
-    idPrefix = `field-${idParts.slice(2, idParts.length).join('-')}-${fieldNumber}`
+    idPrefix = generateUniqueId(`field-${idParts.slice(2, idParts.length).join('-')}-${fieldNumber}`, bodyAppend)
 
   }else if(idParts[2] === 'modal'){
     idAppendField = `body-${idParts.slice(2,idParts.length).join('-')}`
 
+    sectionId = `body-${idParts.slice(2,idParts.length).join('-')}`
+
     bodyAppend = document.getElementById(idAppendField)
     fieldNumber = parseInt(bodyAppend.getAttribute('data-element-count'))+1
 
     bodyAppend.dataset.elementCount = fieldNumber
   
-    idPrefix = `${idParts.slice(1, idParts.length).join('-')}-${fieldNumber}`
+    idPrefix = generateUniqueId(`${idParts.slice(1, idParts.length).join('-')}-${fieldNumber}`, bodyAppend)
 
   }else{
     if(idParts.join('-').includes('prolog-web')){
       idAppendField = `editor-container-section-prolog-web-${idParts[6]}`
       bodyAppend = document.getElementById(idAppendField)
 
+      sectionId = `webpage-section-prolog-web-${idParts[6]}`
+
       fieldNumber = parseInt(bodyAppend.dataset.elementCount)+1
       bodyAppend.dataset.elementCount = fieldNumber
-      idPrefix = `field-${idParts.slice(2, idParts.length).join('-')}-${fieldNumber}`
+      idPrefix = generateUniqueId(`field-${idParts.slice(2, idParts.length).join('-')}-${fieldNumber}`,bodyAppend)
       
     }else if(idParts.join('-').includes('prolog-emodul')){
       idAppendField = `editor-container-section-prolog-emodul-${idParts[6]}`
       bodyAppend = document.getElementById(idAppendField)
 
+      sectionId = `webpage-section-prolog-emodul-${idParts[6]}`
+
       fieldNumber = parseInt(bodyAppend.dataset.elementCount)+1
       bodyAppend.dataset.elementCount = fieldNumber
 
-      idPrefix = `field-${idParts.slice(2, idParts.length).join('-')}-${fieldNumber}`
+      idPrefix = generateUniqueId(`field-${idParts.slice(2, idParts.length).join('-')}-${fieldNumber}`,bodyAppend)
 
     }else if(idParts.includes('footer')){
       idAppendField = `editor-container-section-footer`
       bodyAppend = document.getElementById(idAppendField)
 
+      sectionId = `webpage-section-footer`
+
       fieldNumber = parseInt(bodyAppend.dataset.elementCount)+1
       bodyAppend.dataset.elementCount = fieldNumber
 
-      idPrefix = `field-${idParts.slice(2, idParts.length).join('-')}-${fieldNumber}`
+      idPrefix = generateUniqueId(`field-${idParts.slice(2, idParts.length).join('-')}-${fieldNumber}`,bodyAppend)
 
     }else{
       idAppendField = `editor-container-section-${idParts[4]}`
       bodyAppend = document.getElementById(idAppendField)
 
+      sectionId = `webpage-section-${idParts[4]}`
+
       fieldNumber = parseInt(bodyAppend.dataset.elementCount)+1
       bodyAppend.dataset.elementCount = fieldNumber
 
-      idPrefix = `field-${idParts.slice(2, idParts.length).join('-')}-${fieldNumber}`
+      idPrefix = generateUniqueId(`field-${idParts.slice(2, idParts.length).join('-')}-${fieldNumber}`,bodyAppend)
     }
   }
 
   bodyDropdown=`
-    <div id="dropdown-body-${idPrefix}" data-accordion="open" class="w-25 z-40 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700">
+    <div id="dropdown-${idPrefix}" data-accordion="open" class="w-25 z-40 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700">
       <ul class="py-2 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownDefaultButton">
         <li>
             <a id="up-${idPrefix}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Move Up</a>
@@ -171,6 +171,7 @@ const addField=(event)=>{
       </ul>
     </div>
   `
+  
   if(idParts.includes('modal')){
     document.getElementById(idAppendField).parentElement.parentElement.insertAdjacentHTML('beforeend', bodyDropdown)
   }else{
@@ -188,42 +189,26 @@ const addField=(event)=>{
     }
   }
 
-  const section = document.getElementById(`webpage-section-${idParts[4]}`)
-
   webpageDb.push({
     id: idPrefix,
     type: 'field',
     style: 'ol{list-style-type:decimal;}ul{list-style-type:disc;};',
     action:'new-add',
-    conten:'Field Text',
+    content:'Field Text',
     element_order: fieldNumber
   });
 
-  webpageDb.forEach(item=>{
-    if(item.id === `webpage-section-${idParts.find(part => !isNaN(part))}` && idParts.filter(part => !isNaN(part)).length == 1){
-      item.element_count++
-      item.action= updateActionProperty(item.action, 'update')
-    }else if(item.id === bodyAppend.parentElement.id){
-      item.element_count++
-      item.action= updateActionProperty(item.action, 'update')
-    }else if(item.id === `webpage-${idParts.slice(3).join('-')}` && idParts.filter(part => !isNaN(part)).length == 1){
-      item.element_count++
-      item.action= updateActionProperty(item.action, 'update')
-    }else if(item.id === `section-${idParts.slice(2).join('-')}` && idParts.join('-').includes('accordion')){
-      item.element_count++
-      item.action= updateActionProperty(item.action, 'update')
-    }else if(item.id === `body-${idParts.slice(2).join('-')}` && idParts.join('-').includes('modal')){
-      item.element_count++
-      item.action= updateActionProperty(item.action, 'update')
-    }
-  })
+  const section = webpageDb.find(item=>item.id===sectionId)
+  if(section){
+    section.element_count++
+    section.action=updateActionProperty(section.action, 'update')
+  }
 
   globals.webpageDb=webpageDb
-  console.log('add field',webpageDb, globals.webpageDb)
   
   const field = createFieldHTML(idPrefix,fieldNumber)
   document.getElementById(idAppendField).insertAdjacentHTML('beforeend',field);
-  dropdownInitialized('',  `dropdown-body-${idPrefix}`)
+  dropdownInitialized('',  `dropdown-${idPrefix}`)
 }
 const copyField = (idParts) => {
   webpageDb=  globals.webpageDb
@@ -246,9 +231,8 @@ const copyField = (idParts) => {
   container.dataset.elementCount = countNumber;
 
   // --- 2️⃣ Buat ID baru dan clone node ---
-  const newId = replaceTrailingNumber(oldId, countNumber);
+  const newId = generateUniqueId(oldId, container);
   const copyElement = parent.cloneNode(true);
-  console.log('prolog:', newId)
 
   copyElement.dataset.elementOrder = String(parseInt(copyElement.dataset.elementOrder || '0', 10) + 1);
 
@@ -285,15 +269,15 @@ const copyField = (idParts) => {
         const val = el.getAttribute(attr);
         if (!val || typeof val !== 'string') continue;
         if (arraySubsequenceMatch(val.split('-'), oldSuffix.split('-'))) {
-          // console.log('attribute:', {attr, el, val, oldSuffix, newSuffix}, val.replaceAll(oldSuffix, newSuffix))
-          el.setAttribute(attr, val.replaceAll(oldSuffix, newSuffix));
+        
+          el.setAttribute(attr, replaceIdSuffix(val,oldSuffix, newSuffix));
         }
       }
 
       // Update ID dan duplikasi field di DB
       if (el.id && arraySubsequenceMatch(el.id.split('-'), oldSuffix.split('-'))) {
         const origId = el.id;
-        const newId = origId.replaceAll(oldSuffix, newSuffix);
+        const newId = replaceIdSuffix(origId, oldSuffix, newSuffix)
 
         const originalField = webpageDb.find(f => f.id === origId);
         if (originalField) {
@@ -309,18 +293,27 @@ const copyField = (idParts) => {
   const oldSuffix = oldId.split('-').slice(1).join('-');
   const newSuffix = newId.split('-').slice(1).join('-');
   updateFieldAttributes(copyElement, oldSuffix, newSuffix);
-  // console.log('field copy:', oldId, newId,countNumber, oldSuffix, newSuffix)
 
   // --- 6️⃣ Sisipkan hasil duplikasi ke DOM ---
   parent.insertAdjacentElement('afterend', copyElement);
 
+  copyElement.removeAttribute('data-listener-added')
+  copyElement
+    .querySelectorAll('[data-listener-added]')
+    .forEach(el => el.removeAttribute('data-listener-added'));
+
+  copyElement
+      .querySelectorAll('[data-listener-mouse-added]')
+      .forEach(el => el.removeAttribute('data-listener-mouse-added'));
+
   // --- 5️⃣ Duplikasi dropdown body-nya ---
   
-    const bodyDropdown = document.getElementById(`dropdown-body-${idParts.slice(1).join('-')}`);
+    const bodyDropdown = document.getElementById(`dropdown-${idParts.slice(1).join('-')}`);
     bodyDropdown.className = 'w-25 z-40 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700';
     if (bodyDropdown) {
       const copyBodyDropdown = bodyDropdown.cloneNode(true);
-      copyBodyDropdown.id = replaceTrailingNumber(copyBodyDropdown.id, countNumber);
+      copyBodyDropdown.id = replaceIdSuffix(copyBodyDropdown.id, oldSuffix, newSuffix)
+      
       copyBodyDropdown.className = 'w-25 z-40 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700';
       copyBodyDropdown.setAttribute('data-initialized', '');
 
@@ -364,8 +357,8 @@ const copyField = (idParts) => {
     clonedField.element_order = copyElement.dataset.elementOrder;
     webpageDb.push(clonedField);
   }
-  dropdownInitialized('', `dropdown-body-${newId}`);
-  console.log('Field duplicated:', newId, '→', webpageDb);
+  dropdownInitialized('', `dropdown-${newId}`);
+
   globals.webpageDb=webpageDb
 };
 

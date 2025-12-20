@@ -21,9 +21,8 @@ export function updateContent(editorFieldSelect, value){
   if(id.startsWith('btn-heading-accordion')){
     webpageDb.forEach(item=>{
       if(item.type === 'head-accordion' && item.id === id){
-        console.log(item, id)
-        item.content = document.getElementById(item.id).querySelector('span').outerHTML
-        item.action='update'
+        item.content = document.getElementById(item.id).children[0].outerHTML
+        item.action=updateActionProperty(item.action, 'update')
       }
     })
     
@@ -33,21 +32,19 @@ export function updateContent(editorFieldSelect, value){
         let contentObj = parseStyleObj(item.content)
         contentObj.headType = value
         item.content = stringifyStyleObj(contentObj)
-        item.action='update'
+        item.action=updateActionProperty(item.action, 'update')
       }
     })
-    // console.log('accordion berubah tipe indicator')
 
   }else{
     webpageDb.forEach(item=>{
       if(item.id === id){
         item.content = editorFieldSelect.innerHTML
-        item.action='update'
+        item.action=updateActionProperty(item.action, 'update')
         return
       }
     })
   }
-  console.log('update content',webpageDb, id)
   globals.webpageDb=webpageDb
 }
 

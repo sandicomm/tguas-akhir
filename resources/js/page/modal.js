@@ -6,28 +6,14 @@ import { renderSvg } from './utils/svgEdit.js';
 // ======== updateContent ========
 import { updateActionProperty } from './utils/updateContent.js';
 
+import {arraySubsequenceMatch, generateUniqueId, handleElementCount, replaceIdSuffix} from './utils/elementNumberingId.js'
+
 import { Modal } from 'flowbite';
 import { initFlowbite } from 'flowbite';
 
 let webpageDb=  globals.webpageDb
 let editorFieldSelect=globals.editorFieldSelect
 
-function arraySubsequenceMatch(parts, targetParts) {
-  for (let i = 0; i <= parts.length - targetParts.length; i++) {
-    let match = true;
-
-    for (let j = 0; j < targetParts.length; j++) {
-      if (parts[i + j] !== targetParts[j]) {
-        match = false;
-        break;
-      }
-    }
-
-    if (match) return true;
-  }
-
-  return false;
-}
 
 function modalTypeStyling(){
   document.getElementById('modal-type').addEventListener('change', function(){
@@ -70,7 +56,7 @@ const createBtnModal = (page) =>`
         </div>
 
         <button id="btn-${page.id}" style="${page.style}" data-modal-target="element-${page.id}" data-modal-toggle="element-${page.id}" class="flex justify-between items-center hover:bg-blue-700">
-          ${page.content ?? `<span class="w-full">Button Modal</span>`}
+          ${page.content ?? `<div style="width:100%;text-align:center;">Button Modal</div>`}
         </button>
       </div>
     </div>
@@ -139,7 +125,7 @@ const addModal = (event)=>{
         </div>
 
         <button id="btn-${idPrefix}" data-modal-target="element-${idPrefix}" style="position:relative;padding: 10px;border-radius:5px;background-color:rgba(255,255,255,1);" data-modal-toggle="element-${idPrefix}" class="flex justify-between items-center" data-target="#element-${idPrefix}">
-          <span class="w-full">Button Modal</span>
+          <div style="width:100%;text-align:center;">Button Modal</div>
         </button>
       </div>
     </div>
@@ -167,7 +153,7 @@ const addModal = (event)=>{
                     <a id="down-field-${idPrefix}-1" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Move Down</a>
                 </li>
                 <li>
-                    <a id="copy-${idPrefix}-1" class="text-blue-600 cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Duplikat</a>
+                    <a id="copy-field-${idPrefix}-1" class="text-blue-600 cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Duplikat</a>
                 </li>
                 <li>
                     <a id="delete-field-${idPrefix}-1" class="cursor-pointer text-red-600 block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-red-400">Delete</a>
@@ -212,20 +198,19 @@ const addModal = (event)=>{
     idAppend = `wrapper-section-${idParts.slice(2, idParts.length).join('-')}`;
     bodyAppend = document.getElementById(idAppend);
 
-    fieldNumber = parseInt(bodyAppend.getAttribute('data-element-count')) + 1;
+    fieldNumber = handleElementCount(bodyAppend,bodyAppend.getAttribute('data-element-count'));
     bodyAppend.dataset.elementCount = fieldNumber;
 
-    idPrefix = `${idParts.slice(1, idParts.length).join('-')}-${fieldNumber}`
+    idPrefix = generateUniqueId(`${idParts.slice(1, idParts.length).join('-')}-${fieldNumber}`,bodyAppend)
 
   }else{
     idAppend = `editor-container-section-${idParts[4]}`;
     const section = document.getElementById(idAppend)
 
-    fieldNumber = section.dataset.elementCount;
-    fieldNumber++
+    fieldNumber = handleElementCount(section,section.dataset.elementCount);
     section.dataset.elementCount = fieldNumber
+    idPrefix = generateUniqueId(`${idParts.slice(1, idParts.length).join('-')}-${fieldNumber}`, section)
 
-    idPrefix = `${idParts.slice(1, idParts.length).join('-')}-${fieldNumber}`
     idAppend = `editor-container-section-${idParts[4]}`
     
   }
@@ -290,7 +275,6 @@ const addModal = (event)=>{
     }
   })
   globals.webpageDb=webpageDb
-  console.log(webpageDb)
 
   setTimeout(() => {
     try {
@@ -307,7 +291,7 @@ const addModal = (event)=>{
         initFlowbite();
 
     } catch (error) {
-        console.error('❌ Gagal menginisialisasi Modal:', error);
+        // console.error('❌ Gagal menginisialisasi Modal:', error);
     }
   }, 100);  
 }
@@ -315,6 +299,9 @@ const addModal = (event)=>{
 const copyModal = (idModal, mode = 'full', newId, oldId) => {
   try {
     webpageDb=globals.webpageDb
+    if(mode != 'full'){
+      idModal = `btn-${idModal}`
+    }
     const btnModal = document.getElementById(idModal);
     if (!btnModal) {
       console.error('❌ Button modal tidak ditemukan:', idModal);
@@ -324,7 +311,7 @@ const copyModal = (idModal, mode = 'full', newId, oldId) => {
     const modalId = btnModal.id.startsWith('btn-')
       ? 'element-' + btnModal.id.slice(4)
       : null;
-
+   
     let modalEl = modalId ? document.getElementById(modalId) : null;
     if (!modalEl) {
       console.warn('⚠️ Modal body tidak ditemukan otomatis, mencoba fallback...');
@@ -344,7 +331,7 @@ const copyModal = (idModal, mode = 'full', newId, oldId) => {
     }
 
     // Hitung index baru
-    const countNumber = (parseInt(container.dataset.elementCount || '0', 10) || 0) + 1;
+    const countNumber = handleElementCount(container, container.dataset.elementCount);;
 
     // Fungsi update ID dan atribut dalam modal
     function updateModalAttributes(modalCopyElement, oldModalId, newModalId) {
@@ -356,13 +343,13 @@ const copyModal = (idModal, mode = 'full', newId, oldId) => {
         for (const attr of el.getAttributeNames()) {
           const val = el.getAttribute(attr);
           if (arraySubsequenceMatch(val?.split('-'), oldSuffix.split('-'))) {
-            el.setAttribute(attr, val.replaceAll(oldSuffix, newSuffix));
+            el.setAttribute(attr,replaceIdSuffix(val,oldSuffix,newSuffix));
           }
         }
 
         // Update id elemen
         if (arraySubsequenceMatch(el.id?.split('-'), oldSuffix.split('-'))) {
-          const newId = el.id.replaceAll(oldSuffix, newSuffix);
+          const newId = replaceIdSuffix(el.id,oldSuffix,newSuffix);
           const originalField = webpageDb.find(f => f.id === el.id);
           el.id = newId;
           if (originalField) {
@@ -384,10 +371,11 @@ const copyModal = (idModal, mode = 'full', newId, oldId) => {
     if (mode === 'body') {
       const modalCopy = modalEl.cloneNode(true);
       const oldModalId = modalEl.id;
-      const newModalId = oldModalId.replaceAll(oldId, newId);
+      
+      const newModalId = replaceIdSuffix(oldModalId,oldId,newId);
       modalCopy.id = newModalId;
 
-      updateModalAttributes(modalCopy, oldId, newId);
+      updateModalAttributes(modalCopy, oldModalId, newModalId);
 
       // Append ke section terkait
       const sectionNum = (btnModal.id.split('-').find(part => !isNaN(part)) || null);
@@ -402,7 +390,7 @@ const copyModal = (idModal, mode = 'full', newId, oldId) => {
       const relatedObjects = webpageDb.filter(obj => arraySubsequenceMatch(obj.id.split('-'), oldModalId.split('-')));
       relatedObjects.forEach(originalObj => {
         const clonedObj = deepClone(originalObj);
-        clonedObj.id = clonedObj.id.replaceAll(oldModalId, newModalId);
+        clonedObj.id = replaceIdSuffix(clonedObj.id, oldModalId, newModalId);
         clonedObj.action = 'new-add'
 
         if(clonedObj.file){
@@ -415,8 +403,6 @@ const copyModal = (idModal, mode = 'full', newId, oldId) => {
         webpageDb.push(clonedObj);
       });
 
-      // console.log(`✅ Modal body ${oldModalId} diduplikasi sebagai ${newModalId}`);
-
       setTimeout(() => {
         try {
             // Ganti 'newModalId' dengan ID elemen modal Anda
@@ -425,11 +411,7 @@ const copyModal = (idModal, mode = 'full', newId, oldId) => {
             if (modalElement) {
                 // Inisialisasi objek Modal
                 new Modal(modalElement);
-                // console.log('✅ Modal berhasil diinisialisasi:', 'newModalId');
             }
-            
-            // Asumsi initFlowbite() adalah fungsi global untuk inisialisasi elemen Flowbite lainnya
-            // initFlowbite(); 
             
         } catch (error) {
             console.error('❌ Gagal inisialisasi modal', error);
@@ -446,11 +428,11 @@ const copyModal = (idModal, mode = 'full', newId, oldId) => {
       const modalCopy = modalEl.cloneNode(true);
 
       const oldBtnId = btnModal.id;
-      const newBtnId = replaceTrailingNumber(oldBtnId, countNumber);
+      const newBtnId = generateUniqueId(oldBtnId, container);
 
       const oldModalId = modalEl.id;
-      const newModalId = replaceTrailingNumber(oldModalId, countNumber);
-
+      const newModalId = replaceIdSuffix(oldModalId,oldBtnId, newBtnId);
+  
       btnCopy.id = newBtnId;
       modalCopy.id = newModalId;
 
@@ -478,7 +460,7 @@ const copyModal = (idModal, mode = 'full', newId, oldId) => {
         }
       });
 
-      updateModalAttributes(btnCopy, oldModalId, newModalId);
+      updateModalAttributes(btnCopy, oldBtnId, newBtnId);
       updateModalAttributes(modalCopy, oldModalId, newModalId);
 
       // Duplikat dropdown (jika ada)
@@ -486,9 +468,9 @@ const copyModal = (idModal, mode = 'full', newId, oldId) => {
       const btnBodyDropdown = document.getElementById(`dropdown-btn-${btnSuffix}`);
       if (btnBodyDropdown) {
         const copyBtnBodyDropdown = btnBodyDropdown.cloneNode(true);
-        copyBtnBodyDropdown.id = replaceTrailingNumber(copyBtnBodyDropdown.id, countNumber);
+        copyBtnBodyDropdown.id = replaceIdSuffix(copyBtnBodyDropdown.id, oldBtnId, newBtnId)
         copyBtnBodyDropdown.querySelectorAll('[id]').forEach(el => {
-          el.id = replaceTrailingNumber(el.id, countNumber);
+          el.id = replaceIdSuffix(el.id, oldBtnId, newBtnId)
         });
         btnBodyDropdown.insertAdjacentElement('afterend', copyBtnBodyDropdown);
       }
@@ -502,6 +484,16 @@ const copyModal = (idModal, mode = 'full', newId, oldId) => {
 
       if (sectionContainer) sectionContainer.appendChild(modalCopy);
       else document.body.appendChild(modalCopy);
+
+      modalCopy.removeAttribute('data-listener-added')
+      modalCopy
+        .querySelectorAll('[data-listener-added]')
+        .forEach(el => el.removeAttribute('data-listener-added'));
+
+      btnCopy.removeAttribute('data-listener-added')
+      btnCopy
+        .querySelectorAll('[data-listener-added]')
+        .forEach(el => el.removeAttribute('data-listener-added'));
 
       const btnCopyDropdown = btnCopy.querySelectorAll(`[data-dropdown-toggle]`)
       btnCopyDropdown.forEach(dropdown=>{
@@ -519,7 +511,7 @@ const copyModal = (idModal, mode = 'full', newId, oldId) => {
       const relatedObjects = webpageDb.filter(obj => arraySubsequenceMatch(obj.id.split('-'), oldBtnId.split('-')));
       relatedObjects.forEach(originalObj => {
         const clonedObj = deepClone(originalObj);
-        clonedObj.id = clonedObj.id.replaceAll(oldBtnId, newBtnId);
+        clonedObj.id = replaceIdSuffix(clonedObj.id,oldBtnId, newBtnId);
         clonedObj.action = 'new-add'
 
         if(clonedObj.file){
@@ -530,8 +522,6 @@ const copyModal = (idModal, mode = 'full', newId, oldId) => {
         else if (clonedObj.type === 'body-modal') clonedObj.element_count = clonedObj.element_count || '0';
         webpageDb.push(clonedObj);
       });
-
-      // console.log(`✅ Modal dan tombol ${oldBtnId} diduplikasi sebagai ${newBtnId}`);
 
       initFlowbite?.();
     }
@@ -562,9 +552,7 @@ const copyModal = (idModal, mode = 'full', newId, oldId) => {
       updateContainerField(container.id);
     }
     globals.webpageDb=webpageDb
-    console.log('copy modal',globals.webpageDb)
 
-    // console.log('✅ copyModal success', { idModal, mode });
     return true;
 
   } catch (e) {

@@ -8,7 +8,9 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 use App\Models\Webpage as Page;
+use App\Models\File as FileMedia;
 use Illuminate\Support\ItemNotFoundException;
+use Illuminate\Support\Str;
 
 class WebPage extends Component
 {
@@ -24,10 +26,13 @@ class WebPage extends Component
         
         if ($params === 'prolog-web') {
             $this->webpage = Page::where('id', 'like', '%prolog-web%')->get();
-        } elseif ($params === 'prolog-emodul') {
+            $this->file = FileMedia::get();
+        } else if ($params === 'prolog-emodul') {
             $this->webpage = Page::where('id', 'like', '%prolog-emodul%')->get();
+            $this->file = FileMedia::get();
         } else {
             $this->webpage = Page::where('id', 'not like', '%prolog%')->get();
+            $this->file = FileMedia::get();
         }
     }
 
@@ -43,28 +48,28 @@ class WebPage extends Component
                 // Validasi masing-masing item
                 \Validator::make($item, [
                     'id' => 'required|string',
-                    'type' => 'required|string',
-                    'content' => 'nullable|string',
-                    'action' => 'required|string',
-                    'style' => 'nullable|string',
-                    'element_order' => 'nullable|string',
-                    'element_count' => 'nullable|string',
+                    'type'=>'required|string',
+                    'filetype'=>'nullable|string'
                 ])->validate();
-                if($request->hasFile("items.$index.file") && $item['type'] === 'file'){
-                    //shared hosting ver
-                    $filename = time().'_'.$request->file("items.$index.file")->getClientOriginalName();
+
+                if($request->hasFile("items.$index.file") && $item['type'] === 'file' && $item['action'] === 'add'){
+                    $original = pathinfo($request->file("items.$index.file")->getClientOriginalName(), PATHINFO_FILENAME);
+                    $ext = $request->file("items.$index.file")->getClientOriginalExtension();
+
+                    // singkatkan nama jika terlalu panjang
+                    $original = Str::limit($original, 50, '');
+                    $original = preg_replace('/[^A-Za-z0-9_\-]/', '_', $original);
+
+                    $filename = Str::uuid() . '_' . $original . '.' . $ext;
                     $request->file("items.$index.file")->move(public_path('media'), $filename);
 
-                    $path = 'media/' . $filename;
-
                     $newUrl = asset('media/' . $filename);
-
-                    //local ver
-                    //$path = $request->file("items.$index.file")->store('media', 'public');
-                    //$filename = basename($path);
-                    //$newUrl = asset('storage/media/' . $filename);
-
                     $urlMap[$item['id']] = $newUrl;
+
+                    \App\Models\File::updateOrCreate(
+                        ['id' => $filename],
+                        ['type'=>$item['filetype']]
+                    );
 
                     // HAPUS dari array
                     unset($requestFile[$index]);
@@ -78,7 +83,7 @@ class WebPage extends Component
                     'id' => 'required|string',
                     'type' => 'required|string',
                     'content' => 'nullable|string',
-                    'action' => 'required|string',
+                    'action' => 'nullable|string',
                     'style' => 'nullable|string',
                     'element_order' => 'nullable|string',
                     'element_count' => 'nullable|string',
@@ -124,10 +129,8 @@ class WebPage extends Component
 
                             // Kalau tidak ada yang pakai, baru hapus
                             if (!$isUsedDB && !$isUsedRequest) {
-                                //local ver
-                                //Storage::disk('public')->delete("media/" . $filename);
-                                //hosting ver
                                 File::delete(public_path('media/' . $filename));
+                                \App\Models\File::where('id', $filename)->delete();
                             }
                             
                         }
@@ -136,7 +139,7 @@ class WebPage extends Component
                         $namaFile='first'.$content; 
                         $video="first" . $content;
                         if(str_contains($content, 'almond1DefaultImageCarousel.jpg')){
-                            $content =  asset('storage/media/' . 'almond1DefaultImageCarousel.jpg');
+                            $content =  asset('media/' . 'almond1DefaultImageCarousel.jpg');
                         }else{
                             $field = \DB::table('webpage')
                                 ->where('id', $item['id'])
@@ -167,11 +170,8 @@ class WebPage extends Component
 
                                     // Hapus file jika tidak digunakan di mana pun
                                     if (!$isUsedDB && !$isUsedRequest) {
-                                        //local ver
-                                        //Storage::disk('public')->delete("media/" . $filename);
-                                        //hosting ver
-                     
                                         File::delete(public_path('media/' . $filename));
+                                        \App\Models\File::where('id', $filename)->delete();
                                     }
                                 }
                             }
@@ -191,7 +191,7 @@ class WebPage extends Component
                             if(str_contains($style, 'almond1DefaultImageCarousel.jpg')){
                                 $style = preg_replace(
                                     "/url\((.*?)\)/",
-                                    "url('" . asset('storage/media/' . 'almond1DefaultImageCarousel.jpg') . "')",
+                                    "url('" . asset('media/' . 'almond1DefaultImageCarousel.jpg') . "')",
                                     $style
                                 );
                             }else{
@@ -223,10 +223,8 @@ class WebPage extends Component
                                         });
 
                                         if(!$isUsedDB && !$isUsedRequest){
-                                            //local ver
-                                            //Storage::disk('public')->delete("media/" . $filename);
-                                            //hosting ver
                                             File::delete(public_path('media/' . $filename));
+                                            \App\Models\File::where('id', $filename)->delete();
                                         }
                                     }
                                 }
@@ -293,14 +291,9 @@ class WebPage extends Component
                                     });
 
                                 $filePath = public_path('media/' . $filename);
-                                if (!$isUsedDB && !$isUsedRequest && file_exists($filePath)) {
-                                    //local ver
-                                    //Storage::disk('public')->delete("media/" . $filename);
-                                    //hosting ver
-                     
-                                    //unlink($path);
-                                    
+                                if (!$isUsedDB && !$isUsedRequest && file_exists($filePath)) {                                    
                                     File::delete(public_path('media/' . $filename));
+                                    \App\Models\File::where('id', $filename)->delete();
                                 }
                             }
                         }
@@ -335,14 +328,9 @@ class WebPage extends Component
                                     });
     
                                     $filePath = public_path('media/' . $filename);
-                                    if (!$isUsedDB && !$isUsedRequest && file_exists($filePath)) {
-                                        //local ver
-                                        //Storage::disk('public')->delete("media/" . $filename);
-                                        //hosting ver
-                    
-                                        //unlink($path);
-                                        
+                                    if (!$isUsedDB && !$isUsedRequest && file_exists($filePath)) {                                        
                                         File::delete(public_path('media/' . $filename));
+                                        \App\Models\File::where('id', $filename)->delete();
                                     }
                                 }
                             }
@@ -368,11 +356,8 @@ class WebPage extends Component
     
                                    $filePath = public_path('media/' . $filename);
                                     if (!$isUsedDB && !$isUsedRequest && file_exists($filePath)) {
-                                        //local ver
-                                        //Storage::disk('public')->delete("media/" . $filename);
-                                        //hosting ver
-                               
                                         File::delete(public_path('media/' . $filename));
+                                        \App\Models\File::where('id', $filename)->delete();
                                     }
                                 }
                             }
@@ -384,18 +369,22 @@ class WebPage extends Component
                             ->where('id', 'like', '%prolog-web%')
                             ->where('id', '<>', 'webpage-section-prolog-web-1')
                             ->where('id', '<>', 'webpage')->delete();
+                        
                     }else if($paramStatus === 'prolog-emodul'){
                         \App\Models\Webpage::where('id', $item['id'])
                             ->where('id', 'like', '%prolog-emodul%')
                             ->where('id', '<>', 'webpage-section-prolog-emodul-1')
                             ->where('id', '<>', 'webpage')->delete();
+
                     }else{
                         \App\Models\Webpage::where('id', $item['id'])
                             ->where('id', 'not like', '%prolog-web%')
                             ->where('id', 'not like', '%prolog-emodul%')
+                            ->where('id', '<>', 'webpage-section-footer')
                             ->where('id', '<>', 'webpage-section-prolog-web-1')
                             ->where('id', '<>', 'webpage-section-prolog-emodul-1')
                             ->where('id', '<>', 'webpage')->delete();
+
                     } 
                 }
             }
@@ -403,16 +392,13 @@ class WebPage extends Component
 
             return response()->json([
                 'success' => true,
-                'message' => 'Data berhasil diperbarui ' . $video . ' || '.$namaFile,
+                'message' => 'Data berhasil diperbarui ',
             ]);
 
         } catch (\Throwable $e) {
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-                'trace' => $e->getTraceAsString(),
+                'message' => $e->getMessage()
             ], 500);
         }
     }

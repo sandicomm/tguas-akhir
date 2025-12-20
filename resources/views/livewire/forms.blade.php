@@ -1,5 +1,14 @@
 <div class="p-4 sm:ml-64 flex justify-center items-center flex-col" x-data="{ open: @entangle('isModalOpen') }">
 <x-loading wire:loading.flex />
+        <div class="hidden" id='jsLoader'>
+            <x-loading />
+        </div>
+        <script>
+            document.getElementById('jsLoader').classList.remove('hidden');
+            setTimeout(()=>{
+                document.getElementById('jsLoader').classList.add('hidden');
+            },3750)
+        </script>
         @if(session('success'))
             <div class="fixed top-5 left-1/2 transform -translate-x-1/2 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded shadow-lg z-50">
                 <div class="flex items-center justify-between gap-4">
@@ -22,14 +31,14 @@
             </div>
         @endif
 
-        <h1 class="text-4xl font-bold">Daftar Form</h1>
-        <div class="flex flex-wrap m-6 p-5 bg-slate-200 w-full rounded gap-3">
+        <h1 class="text-4xl font-bold text-white dark:text-black">Daftar Form</h1>
+        <div class="flex flex-wrap m-6 p-5 dark:bg-slate-200 bg-slate-700 w-full rounded gap-3">
             <div class="w-full flex justify-end">
                 <a href="{{ route('form.detail', 'add') }}" class="bg-green-600 px-5 py-2 rounded shadow-sm text-white inline-block lg:text-xl">Tambah</a>
             </div>
             @foreach($forms as $index => $form)
             <a href="{{ route('form.detail', $form->id) }}" id="btn-form-{{ $form->id }}" class="w-full">
-                <div class="bg-gradient-to-r to-green-400 from-blue-600 p-4 rounded shadow-sm text-white w-full flex">
+                <div class="bg-gradient-to-r dark:to-green-400 dark:from-blue-600 from-violet-600 to-gray-800 p-4 rounded shadow-sm text-white w-full flex">
                     <div class="w-full">
                         <div class="title">
                             <h1 class="lg:text-4xl text-xl font-bold">{{ $form->form_name }}</h1>
@@ -84,13 +93,13 @@
             </a>
             @endforeach
         </div>
-        <div x-show="open" x-transition x-cloak class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-[999]">
-            <div class="bg-white rounded-lg p-3 lg:w-1/3 w-[70%]">
-                <div class="flex items-center justify-between p-4 md:p-5 border-b rounded-t dark:border-gray-600 border-gray-200">
+        <div x-show="open" x-transition x-cloak class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-[999] text-white dark:text-black">
+            <div class="dark:bg-white bg-slate-700  rounded-lg p-3 lg:w-1/3 w-[70%]">
+                <div class="flex items-center justify-between p-4 md:p-5 border-b rounded-t border-gray-400 dark:border-gray-200">
                     <h3 class="text-xl font-bold mb-4">
                         Hapus Form
                     </h3>
-                    <button type="button" @click="open = false" class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white" data-modal-hide="default-modal">
+                    <button type="button" @click="open = false" class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white" >
                         <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
                             <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/>
                         </svg>
@@ -101,7 +110,10 @@
                     @csrf
                     <div class="p-4 md:p-5 space-y-2">
                         <p>Jika anda yakin ingin <span class="font-bold">MENGHAPUS</span> data ini, Ketik <span class="font-bold">"Hapus Form"</span> Di field dibawah</p>
-                        <input type="text" wire:model="confirmDelete" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                        <input type="text" wire:model="confirmDelete" 
+                            class="dark:bg-gray-50 border dark:border-gray-300 dark:text-gray-900 text-sm rounded-lg focus:ring-blue-500 
+                                focus:border-blue-500 block w-full bg-gray-800 border-gray-600 dark:placeholder-gray-400 
+                                text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
                         @if(session()->has('error'))
                             <p class="text-red-500 text-sm m-0">{{ session('error') }}</p>
                         @endif

@@ -5,7 +5,7 @@ export function dropdownInitialized(element,id){
        const targetId = toggleEl.getAttribute('data-dropdown-toggle');
        const targetEl = document.getElementById(targetId);
    
-       if (targetEl && !targetEl.dataset.initialized) {
+       if (targetEl) {
          // Inisialisasi ulang dropdown
          new Dropdown(targetEl, toggleEl, {
            placement: toggleEl.getAttribute('data-dropdown-placement') || 'bottom',
@@ -14,7 +14,7 @@ export function dropdownInitialized(element,id){
          targetEl.dataset.initialized = 'true';
         //  console.log("dropdown initialized", targetEl, targetEl.dataset.initialized)
        }else{
-         console.log("gagal inisialisasi dropdown")
+        //  console.log("gagal inisialisasi dropdown", targetEl)
        }
      })
   }else if(element == 'all'){
@@ -53,5 +53,6 @@ export function dropdownInitialized(element,id){
     }else{
       // console.log("gagal inisialisasi dropdown")
     }
+    
   }
 }

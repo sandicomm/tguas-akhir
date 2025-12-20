@@ -1,12 +1,8 @@
 // ======== FLOWBITE COMPONENTS =========
-import { Accordion, Carousel, Modal, initFlowbite } from 'flowbite';
+import { initFlowbite } from 'flowbite';
 
 // ======== GLOBALS =========
 import { globals } from './page/globals.js';
-
-// ======== UTILITIES =========
-import { dropdownInitialized } from './page/utils/dropdownInit.js';
-// import { CheckData } from './page/utils/checkLimitData.js';
 
 // ======== STYLING =========
 import * as bs from './page/styling/baseStyling.js';
@@ -50,20 +46,289 @@ import { getTargetElement,handleElementAction } from './page/downUpDelete/action
 
 // ======== updateContent ========
 import { updateActionProperty } from './page/utils/updateContent.js'
+import {arraySubsequenceMatch} from './page/utils/elementNumberingId.js'
 
 // ======== GLOBAL VARIABLE ASSIGNMENT =========
 let webpageDb = globals.webpageDb,
+  fileDb = globals.file,
   param = globals.param,
   webpageDbRaw = globals.webpageDbRaw,
+  file = globals.file,
   webpageDbParentSection = globals.webpageDbParentSection,
   editorFieldSelect = globals.editorFieldSelect,
   carouselSelect = globals.carouselSelect,
   accordionSelect = globals.accordionSelect,
   savedSelection= globals.savedSelection
+  
+const FONT_SIZE_MAP = {
+  1: "x-small",
+  2: "small",
+  3: "medium",
+  4: "large",
+  5: "x-large",
+  6: "xx-large",
+  7: "xxx-large",
+};
+
+const FONT_SIZE_REVERSE_MAP = {
+  "x-small": 1,
+  "small": 2,
+  "medium": 3,
+  "large": 4,
+  "x-large": 5,
+  "xx-large": 6,   // fallback browser
+  "xxx-large": 7,
+};
+
+function normalizeFontSizeToNumber(value) {
+  if (!value) return null;
+
+  // font size="7"
+  if (!isNaN(value)) {
+    return Math.min(7, Math.max(1, parseInt(value)));
+  }
+
+  value = value.toLowerCase();
+
+  // keyword: x-large, xxx-large
+  if (FONT_SIZE_REVERSE_MAP[value]) {
+    return FONT_SIZE_REVERSE_MAP[value];
+  }
+
+  // px / rem / em → kira-kira
+  if (value.endsWith("px")) {
+    const px = parseFloat(value);
+    if (px >= 32) return 7;
+    if (px >= 28) return 6;
+    if (px >= 24) return 5;
+    if (px >= 18) return 4;
+    if (px >= 14) return 3;
+    if (px >= 12) return 2;
+    return 1;
+  }
+
+  return null;
+}
+
+const originalSizes = {};
+let originalCaptured = false;
+
+function storeOriginalSize(el) {
+  if (!el.id) return;
+
+  if (!originalSizes[el.id]) {
+    originalSizes[el.id] = {};
+  }
+
+  const ori = originalSizes[el.id];
+
+  if (!ori.width) ori.width = el.style.width || "";
+  if (!ori.height) ori.height = el.style.height || "";
+
+  // ===== FONT via <font size="">
+  const fontEl = el.querySelector("font");
+  if (fontEl && !ori.fontSize) {
+    const size = normalizeFontSizeToNumber(fontEl.getAttribute("size"));
+    if (size) {
+      ori.fontSize = { value: size };
+      return;
+    }
+  }
+
+  // ===== FONT via style="font-size"
+  const styledEl = el.querySelector("[style*='font-size']");
+  if (styledEl && !ori.fontSize) {
+    const size = normalizeFontSizeToNumber(styledEl.style.fontSize);
+    if (size) {
+      ori.fontSize = { value: size };
+    }
+  }
+}
+
+function restoreOriginalSize(el) {
+  if (!el.id) return;
+  const ori = originalSizes[el.id];
+  if (!ori) return;
+
+  el.style.width = ori.width;
+  el.style.height = ori.height;
+
+  if (!ori.fontSize) return;
+
+  const sizeNum = ori.fontSize.value;
+  const cssSize = FONT_SIZE_MAP[sizeNum];
+
+  // 1️⃣ Kalau masih ada <font>
+  const fontEl = el.querySelector("font");
+  if (fontEl) {
+    fontEl.setAttribute("size", sizeNum);
+    return;
+  }
+
+  // 2️⃣ Kalau pakai style
+  const styledEl = el.querySelector("[style*='font-size']");
+  if (styledEl) {
+    styledEl.style.fontSize = cssSize;
+    return;
+  }
+
+  // 3️⃣ Fallback: apply ke el langsung
+  el.style.fontSize = cssSize;
+}
+
+function findParentWidth(el) {
+    let current
+    if(el.id.startsWith('field')){
+      current = el.parentElement.parentElement;
+    }else{
+      current = el.parentElement;
+    }
+    while (current) {
+        const styleAttr = current.getAttribute("style");
+
+        // Kalau inline width ditemukan, tapi lebih besar dari layar → skip aja (overflow case)
+        if (styleAttr && styleAttr.includes("width:")) {
+            const match = styleAttr.match(/width\s*:\s*(\d+)px/i);
+            if (match) {
+                const w = parseInt(match[1]);
+                if (w <= window.innerWidth) {
+                    return { current: w, status: "style" };
+                }
+            }
+        }
+
+        // Cek visual rect
+        const rect = current.getBoundingClientRect();
+        if (rect.width && rect.width > 0 && rect.width <= window.innerWidth) {
+            return { current: rect.width, status: "rect" };
+        }
+
+        // lanjut ke parent
+        current = current.parentElement;
+    }
+    return null;
+}
+
+function applyFontSize(el, newSize) {
+  const fontEl = el.querySelector("font");
+  const styledEl = el.querySelector("[style*='font-size']");
+
+  // PRIORITAS <font>
+  if (fontEl) {
+    fontEl.setAttribute("size", newSize);
+    return;
+  }
+
+  // STYLE fallback
+  if (styledEl) {
+    styledEl.style.fontSize = FONT_SIZE_MAP[newSize] || "medium";
+    return;
+  }
+
+  // fallback terakhir
+  el.style.fontSize = FONT_SIZE_MAP[newSize] || "medium";
+}
+
+function resizeFont(el) {
+  let currentValue = null;
+
+  const fontEl = el.querySelector("font");
+  const styledEl = el.querySelector("[style*='font-size']");
+
+  if (fontEl) {
+    currentValue = fontEl.getAttribute("size"); // bisa "7"
+  } else if (styledEl) {
+    currentValue = styledEl.style.fontSize; // bisa "xxx-large"
+  }
+
+  // 🔑 NORMALISASI YANG BENAR
+  const numericSize = normalizeFontSizeToNumber(currentValue);
+
+  if (!numericSize) return;
+
+  // MOBILE LOGIC
+  if (window.innerWidth <= 550) {
+    let newSize = numericSize;
+
+    if (numericSize >= 6) {
+      newSize = 5;                // 6 / 7 → 5
+    } else if (numericSize > 3 && numericSize < 5) {
+      newSize = numericSize - 1;  // 4 → 3
+    }
+
+    applyFontSize(el, newSize);
+  }
+}
+
+function resizeElements() {
+  setTimeout(() => {
+    // 🔒 CAPTURE ORIGINAL SIZE SEKALI SAJA
+    if (!originalCaptured) {
+      document.querySelectorAll("[style]").forEach(el => {
+        if(!el.id.startsWith('dropdown')){
+          storeOriginalSize(el);
+        }
+      });
+
+      originalCaptured = true;
+    }
+
+    const isMobile = window.innerWidth <= 850;
+
+    document.querySelectorAll("[style]").forEach(el => {
+      if(!el.id.startsWith('dropdown')){
+
+        if (!isMobile) {
+          restoreOriginalSize(el);
+          return;
+        }
+  
+        // ===== MOBILE ====
+        resizeFont(el);
+        
+        if (el.style.width === "100%") return;
+  
+        const styleAttr = el.getAttribute("style");
+        if (!styleAttr || !styleAttr.includes("width:")) return;
+  
+        const styleWidth  = parseInt(el.style.width) || null;
+        const styleHeight = parseInt(el.style.height) || null;
+  
+        const check = findParentWidth(el);
+        if (!check) return;
+  
+        let parentWidth = check.current;
+        if (!parentWidth) return;
+  
+        if (styleWidth && styleWidth >= parentWidth) {
+          const scale = parentWidth / styleWidth;
+          el.style.width = (parentWidth - 15) + "px";
+  
+          if (styleHeight) {
+            el.style.height = Math.floor(styleHeight * scale) + "px";
+          }
+        }
+  
+        if (el.offsetWidth > parentWidth) {
+          el.style.width = (parentWidth - 15) + "px";
+        }
+      }
+    });
+
+  }, 200);
+}
+
+window.addEventListener("resize", resizeElements);
+window.addEventListener("load", resizeElements);
 
 document.addEventListener('DOMContentLoaded', function(){
+  document.getElementById('loading-overlay').classList.remove('hidden');
   webpageDbRaw = JSON.parse(JSON.stringify(webpageJs));
   globals.webpageDbRaw = webpageDbRaw
+
+  file = JSON.parse(JSON.stringify(fileJs));
+  globals.file = file
+
   param = JSON.parse(JSON.stringify(paramJs))
   globals.param = param
 
@@ -73,8 +338,6 @@ document.addEventListener('DOMContentLoaded', function(){
   webpageDbParentSection = webpageDbRaw.filter(page => page.type == 'parent-section')
   globals.webpageDbParentSection = webpageDbParentSection
 
-  console.log(webpageDb, globals)
-  // console.log(param, paramJs)
   let btnSwap = document.getElementById('btn-page-swap')
   let btnSwapPage
   let btn1=`flex: 1;padding: 0.25rem;border-right: 1px solid #4b5563;font-size: 0.875rem;font-weight: 700;color: #1f2937;`
@@ -100,138 +363,30 @@ document.addEventListener('DOMContentLoaded', function(){
 
   btnSwap.innerHTML=btnSwapPage        
   document.getElementById('indicator-page').innerHTML=indicatorPage        
-  loadWebpage()
+
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      loadWebpage();
+      document.getElementById('loading-overlay').classList.add('hidden');
+    });
+  });
 })
 
 function setListener(){
-  document.querySelectorAll("[id^='webpage-section-']").forEach(section =>{
-    section.addEventListener('click', function(event){
-      if(event.target.id.startsWith('editor-container-section')){
-        editorFieldSelect = section
-        globals.editorFieldSelect = section
-
-        accordionSelect =null
-        globals.accordionSelect = null
-
-        carouselSelect = null
-        globals.carouselSelect = null
-        console.log(globals.editorFieldSelect)
-        updateStylingControls(editorFieldSelect)
-      }
-    })
-  })
-
-  document.querySelectorAll("[id^='field-']").forEach(field =>{
-    field.addEventListener('click', function(event){
-      event.stopPropagation()
-      webpageDb=globals.webpageDb
-      editorFieldSelect = field
-      globals.editorFieldSelect = editorFieldSelect
-
-      accordionSelect =null
-      globals.accordionSelect =null
-      
-      carouselSelect = null
-      globals.carouselSelect = null
-      
-      // console.log('field change: ', editorFieldSelect, event.target.closest('font') ?? event.target.innerHTML)
-      webpageDb.forEach(item=>{
-        if(item.id === field.id){
-          item.action= updateActionProperty(item.action, 'update')
-          item.content = field.innerHTML
-          // console.log(item.content)
-          return
-        }
-      })
-      globals.webpageDb = webpageDb
-      // console.log('editorFieldSelect: ',event.target, editorFieldSelect)
-      updateStylingControls(editorFieldSelect ,event.target);
-    })
-    field.addEventListener('keyup', function (){
-      webpageDb.forEach(item=>{
-        if(item.id === field.id){
-          item.action= updateActionProperty(item.action, 'update')
-          item.content = field.innerHTML
-          // console.log(item.content)
-          return
-        }
-      })
-      globals.webpageDb = webpageDb
-    })
-  })
-
-  document.querySelectorAll("[id^='video-']").forEach(fieldVideo => {
-    fieldVideo.addEventListener('click', function(e){
-      editorFieldSelect = fieldVideo
-      globals.editorFieldSelect = editorFieldSelect
-
-      accordionSelect = null
-      globals.accordionSelect = null
-
-      carouselSelect = null
-      globals.carouselSelect = null
-      updateStylingControls(fieldVideo, "video")
-    })
-  })
-
-  document.querySelectorAll('[id^="btn-modal-"]').forEach(btnModal =>{
-    btnModal.addEventListener('click', function(){
-      editorFieldSelect = btnModal
-      globals.editorFieldSelect = editorFieldSelect
-
-      accordionSelect =null
-      globals.accordionSelect =null
-
-      carouselSelect = null
-      globals.carouselSelect = null
-      updateStylingControls(editorFieldSelect)
-      // console.log('btn modal event listener', btnModal)
-    })
-  })
-
-  document.querySelectorAll('[id^="parent-modal-"]').forEach(bodyModal =>{
-    bodyModal.addEventListener('click', function(e){
-      if(!e.target.id.startsWith('btn-footer')){
-        editorFieldSelect = bodyModal
-        globals.editorFieldSelect = bodyModal
-
-        carouselSelect = null
-        globals.carouselSelect = null
-
-        updateStylingControls(editorFieldSelect)
-        console.log('parent modal', editorFieldSelect)
-      }
-    })
-  })
-
-  document.querySelectorAll('[id^="carousel-"]').forEach(carouselElement =>{
-    carouselElement.addEventListener('click', function(e){
-      carouselSelect = carouselElement
-      globals.carouselSelect = carouselElement
-      
-      editorFieldSelect=null
-      globals.editorFieldSelect=null
-      
-      accordionSelect =null
-      globals.accordionSelect =null
-      console.log('carousel:', globals.carouselSelect)
-      updateStylingControls(carouselElement)
-    })
-  })
-
   document.querySelectorAll('input[type="file"][accept^="video"]').forEach(input => {
+    if (input.dataset.listenerAdded === "true") return;
+    input.dataset.listenerAdded = "true";
     input.addEventListener('change', function (e) {
       const file = e.target.files[0];
       webpageDb=globals.webpageDb
+      fileDb=globals.file
       if (file && file.type.startsWith('video/')) {
         const labelId = `label-${e.target.id}`; // contoh: input-video-1-2 → label-input-video-1-2
         const label = document.getElementById(labelId);
         
-        // console.log(`${e.target.id}: `, labelId, label)
         // Buat elemen video
         const video = document.createElement('video');
         video.controls = true;
-        // video.className = 'object-contain'; // sesuaikan styling jika perlu
         video.src = URL.createObjectURL(file);
 
         // Hapus isi label lama (misal SVG)
@@ -249,87 +404,23 @@ function setListener(){
           }
         })
 
-        webpageDb.push({
+        fileDb.push({
           id:uniqueKey,
           type:'file',
-          file:file,
-          action:'new-add'
+          filetype:'video',
+          file:file
         })
 
         globals.webpageDb=webpageDb
-        console.log(webpageDb)
       }
     });
   });
-
-  document.querySelectorAll("[id^='btn-heading-accordion']").forEach(headAccordion => {
-    headAccordion.addEventListener('click', function(event) {
-      // cari elemen terdekat yang punya id prefix "btn-heading-accordion"
-      const btn = event.target.closest("[id^='btn-heading-accordion']");
-      if (!btn) return; // kalau klik di luar area
-
-      const idParts = btn.id.split('-');
-      editorFieldSelect = btn;
-      globals.editorFieldSelect = btn;
-
-      carouselSelect = null;
-      globals.carouselSelect = null;
-
-      accordionSelect = document.getElementById(idParts.slice(2, -1).join('-'));
-      globals.accordionSelect = accordionSelect
-      // console.log('accordion heading clicked: ', editorFieldSelect, accordionSelect);
-      updateStylingControls(editorFieldSelect);
-    });
-  });
-
-  document.querySelectorAll("[id^='section-accordion-']").forEach(bodyAccordion => {
-    bodyAccordion.addEventListener('click', function(event){
-      event.stopPropagation()
-      const idParts = bodyAccordion.id.split('-')
-      console.log('body click', event.target.id)
-      if(event.target.id.startsWith('section-accordion-') || event.target.id.startsWith('wrapper-section-')){
-        editorFieldSelect = bodyAccordion
-        globals.editorFieldSelect = bodyAccordion
-
-        carouselSelect = null
-        globals.carouselSelect = null
-
-        accordionSelect = document.getElementById(idParts.slice(1,-2).join('-'))
-        globals.accordionSelect = document.getElementById(idParts.slice(1,-2).join('-'))
-        console.log('accordion body clicked: ',editorFieldSelect, accordionSelect, event.target);
-        updateStylingControls(editorFieldSelect)
-      }
-    })
-  })
-
-  document.querySelectorAll('[id^="field-"]').forEach(field =>{
-    field.addEventListener('mouseup', ()=>{
-      const sel = window.getSelection();
-      if (sel.rangeCount > 0) {
-        const range = sel.getRangeAt(0);
-        savedSelection = range.cloneRange();
-        globals.savedSelection = range.cloneRange();
-      }
-    })
-  })
-
-  document.getElementById('heading-text').addEventListener('click', (event) => {
-    updateStylingControls(document.getElementById('heading-text') ,event.target)
-  })
-
-  document.getElementById('heading-text').addEventListener('mouseup', () => {
-    const sel = window.getSelection();
-    if (sel.rangeCount > 0) {
-      const range = sel.getRangeAt(0);
-      savedSelection = range.cloneRange();
-      globals.savedSelection = range.cloneRange();
-    }
-  })
-
-  // videoStyling()
 }
 
 // ======================== INITIALIZED =======================
+const indexBySection = {};
+const indexById = {};
+
 function loadWebpage(){
   const webpageNotFooter = webpageDb.filter(file => !file.id.includes('footer'))
   if(webpageNotFooter.length == 0){
@@ -403,6 +494,17 @@ function loadWebpage(){
     }
 
   }else{
+    webpageDb.forEach(item => {
+      indexById[item.id] = item;
+
+      const sectionNum = item.id.split('-').find(p => !isNaN(p));
+      if (!sectionNum) return;
+
+      if (!indexBySection[sectionNum]) {
+        indexBySection[sectionNum] = [];
+      }
+      indexBySection[sectionNum].push(item);
+    });
     const webpage = document.getElementById('webpage')
 
     function getSectionNumber(id) {
@@ -413,41 +515,24 @@ function loadWebpage(){
       return id.split('-').filter(part => !isNaN(part) && part.trim() !== '').length;
     }
 
-    function arraySubsequenceMatch(parts, targetParts) {
-      for (let i = 0; i <= parts.length - targetParts.length; i++) {
-        let match = true;
-
-        for (let j = 0; j < targetParts.length; j++) {
-          if (parts[i + j] !== targetParts[j]) {
-            match = false;
-            break;
-          }
-        }
-
-        if (match) return true;
-      }
-
-      return false;
-    }
-
     // 1. Ambil semua section dan sort berdasarkan element_order
     let sections = webpageDb
       .filter(page => page.type === "section" && !page.id.includes('footer'))
       .sort((a, b) => a.element_order - b.element_order);
 
-    let webpageHasPrinted=[]
+    let webpageHasPrinted= new Set()
     // 2. Loop per section
     sections.forEach(section => {
       let idPrefix = section.id.split('-').slice(1).join('-');
       const borderWave = webpageDb.filter(page => page.type === 'border-wave' && arraySubsequenceMatch(page.id.split('-'), idPrefix.split('-')))
 
       // Cetak section
-      if(!webpageHasPrinted.includes(section.id)){
+      if(!webpageHasPrinted.has(section.id)){
         webpage.insertAdjacentHTML(
           'beforeend',
           createSection(idPrefix, borderWave, section.element_order, section.element_count, section.style)
         );
-        webpageHasPrinted.push(section.id)
+        webpageHasPrinted.add(section.id)
       }
       
       // Update element count
@@ -456,9 +541,8 @@ function loadWebpage(){
 
       // 3. Cari elemen lain yang belong ke section ini
       let sectionNum = getSectionNumber(section.id);
-      let childElements = webpageDb.filter(page => {
-        return page.type !== "section" && getSectionNumber(page.id) === sectionNum && countNumbers(page.id) == 2;
-      });
+      let childElements = (indexBySection[sectionNum] || [])
+        .filter(p => p.type !== 'section' && countNumbers(p.id) === 2);
 
       function appendTo(selector, html, container=document) {
         const el = container.querySelector(selector);
@@ -467,17 +551,15 @@ function loadWebpage(){
 
       function renderAccordion(accordionEl, editorContainer, indicator) {
         const id = accordionEl.id;
-        // console.log('accordion:', editorContainer)
         // buat accordion + dropdown body
-        if(accordionEl.id.startsWith('accordion-in-accordion') && !webpageHasPrinted.includes(accordionEl.id)){
-          // console.log(id ,webpageHasPrinted)
-          console.log(`#wrapper-section-${id.split('-').slice(2,-1).join('-')}`)
+        if(accordionEl.id.startsWith('accordion-in-accordion') && !webpageHasPrinted.has(accordionEl.id)){
+
           editorContainer.querySelector(`#wrapper-section-${id.split('-').slice(2,-1).join('-')}`).insertAdjacentHTML('beforeend', createAccordion(accordionEl));
-          webpageHasPrinted.push(accordionEl.id)
-        }else if(!webpageHasPrinted.includes(accordionEl.id)){
-          // console.log(accordionEl.id)
+          webpageHasPrinted.add(accordionEl.id)
+        }else if(!webpageHasPrinted.has(accordionEl.id)){
+      
           editorContainer.insertAdjacentHTML('beforeend', createAccordion(accordionEl));
-          webpageHasPrinted.push(accordionEl.id)
+          webpageHasPrinted.add(accordionEl.id)
         }
         editorContainer.insertAdjacentHTML('afterend', createBodyDropdownAccordion(id, id.split('-')));
 
@@ -498,7 +580,6 @@ function loadWebpage(){
 
           const isNested = id.startsWith("accordion-in-accordion");
           const isNestedEl = el.id.includes("accordion-in-accordion");
-          // console.log('uhuy:', {levelHead,levelSection,levelField})
 
           if (el.id.startsWith("btn-heading") && countNumbers(el.id) == accordionLengthId+1) {
             if (isNested === isNestedEl) grouped.head.push(el);
@@ -509,25 +590,23 @@ function loadWebpage(){
           }
         });
 
-        // render head
-        console.log(id,grouped,webpageHasPrinted)
         grouped.head.sort((a, b) => a.element_order - b.element_order)
           .forEach(head => {
-            if(!webpageHasPrinted.includes(head.id)){
+            if(!webpageHasPrinted.has(head.id)){
               appendTo(`#parent-${id}`, createItemAccordion(head.id.split('-').slice(2).join('-'), head, accordionEl));
               editorContainer.insertAdjacentHTML('afterend', createDropdownHeadAccordion(head.id.split('-').slice(2).join('-')));
-              webpageHasPrinted.push(head.id)
-              console.log('print:', head.id, 'di:', `#parent-${id}`)
+              webpageHasPrinted.add(head.id)
+
             }
           });
 
         // render section
         grouped.section.sort((a, b) => a.element_order - b.element_order)
           .forEach(section => {
-            if(!webpageHasPrinted.includes(section.id)){
+            if(!webpageHasPrinted.has(section.id)){
               appendTo(`#body-${section.id.split('-').slice(1,-1).join('-')}`, createSectionAccordion(section));
               editorContainer.insertAdjacentHTML('afterend', createDropdownSectionAccordion(section.id, section.id.split('-')));
-              webpageHasPrinted.push(section.id)
+              webpageHasPrinted.add(section.id)
             }
           });
 
@@ -536,17 +615,17 @@ function loadWebpage(){
           let html, dropdown;
           switch (field.type) {
             case 'button-modal':
-              if(!webpageHasPrinted.includes(field.id)){
+              if(!webpageHasPrinted.has(field.id)){
                 html = createBtnModal(field);
                 dropdown = createDropdownModal(field.id);
                 appendTo(`#wrapper-section-${field.id.split('-').slice(1,-1).join('-')}`, html);
-                webpageHasPrinted.push(field.id)
+                webpageHasPrinted.add(field.id)
               }
               break;
             case 'body-modal':
-              if(!webpageHasPrinted.includes(field.id)){
+              if(!webpageHasPrinted.has(field.id)){
                 const fieldHead = webpageDb.find(page => page.id == `field-head-${field.id.split('-').slice(1).join('-')}`)
-                console.log(fieldHead, `field-head-${field.id.split('-').slice(1).join('-')}`, webpageDb)
+            
                 document.getElementById(`webpage-section-${sectionNum}`).insertAdjacentHTML('beforeend', createBodyModal(field, fieldHead))
                 document.getElementById(`webpage-section-${sectionNum}`).insertAdjacentHTML('beforeend', createDropdownModal(field.id))
                 document.getElementById(`webpage-section-${sectionNum}`).insertAdjacentHTML('beforeend', createDropdownModal(field.id))
@@ -559,7 +638,6 @@ function loadWebpage(){
                 fieldModal = webpageDb.filter(data => {
                   const id = field.id.split('-').slice(1).join('-')
                   if(arraySubsequenceMatch(data.id.split('-'), id.split('-')) && countNumbers(data.id) == countNumbers(field.id)+1){
-                    // console.log('cetak:', data, field)
                     return data
                   }
                 })
@@ -570,32 +648,32 @@ function loadWebpage(){
                   const renderer = renderers[modalField.type];
                   renderer(modalField, sectionAppend, editorContainer)
                 })
-                webpageHasPrinted.push(field.id)
+                webpageHasPrinted.add(field.id)
               }
               break;
             case 'video':
-              if(!field.id.includes('modal') && !webpageHasPrinted.includes(field.id)){
+              if(!field.id.includes('modal') && !webpageHasPrinted.has(field.id)){
                 html = createVideo(field);
                 dropdown = createDropdownVideo(field.id);
                 appendTo(`#wrapper-section-${field.id.split('-').slice(1,-1).join('-')}`, html);
-                webpageHasPrinted.push(field.id)
+                webpageHasPrinted.add(field.id)
               }
               break;
             case 'field':
-              if(!field.id.includes('modal') && !webpageHasPrinted.includes(field.id)){
+              if(!field.id.includes('modal') && !webpageHasPrinted.has(field.id)){
                 html = createField(field);
                 dropdown = createDropdownField(field.id);
                 appendTo(`#wrapper-section-${field.id.split('-').slice(1,-1).join('-')}`, html);
-                webpageHasPrinted.push(field.id)
-                // console.log('di print:', field.id, id, editorContainer)
+                webpageHasPrinted.add(field.id)
+
               }
               break;
             case 'carousel':
-              if(!webpageHasPrinted.includes(field.id)){
+              if(!webpageHasPrinted.has(field.id)){
                 html = createCarousel(field, webpageDb, editorContainer)
                 dropdown = createDropdownCarousel(field.id, field.id.split('-'))
                 appendTo(`#wrapper-section-${field.id.split('-').slice(1,-1).join('-')}`, html)
-                webpageHasPrinted.push(field.id)
+                webpageHasPrinted.add(field.id)
               }
               break;
             case 'accordion':
@@ -606,74 +684,50 @@ function loadWebpage(){
           if (dropdown) editorContainer.insertAdjacentHTML('afterend', dropdown);
         });
 
-        // init accordion
-        setTimeout(() => {
-          try {
-            const accordionElement = document.getElementById(id);
-            if (accordionElement) {
-              new Accordion(accordionElement, {
-                alwaysOpen: false,
-                activeClasses: 'bg-gray-100 text-gray-900',
-                inactiveClasses: 'text-gray-500'
-              });
-              // console.log('✅ Accordion berhasil diinisialisasi:', id);
-            }
-            initFlowbite();
-          } catch (error) {
-            console.error('❌ Gagal inisialisasi accordion', error);
-          }
-        }, 100);
       }
 
       const renderers = {
         field(page, sectionAppend) {
           let element, dropdown;
-          if (page.id.startsWith('field-modal-') && !webpageHasPrinted.includes(page.id)) {
-            console.log(page.id)
+          if (page.id.startsWith('field-modal-') && !webpageHasPrinted.has(page.id)) {
+        
             element = createField(page);
             dropdown = createDropdownField(page.id);
             appendTo(`#body-${page.id.split('-').slice(1, -1).join('-')}`, element, sectionAppend);
             document.querySelector(`#parent-${page.id.split('-').slice(1,-1).join('-')}`).insertAdjacentHTML('afterbegin', dropdown)
-            if(page.id.startsWith('field-accordion')){
-              console.log('di print ya:', page.id)
-            }
 
-            webpageHasPrinted.push(page.id)
+            webpageHasPrinted.add(page.id)
             return true; // stop, biar gak render ulang di bawah
             
-          } else if (page.id.startsWith('field-element-') && !webpageHasPrinted.includes(page.id)) {
+          } else if (page.id.startsWith('field-element-') && !webpageHasPrinted.has(page.id)) {
             element = createField(page);
             dropdown = createDropdownField(page.id);
-            webpageHasPrinted.push(page.id)
-            if(page.id.startsWith('field-accordion')){
-              console.log('di print ya:', page.id)
-            }
+            webpageHasPrinted.add(page.id)
           }
           return { element, dropdown };
         },
 
         video(page, sectionAppend) {
           let element, dropdown;
-          if (page.id.startsWith('video-modal') && !webpageHasPrinted.includes(page.id)) {
+          if (page.id.startsWith('video-modal') && !webpageHasPrinted.has(page.id)) {
             element = createVideo(page);
             dropdown = createDropdownVideo(page.id);
             appendTo(`#body-${page.id.split('-').slice(1, -1).join('-')}`, element);
             document.querySelector(`#parent-${page.id.split('-').slice(1,-1).join('-')}`).insertAdjacentHTML('afterbegin', dropdown);
-            webpageHasPrinted.push(page.id)
+            webpageHasPrinted.add(page.id)
 
             return true
-          } else if(page.id.startsWith('video-element') && !webpageHasPrinted.includes(page.id)) {
+          } else if(page.id.startsWith('video-element') && !webpageHasPrinted.has(page.id)) {
             element = createVideo(page);
             dropdown = createDropdownVideo(page.id);
-            webpageHasPrinted.push(page.id)
+            webpageHasPrinted.add(page.id)
           }
           return { element, dropdown };
         },
 
         'button-modal'(page) {
-          if (!page.id.startsWith('modal-accordion') && !webpageHasPrinted.includes(page.id) ) {
-            console.log(page.id)
-            webpageHasPrinted.push(page.id)
+          if (!page.id.startsWith('modal-accordion') && !webpageHasPrinted.has(page.id) ) {
+            webpageHasPrinted.add(page.id)
             return {
               element: createBtnModal(page),
               dropdown: createDropdownModal(page.id)
@@ -683,8 +737,8 @@ function loadWebpage(){
         },
 
         'btn-prolog'(page) {
-          if (!page.id.startsWith('modal-accordion') && !webpageHasPrinted.includes(page.id)) {
-            webpageHasPrinted.push(page.id)
+          if (!page.id.startsWith('modal-accordion') && !webpageHasPrinted.has(page.id)) {
+            webpageHasPrinted.add(page.id)
             return {
               element: createBtnProlog(page),
             }
@@ -693,7 +747,7 @@ function loadWebpage(){
         },
 
         'body-modal'(page, sectionAppend, editorContainer) {
-          if(!webpageHasPrinted.includes(page.id)){
+          if(!webpageHasPrinted.has(page.id)){
             const fieldHead = webpageDb.find(field => field.id === `field-head-${page.id.split('-').slice(1).join('-')}`)
             sectionAppend.insertAdjacentHTML('beforeend', createBodyModal(page, fieldHead))
             sectionAppend.insertAdjacentHTML('beforeend', createDropdownModal(page.id))
@@ -702,7 +756,6 @@ function loadWebpage(){
             fieldModal = webpageDb.filter(data => {
               const id=page.id.split('-').slice(1).join('-')
               if(arraySubsequenceMatch(data.id.split('-'), id.split('-')) && countNumbers(data.id) == countNumbers(page.id)+1){
-                // console.log('cetak:', data, field)
                 return data
               }
             })
@@ -714,15 +767,14 @@ function loadWebpage(){
               renderer(modalField, sectionAppend, editorContainer)
             })
 
-            webpageHasPrinted.push(page.id)
-            // console.log('modal:', fieldHead)
+            webpageHasPrinted.add(page.id)
             return true;
           }
         },
 
         accordion(page, sectionAppend, editorContainer) {
           // langsung delegasikan ke renderer accordion khusus (yang refactor panjang kemarin)
-          if(!page.id.startsWith('accordion-in-accordion') && !webpageHasPrinted.includes(page.id)){
+          if(!page.id.startsWith('accordion-in-accordion') && !webpageHasPrinted.has(page.id)){
             renderAccordion(page, editorContainer, 'first');
           }
           return true;
@@ -732,11 +784,11 @@ function loadWebpage(){
           const id = page.id;
 
           // buat accordion + dropdown body
-          if(!id.startsWith('carousel-accordion') && !webpageHasPrinted.includes(page.id)){
+          if(!id.startsWith('carousel-accordion') && !webpageHasPrinted.has(page.id)){
             let fieldCarousel = childElements.filter(elemen => arraySubsequenceMatch(elemen.id.split('-'), page.id.split('-')))
             editorContainer.insertAdjacentHTML('beforeend', createCarousel(page,fieldCarousel,editorContainer));
             editorContainer.insertAdjacentHTML('afterend', createDropdownCarousel(id, id.split('-')));
-            webpageHasPrinted.push(page.id)
+            webpageHasPrinted.add(page.id)
           }
           return true
         }
@@ -752,10 +804,11 @@ function loadWebpage(){
         // urutkan berdasarkan element_order biasa
         return a.element_order - b.element_order;
       });
-      console.log(childElements)
+  
       childElements.forEach(page => {
         if(!page.id.includes('footer')){
           let sectionAppend=''
+
           if(param.includes('prolog-web')){
             sectionAppend = document.querySelector(`#webpage-section-prolog-web-${sectionNum}`);
             
@@ -772,7 +825,6 @@ function loadWebpage(){
           if (!renderer) return; // skip kalau gak ada handler
   
           const result = renderer(page, sectionAppend, editorContainer, webpageDb);
-      
           if (result === true) return; // sudah di-handle sepenuhnya di dalam renderer
           
           if (result && result.element) {
@@ -812,14 +864,11 @@ function loadWebpage(){
         })
       });
     //=========================================================
-      // console.log(webpageHasPrinted.length, webpageNotFooter.length)
       const notPrinted = webpageNotFooter.filter(obj => 
-        !webpageHasPrinted.includes(obj.id)
+        !webpageHasPrinted.has(obj.id)
       );
-
-      // console.log(notPrinted);
   }
-  setListener()
+
   const allVideos = document.querySelectorAll('video');
   allVideos.forEach(v => {
     v.addEventListener('error', e => {
@@ -834,7 +883,7 @@ function loadWebpage(){
       v.preload = 'metadata';
     }
   });
-  dropdownInitialized('all')
+
   setTimeout(() => {
       try {
         initFlowbite();
@@ -842,14 +891,38 @@ function loadWebpage(){
           console.error('❌ Gagal menginisialisasi Modal:', error);
       }
     }, 100); 
-    // console.log('globals after load: ',globals)
+
 
 }
 
-document.getElementById('default-sidebar').addEventListener('click', function (event) {
-  // console.log(event.target)
-  const idParts = event.target.id.split('-')
+document.getElementById('default-sidebar').addEventListener('mouseup', function (event){
+  if(event.target.closest('heading-text')){
 
+    const sel = window.getSelection();
+    if (sel.rangeCount > 0) {
+      const range = sel.getRangeAt(0);
+      savedSelection = range.cloneRange();
+      globals.savedSelection = range.cloneRange();
+    }
+  }
+})
+
+document.getElementById('default-sidebar').addEventListener('click', function (event) {
+  // ================= EVENT CLICK ====================
+  if(event.target.closest("[id='heading-text']")){
+    let element = event.target.closest("[id='heading-text']")
+
+    const sel = window.getSelection();
+    if (sel.rangeCount > 0) {
+      const range = sel.getRangeAt(0);
+      savedSelection = range.cloneRange();
+      globals.savedSelection = range.cloneRange();
+    }
+
+    updateStylingControls(element ,event.target)
+  }
+
+  const idParts = event.target.id.split('-')
   if(event.target.id.startsWith('set-image-item')){
     setImageItem(idParts)
   }
@@ -861,13 +934,13 @@ document.getElementById('default-sidebar').addEventListener('click', function (e
   if (event.target.id.startsWith('add-item-carousel-')) {
     addItemCarousel(event)
     if(carouselSelect.dataset.text === "true"){
-      setListener()
+  
     }
   }
 
   if (event.target.id.startsWith("add-text-carousel")) {
     addTextCarousel(event)
-    setListener()
+
   }
 
   if(event.target.id.startsWith("btn-hide-next")){
@@ -876,14 +949,11 @@ document.getElementById('default-sidebar').addEventListener('click', function (e
 
   if(event.target.id.startsWith("btn-text-position") && carouselSelect.dataset.text === 'true'){
     btnTextPosition(event)
-    setListener()
   }
 
   if(event.target.id.startsWith("copy")){
     if(idParts[1] == "item"){
       copyItemCarousel(idParts.slice(1).join('-'))
-      setListener()
-      console.log(globals.webpageDb)
     }
   }
 
@@ -904,63 +974,248 @@ document.getElementById('default-sidebar').addEventListener('click', function (e
         afterMove: () => updateStylingControls(carouselSelect)
       }, idParts);
     }else if(idParts[0] == 'delete'){
-      const confirmDelete = confirm("Apakah kamu yakin ingin menghapus elemen ini?");
 
-      if (confirmDelete) {
-        event.target.parentElement.parentElement.parentElement.remove()
-        handleElementAction('delete', actualField, actualBodyItem, {
-          datasetKey: 'itemOrder',
-          reinitFlowbite: true,
-          afterMove: () => updateStylingControls(carouselSelect)
-        }, idParts);    
+      let sectionDelete=true
+      const editCarouselWrapper = document.getElementById(`edit-${idParts.slice(1).join('-')}`).parentElement
+      if(editCarouselWrapper.children.length <=1){
+        sectionDelete=false
+      }
+      
+      if(sectionDelete){
+        const confirmDelete = confirm("Apakah kamu yakin ingin menghapus elemen ini?");
+        if (confirmDelete) {
+          handleElementAction('delete', actualField, actualBodyItem, {
+            datasetKey: 'itemOrder',
+            reinitFlowbite: true,
+            afterMove: () => updateStylingControls(carouselSelect)
+          }, idParts);    
+        }
+      }else{
+         alert("elemen tidak boleh terhapus semua")
       }
     }
+  }
+})
+
+document.getElementById('webpage').addEventListener('mouseup', function(event){
+  if(event.target.closest("[id^='field-']")){
+    const sel = window.getSelection();
+      if (sel.rangeCount > 0) {
+        const range = sel.getRangeAt(0);
+        savedSelection = range.cloneRange();
+        globals.savedSelection = range.cloneRange();
+      }
+  }
+})
+
+document.getElementById('webpage').addEventListener('keyup', function(event){
+  if(event.target.closest("[id^='field-']")){
+    let element = event.target.closest("[id^='field-']")
+
+    webpageDb.forEach(item=>{
+      if(item.id === element.id){
+        item.action= updateActionProperty(item.action, 'update')
+        item.content = element.innerHTML
+
+        return
+      }
+    })
+    globals.webpageDb = webpageDb
   }
 })
 
 document.getElementById('webpage').addEventListener('click', function (event) {
   const idParts = event.target.id.split('-')
   const id = event.target.id
+
+  // ================== Click Elemen Event ===================
+  if(event.target.closest('[id^="btn-heading-accordion"]')){
+
+    let element = event.target.closest('[id^="btn-heading-accordion"]')
+
+    element.dataset.listenerAdded = "true";
+    // cari elemen terdekat yang punya id prefix "btn-heading-accordion"
+    const btn = element
+    if (!btn) return; // kalau klik di luar area
+
+    const idParts = btn.id.split('-');
+    editorFieldSelect = btn;
+    globals.editorFieldSelect = btn;
+
+    const range = document.createRange();
+    range.selectNodeContents(element);
+
+    globals.savedSelection = range;
+
+    carouselSelect = null;
+    globals.carouselSelect = null;
+
+    accordionSelect = document.getElementById(idParts.slice(2, -1).join('-'));
+    globals.accordionSelect = accordionSelect
+
+    updateStylingControls(editorFieldSelect);
+
+  }
+
+  else if(event.target.closest("[id^='field-']")){
+
+    let element = event.target.closest("[id^='field-']")
+
+    event.stopPropagation()
+    webpageDb=globals.webpageDb
+    editorFieldSelect = element
+    globals.editorFieldSelect = editorFieldSelect
+
+    accordionSelect =null
+    globals.accordionSelect =null
+    
+    carouselSelect = null
+    globals.carouselSelect = null
+    
+    webpageDb.forEach(item=>{
+      if(item.id === element.id){
+        item.action= updateActionProperty(item.action, 'update')
+        item.content = element.innerHTML
+      
+        return
+      }
+    })
+    globals.webpageDb = webpageDb
+
+    updateStylingControls(editorFieldSelect ,element);
+  }
+
+  else if(event.target.closest("[id^='video-']")){
+
+    let element = event.target.closest("[id^='video-']")
+
+    editorFieldSelect = element
+    globals.editorFieldSelect = editorFieldSelect
+
+    accordionSelect = null
+    globals.accordionSelect = null
+
+    carouselSelect = null
+    globals.carouselSelect = null
+    updateStylingControls(element, "video")
+  }
+
+  else if(event.target.closest('[id^="btn-modal-"]')){
+
+    let element = event.target.closest('[id^="btn-modal-"]')
+
+    editorFieldSelect = element
+    globals.editorFieldSelect = editorFieldSelect
+
+    accordionSelect =null
+    globals.accordionSelect =null
+
+    carouselSelect = null
+    globals.carouselSelect = null
+    updateStylingControls(editorFieldSelect)
+
+  }
+
+  else if(event.target.closest('[id^="parent-modal-"]')){
+    if(!event.target.id.startsWith('btn-footer') && event.target.closest('[id^="parent-modal-"]')){
+      let element = event.target.closest('[id^="parent-modal-"]')
+      editorFieldSelect = element
+      globals.editorFieldSelect = element
+
+      carouselSelect = null
+      globals.carouselSelect = null
+
+      updateStylingControls(editorFieldSelect)
+
+    }
+  }
+
+  else if(event.target.closest('[id^="carousel-"]')){
+
+    let element = event.target.closest('[id^="carousel-"]')
+
+    carouselSelect = element
+    globals.carouselSelect = element
+    
+    editorFieldSelect=null
+    globals.editorFieldSelect=null
+    
+    accordionSelect =null
+    globals.accordionSelect =null
+
+    if(event.target.id.startsWith('item') || event.target.parentElement.id.startsWith('img-text')|| event.target.parentElement.id.startsWith('item')){
+      updateStylingControls(element)
+    }
+  }
+
+  else if(event.target.closest('[id^="section-accordion"]')){
+    let element = event.target.closest('[id^="section-accordion"]')
+
+    event.stopPropagation()
+    const idParts = element.id.split('-')
+
+    if(event.target.id.startsWith('section-accordion-') || event.target.id.startsWith('wrapper-section-')){
+      editorFieldSelect = element
+      globals.editorFieldSelect = element
+
+      carouselSelect = null
+      globals.carouselSelect = null
+
+      accordionSelect = document.getElementById(idParts.slice(1,-2).join('-'))
+      globals.accordionSelect = document.getElementById(idParts.slice(1,-2).join('-'))
+
+      updateStylingControls(editorFieldSelect)
+    }
+  }
+
+  else if(event.target.closest('[id^="webpage-section-"]')){
+
+    let element = event.target.closest('[id^="webpage-section-"]')
+
+    editorFieldSelect = element
+    globals.editorFieldSelect = element
+
+    accordionSelect =null
+    globals.accordionSelect = null
+
+    carouselSelect = null
+    globals.carouselSelect = null
+
+    updateStylingControls(editorFieldSelect)
+  }
+
   // =================== ADD ELEMENT ==========================
 
   if (id.startsWith('add-section-')) {
-  
     addSection(event)
-    setListener()
+   
   }
 
   if (id.startsWith('add-field-')) {
-   
     addField(event)
     setListener();
   }
 
   if (id.startsWith('add-video-')) {
-
     addVideo(event)
-    setListener();
+   
   }
   
     // ======================== MODAL =========================
   if(id.startsWith('add-modal-')) {
-
     addModal(event)
-    setListener()
+
   }
 
   // ======================== ACCORDION ======================
   if(id.startsWith('add-accordion-')) {
-   
     addAccordion(event)
-    setListener()
+  
   }
   
   // ======================== CAROUSEL ======================
   if(id.startsWith('add-carousel-')) {
-
     addCarousel(event)
-    setListener()
-    // console.log(globals.webpageDb)
   }
 
   if(id.startsWith('copy-')){
@@ -969,31 +1224,23 @@ document.getElementById('webpage').addEventListener('click', function (event) {
     
     if(idParts[1] == "field"){
       copyField(idParts)
-      setListener();
 
     }else if(idParts[1] == "video"){
       copyVideo(idParts)
-      setListener();
-
+      
     }else if(idParts[1] == "modal"){
       copyModal(idParts.slice(1).join('-'))
-      setListener()
 
     }else if(idParts[1] == "accordion"){
       copyAccordion(idParts.slice(1).join('-'))
-      setListener()
 
     }else if(idParts[1] == "head"){
       copyHeadAccordion(idParts.slice(2).join('-'))
-      setListener()
-
     }else if(idParts[1] == "section"){
       copySection(idParts.slice(1).join('-'), 'all', event)
-      setListener()
       
     }else if(idParts[1] == "carousel"){
       copyCarousel(idParts.slice(1).join('-'))
-      setListener()
     }
   }
 
@@ -1015,7 +1262,10 @@ if(idParts[0] =='up' || idParts[0] == 'down' || idParts[0] == 'delete'){
     let sectionDelete=true
 
     if(idParts[1] ==='section'){
-      let section = bodyElement.querySelectorAll("[id^='section-accordion']");
+      let section = bodyElement.querySelectorAll("[id^='webpage-section']");
+      if(idParts[2] ==='accordion'){
+        section = bodyElement.querySelectorAll("[id^='section-accordion']");
+      }
       let sectionNotFooter = Array.from(section).filter(sec => !sec.id.includes('footer'));
       
       if(idParts.includes('webpage')){
@@ -1026,7 +1276,12 @@ if(idParts[0] =='up' || idParts[0] == 'down' || idParts[0] == 'delete'){
         sectionDelete=true
       }else{
         sectionDelete=false
-        alert("section tidak boleh terhapus semua")
+      }
+
+    }else if(idParts[1] ==='head'){
+      const parentAccordion = document.getElementById(idParts.slice(2).join('-')).parentElement
+      if(parentAccordion.children.length <= 1){
+        sectionDelete=false
       }
     }
 
@@ -1036,24 +1291,23 @@ if(idParts[0] =='up' || idParts[0] == 'down' || idParts[0] == 'delete'){
         handleElementAction('delete', fieldElement, bodyElement, {
           datasetKey: 'elementOrder'
         }, idParts);
-        event.target.parentElement.parentElement.parentElement.remove()
       }
+    }else{
+       alert("elemen tidak boleh terhapus semua")
     }
   }
 }
+})
 
-});
 
 document.getElementById('btn-save').addEventListener('click', async function() {
   const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-  document.getElementById('loading-overlay').style.display = 'flex';
+  document.getElementById('loading-overlay').classList.remove('hidden');
 
-  let mergedDb = [...globals.webpageDbParentSection, ...globals.webpageDb]
+  let noFileDb = [...globals.webpageDbParentSection, ...globals.webpageDb]
         .filter(item => item.action);
 
-  let fileDb=mergedDb.filter(item => item.type === 'file')
-  let noFileDb=mergedDb.filter(item => item.type !== 'file')
-  console.log('pemisahan:', fileDb, noFileDb)
+  let fileDb=globals.file.filter(item=>item.action)
 
   // Helper: chunk data
   const chunk = (arr, size) => {
@@ -1070,6 +1324,7 @@ document.getElementById('btn-save').addEventListener('click', async function() {
           form.append(`items[${idx}][id]`, item.id);
           form.append(`items[${idx}][type]`, item.type);
           form.append(`items[${idx}][action]`, item.action ?? '');
+          form.append(`items[${idx}][filetype]`, item.filetype ?? '');
 
           if (extraFields) {
               form.append(`items[${idx}][style]`, item.style ?? "");
@@ -1085,8 +1340,6 @@ document.getElementById('btn-save').addEventListener('click', async function() {
 
       form.append("paramStatus", param);
 
-      console.log(`🚀 Mengirim ${indexLabel}`);
-
       let raw = "";
       try {
           const response = await fetch(url, {
@@ -1098,22 +1351,16 @@ document.getElementById('btn-save').addEventListener('click', async function() {
               body: form
           });
 
-          raw = await response.text();
+          raw = await response.text()
+          console.log('data raw:',raw,)
           let data = JSON.parse(raw);
-
           if (!data.success) throw data;
 
-          console.log(`✅ ${indexLabel} sukses`, data.message);
-
       } catch (err) {
-          console.error(`❌ Error pada ${indexLabel}`, err, "RAW:", raw);
-          alert(`Gagal menyimpan ${indexLabel}. Cek console.`);
+          alert(`Gagal menyimpan ${indexLabel}`);
 
           throw new Error(
-              `${err.message || "Unknown Error"}\n\n` +
-              `File: ${err.file}\n` +
-              `Line: ${err.line}\n\n` +
-              `Trace:\n${err.trace}`
+              `${err.message || "Unknown Error"}\n\n`
           );
       }
   };
@@ -1122,13 +1369,12 @@ document.getElementById('btn-save').addEventListener('click', async function() {
   // 1️⃣  Kirim FILE dalam batch kecil
   // =============================
   const fileChunks = chunk(fileDb, 15); // max 15 file
-  console.log(`📦 File batch count = ${fileChunks.length}`);
 
   for (let i = 0; i < fileChunks.length; i++) {
       await sendBatch(
           fileChunks[i],
           `batch file ${i + 1}/${fileChunks.length}`,
-          "https://shd.smartdiabetes.my.id/webpage/store",
+          "http://127.0.0.1:8000/webpage/store",
           false
       );
   }
@@ -1141,30 +1387,21 @@ document.getElementById('btn-save').addEventListener('click', async function() {
       ...noFileDb.filter(x => !x.action?.includes("delete"))
   ];
 
-  console.log('final no file db:', nonFile)
-
   const nonFileChunks = chunk(nonFile, 100);
-  console.log(`📦 Non-file batch count = ${nonFileChunks.length}`);
 
   for (let i = 0; i < nonFileChunks.length; i++) {
       await sendBatch(
           nonFileChunks[i],
           `batch data ${i + 1}/${nonFileChunks.length}`,
-          "https://shd.smartdiabetes.my.id/webpage/store",
+          "http://127.0.0.1:8000/webpage/store",
           true
       );
   }
-  // https://shd.smartdiabetes.my.id/webpage/store
-  document.getElementById('loading-overlay').style.display = 'none';
+
+  document.getElementById('loading-overlay').classList.add('hidden')
   alert('✅ Semua data berhasil disimpan.');
   window.location.reload();
 });
-
-document.getElementById('btn-cek').addEventListener('click', function(){
-  let mergeDb = [...globals.webpageDb, ...globals.webpageDbParentSection]
-  let cleanWebpage = mergeDb.filter(item => item.action)
-  console.log('webpage:',globals.webpageDb, 'parent:',globals.webpageDbParentSection, 'clean:',cleanWebpage)
-})
 
 bs.fontStylingField()
 bs.widthHeightField()
@@ -1173,6 +1410,7 @@ bs.paddingMarginField()
 bs.colorBackgroundField()
 bs.borderWave()
 bs.flexPosition()
+bs.setListenerSetImage()
 setListener()
 accordionStyling()
 modalTypeStyling()

@@ -2,6 +2,7 @@ import { globals } from '../globals.js';
 import { dropdownInitialized } from '../utils/dropdownInit.js';
 import { renderSvg } from '../utils/svgEdit.js';
 import { deepClone } from '../utils/utilsDuplikatFunction.js';
+import { setListenerSetImage } from './baseStyling.js';
 
 function setPaddingMarginBoxBorder(computedField){
     document.getElementById('padding-field').value = parseInt(computedField.padding);
@@ -49,9 +50,51 @@ function rgbToHex(r, g, b) {
   return "#" + toHex(r) + toHex(g) + toHex(b);
 }
 
+function rgbToHexFull(rgb) {
+    const match = rgb.match(/\d+/g);
+    if (!match) return null;
+
+    return "#" + match.slice(0, 3)
+        .map(x => parseInt(x).toString(16).padStart(2, '0'))
+        .join('');
+}
+// rumus deteksi warna teks
+export function isLightColor(hex) {
+    hex = hex.replace('#', '');
+
+    const r = parseInt(hex.substring(0, 2), 16);
+    const g = parseInt(hex.substring(2, 4), 16);
+    const b = parseInt(hex.substring(4, 6), 16);
+
+    // Rumus luminance (W3C)
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b);
+
+    return luminance > 150; // threshold
+}
+
+function findTextColor(element) {
+    // Cek jika element punya inline style color
+    const styleColor = element.style.color;
+    if (styleColor) return styleColor;
+
+    // Cek attribute color (jarang dipakai, tapi tetap dukung)
+    const attrColor = element.getAttribute('color');
+    if (attrColor) return attrColor;
+
+    // Loop ke child nodes yang paling dalam (depth-first)
+    for (let child of element.children) {
+        let color = findTextColor(child);
+        if (color) return color;
+    }
+
+    return null;
+}
+
 export function updateStylingControls(data, field) {
     let carouselSelect=globals.carouselSelect
     let accordionSelect=globals.accordionSelect
+    let fileDb=globals.file
+
     if(data){
       const computedField = window.getComputedStyle(data);
       const idParts = data.id.split('-')
@@ -59,15 +102,14 @@ export function updateStylingControls(data, field) {
       let stylingWebpage=['heading-text-wrapper','accordion-head-indicator-wrapper','accordion-modal-type','accordion-accordion-type',
         'accordion-carousel-styling','accordion-font-styling','font-order-list','font-unorder-list','reset-box',
         'accordion-box-field','box-width-field','box-height-field','flex-position','accordion-border-field',
-        'accordion-border-wave-section','accordion-background','bg-image-styling','accordion-padding','accordion-margin','wrapper-btn-save',
+        'accordion-border-wave-section','accordion-background','bg-image-styling','accordion-padding','accordion-margin','wrapper-btn-save'
       ]
       
       stylingWebpage.forEach(id=>{
-        document.getElementById(id).classList.add('hidden')
+        if(id !== 'wrapper-btn-save'){
+          document.getElementById(id).classList.add('hidden')
+        }
       })
-
-      // document.getElementById('border-wave-position-top').cheked = false
-      // document.getElementById('border-wave-position-bottom').cheked = false
 
       if(idParts[0] == 'webpage'){
         let stylingWebpage
@@ -80,7 +122,7 @@ export function updateStylingControls(data, field) {
           stylingWebpage=[ 
             'accordion-box-field','box-height-field','flex-position','accordion-border-field',
             'accordion-border-wave-section','accordion-background','bg-image-styling','accordion-padding',
-            'accordion-margin','wrapper-btn-save'
+            'accordion-margin','wrapper-btn-save','reset-box'
           ]
         }
 
@@ -92,7 +134,7 @@ export function updateStylingControls(data, field) {
         let borderColor= data.style.borderColor ?? ''
 
         fieldColor = getRgbArray(fieldColor)
-        // console.log(data,fieldColor, data.style.backgroundColor, data.style.backgroundImage)
+       
         if(fieldColor){
           fieldColor = rgbToHex(fieldColor[0],fieldColor[1],fieldColor[2])
         }
@@ -105,7 +147,7 @@ export function updateStylingControls(data, field) {
 
         const justifySection = data.querySelector('[id^="editor-container-section-"]').style.justifyContent
         const flexBoxSection = document.getElementById('flex-position-section')
-        console.log('justify section:',justifySection)
+    
         if(justifySection === 'start'){
           flexBoxSection.querySelector('[value="top"]').selected=true
         }else if(justifySection === 'center'){
@@ -137,7 +179,7 @@ export function updateStylingControls(data, field) {
           document.getElementById('btn-reset-border-wave').classList.add('hidden')
         }
 
-        // console.log('webpage', fieldColor)
+  
 
       }else if(idParts[0] == 'field'){
         console.log('field')
@@ -152,8 +194,8 @@ export function updateStylingControls(data, field) {
 
         let fontColor
         if (data) {
-          fontColor = data.getAttribute('color') ?? data.closest('font')?.getAttribute('color') ?? '';
-          // console.log(fontColor);
+          fontColor = findTextColor(data) ?? ''
+  ;
         } else {
           console.error("Variabel 'field' bernilai null atau tidak ditemukan.");
         }
@@ -184,23 +226,31 @@ export function updateStylingControls(data, field) {
         // console.log('field')
 
       }else if(data.id == 'heading-text'){
-        let stylingWebpage=['heading-text-wrapper','accordion-font-styling','font-order-list','font-unorder-list',
-          'accordion-box-field','box-width-field','box-height-field','flex-position','accordion-border-field',
-          'accordion-padding','accordion-margin','wrapper-btn-save'
+        console.log('hedaing text')
+        let stylingWebpage=['heading-text-wrapper','accordion-head-indicator-wrapper',
+          'accordion-font-styling','accordion-box-field','box-width-field',
+          'accordion-border-field','accordion-background','bg-image-styling','accordion-padding',
+          'accordion-margin','wrapper-btn-save'
         ]
+
+        if(globals.editorFieldSelect.id.startsWith('btn-modal')){
+          stylingWebpage.push('accordion-modal-type')
+        }else if(globals.editorFieldSelect.id.startsWith('btn-heading-accordion')){
+          stylingWebpage.push('accordion-accordion-type')
+        }
 
         stylingWebpage.forEach(id=>{
           document.getElementById(id).classList.remove('hidden')
         })
         
         let fontColor
-        if (field) {
-          fontColor = field.getAttribute('color') ?? field.closest('font')?.getAttribute('color') ?? '';
-          // console.log(fontColor, field.closest('font'));
-        } else {
+        if (data) {
+          fontColor = findTextColor(data) ?? '';
 
+        } else {
           console.error("Variabel 'field' bernilai null atau tidak ditemukan.");
         }
+
         let fieldColor= data.style.backgroundImage || data.style.backgroundColor
         let borderColor= data.style.borderColor
 
@@ -227,7 +277,7 @@ export function updateStylingControls(data, field) {
         // console.log('field')
 
       }else if(data.id.startsWith('video')){
-        console.log('video')
+        // console.log('video')
         let stylingWebpage=[
           'accordion-box-field','box-width-field','accordion-margin','wrapper-btn-save'
         ]
@@ -236,15 +286,32 @@ export function updateStylingControls(data, field) {
           document.getElementById(id).classList.remove('hidden')
         })
       }else if(data.id.startsWith('btn-modal') || data.id.startsWith('btn-heading-accordion')){
-        document.getElementById("heading-text").innerHTML = ''
-        document.getElementById("heading-text").innerHTML = data.querySelector('span').innerHTML
-        console.log('btn head modal accordion')
+        let headingText = document.getElementById("heading-text")
+        headingText.innerHTML = ''
+        headingText.innerHTML = data.children[0].outerHTML
+
+        let colorFontHeading = findTextColor(headingText) ?? '';
+
+        if(colorFontHeading.includes('rgb')){
+
+          colorFontHeading = rgbToHexFull(colorFontHeading)
+        }
+      
+        let bgColor = isLightColor(colorFontHeading) ? '#000000' : '#ffffff';
+        headingText.style.backgroundColor = bgColor;
+        // console.log('btn head modal accordion')
         let stylingWebpage=['heading-text-wrapper','accordion-head-indicator-wrapper',
-          'accordion-font-styling','accordion-box-field','box-width-field','accordion-modal-type',
+          'accordion-font-styling','accordion-box-field','box-width-field',
           'accordion-border-field','accordion-background','bg-image-styling','accordion-padding',
           'accordion-margin','wrapper-btn-save'
         ]
-        
+
+        if(data.id.startsWith('btn-modal')){
+          stylingWebpage.push('accordion-modal-type')
+        }else if(data.id.startsWith('btn-heading-accordion')){
+          stylingWebpage.push('accordion-accordion-type')
+        }
+
         stylingWebpage.forEach(id=>{
           document.getElementById(id).classList.remove('hidden')
         })
@@ -253,11 +320,11 @@ export function updateStylingControls(data, field) {
         let indicatorType = data.dataset.typeIndicator
         if(data.id.startsWith('btn-heading')){
           indicatorType = data.parentElement.parentElement.parentElement.parentElement.dataset.typeIndicator
-          console.log(indicatorType, )
+          // console.log(indicatorType, )
         }else{
           indicatorType = data.dataset.typeIndicator
         }
-        console.log(indicatorType, data)
+   
         if(indicatorType === "question"){
           headIndicator.querySelector('[value="question"]').selected=true
           
@@ -286,6 +353,9 @@ export function updateStylingControls(data, field) {
           borderColor = rgbToHex(borderColor[0],borderColor[1],borderColor[2])
         }
 
+        let fontColor = findTextColor(data) ?? ''
+
+        document.getElementById('font-color-input').value = fontColor
         document.getElementById('color-field-input').value = fieldColor
         document.getElementById('border-color-field').value = borderColor;
 
@@ -327,9 +397,13 @@ export function updateStylingControls(data, field) {
 
       }else if(data.id.startsWith('section-accordion')){
 
-        let stylingWebpage=['accordion-box-field','box-width-field','box-height-field','accordion-border-field',
-          'accordion-background','bg-image-styling','accordion-accordion-type','accordion-padding','accordion-margin',
-          'wrapper-btn-save'
+        document.getElementById("heading-text").innerHTML = ''
+        document.getElementById("heading-text").innerHTML = data.parentElement.parentElement.querySelector('[id^="btn-heading-accordion"]').children[0].outerHTML
+
+        let stylingWebpage=['heading-text-wrapper','accordion-head-indicator-wrapper',
+          'accordion-font-styling','accordion-box-field','box-width-field','accordion-accordion-type',
+          'accordion-border-field','accordion-background','bg-image-styling','accordion-padding',
+          'accordion-margin','wrapper-btn-save'
         ]
         
         stylingWebpage.forEach(id=>{
@@ -363,9 +437,8 @@ export function updateStylingControls(data, field) {
         document.getElementById('color-field-input').value = fieldColor
         document.getElementById('border-color-field').value = borderColor
 
-        // console.log('section accordion set styling contorls')
       }else if(data.id.startsWith('carousel')){
-        // console.log(carouselSelect, data,globals.carouselSelect)
+  
         document.getElementById('add-text-carousel').textContent = carouselSelect.dataset.text === "true" ? "Remove Text" : "Add Text"
         document.getElementById('btn-text-position').textContent = carouselSelect.dataset.textPosition === "on-image" ? "On Image" : "Below Image"
         document.getElementById('btn-hide-next').textContent = carouselSelect.dataset.nextBtnHide === "true" ? "Unhide" : "Hide"
@@ -399,25 +472,35 @@ export function updateStylingControls(data, field) {
               </div>
               `
           let dropdownItem=`
-            <div id="dropdown-${item.id}" data-accordion="open" class="absolute mt-2 left-0 w-30 z-50 hidden bg-white rounded-lg shadow-sm">
+            <div id="dropdown-${item.id}" data-accordion="open" class="absolute mt-2 left-0 w-[125px] z-50 hidden bg-white dark:bg-slate-800 rounded-lg shadow-sm">
               <ul class="py-2 text-sm text-gray-700">
-                <li><a id="down-${item.id}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100">Move Down</a></li>
-                <li><a id="up-${item.id}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 ">Move Up</a></li>
-                <li><label for="bg-image-carousel" id="set-image-${item.id}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100">Set Image</label></li>
-                <li><a id="reset-image-${item.id}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100">Reset Image</a></li>
-                <li><a id="copy-${item.id}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100">Duplikat</a></li>
+                <li><a id="down-${item.id}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-white">Move Down</a></li>
+                <li><a id="up-${item.id}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-white">Move Up</a></li>
+                <li><a id="reset-image-${item.id}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-white">Reset Image</a></li>
+                <li><a id="copy-${item.id}" class="cursor-pointer block text-blue-400 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-white">Duplikat</a></li>
+              </ul>
+              <ul class=" bg-sky-500 ">
+                <li><label for="bg-image-carousel" id="set-image-${item.id}" class="text-sm cursor-pointer block px-2 py-2 hover:bg-blue-600">Set Image From File</label></li>
+                <li><label data-modal-target="recent-image-modal" data-modal-toggle="recent-image-modal" id="set-image-from-recent-${item.id}" class="text-sm cursor-pointer block px-2 py-2 hover:bg-blue-600">Set Image From Recent</label></li>
               </ul>
               <ul class="py-2 text-sm text-gray-700 border-t border-gray-500">
-                <li><a id="delete-${item.id}" class="cursor-pointer font-bold block text-red-700 px-4 py-2 hover:bg-gray-100">Delete</a></li>
+                <li><a id="delete-${item.id}" class="cursor-pointer font-bold block text-red-700 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600">Delete</a></li>
               </ul>
             </div>
           `
-
-          accordionCarouselStyling.querySelector('[id="edit-carousel-item-wrapping"]').parentElement.insertAdjacentHTML('afterbegin', dropdownItem)
+          
+          // document.getElementById('webpage').insertAdjacentHTML('afterend', dropdownItem)
+          if(!document.getElementById(`dropdown-${item.id}`)){
+            accordionCarouselStyling.querySelector('[id="edit-carousel-item-wrapping"]').parentElement.insertAdjacentHTML('afterbegin', dropdownItem)
+          }
           accordionCarouselStyling.querySelector('[id="edit-carousel-item-wrapping"]').insertAdjacentHTML('beforeend', itemWrapped)
           accordionCarouselStyling.querySelector('[id="edit-carousel-item-wrapping"]').querySelector(`#edit-${item.id}`).setAttribute('style', style)
+
+          document.getElementById(`set-image-from-recent-${item.id}`).addEventListener('click', function(e){
+            e.target.parentElement.parentElement.parentElement.classList.add('hidden')
+          })
         })
-        
+
         let addItemCarousel = document.querySelector('[id^="add-item"]')
         addItemCarousel.id = `add-item-${data.id}`
 
@@ -451,17 +534,20 @@ export function updateStylingControls(data, field) {
         
         // Masukkan nilai heksadesimal ke input
         document.getElementById('color-field-input').value = hexColor;
-        document.getElementById('bg-color-opacity').value = opacityValue;
-        // console.log(data)
+        document.getElementById('bg-color-opacity').value = opacityValue; 
+
+        setTimeout(() => {
+          try {
+            initFlowbite();
+          } catch (error) {
+            // console.error('❌ Gagal inisialisasi carousel', error);
+          }
+        }, 100);
+        
+        setListenerSetImage()
         dropdownInitialized('multi', data.id)
       }
 
-      if(accordionSelect){
-        document.getElementById('accordion-modal-type').classList.add('hidden')
-        document.getElementById('accordion-box-field').classList.remove('hidden')
-        document.getElementById('box-height-field').classList.add('hidden')
-      }
-      
       let rgba = null
       if(computedField.backgroundColor){
         rgba = computedField.backgroundColor
@@ -574,16 +660,16 @@ export function updateStylingControls(data, field) {
 
       if(!document.getElementById('preview-image').classList.contains('hidden')){
         document.getElementById('wrapper-btn-reset-bg-image').classList.remove('hidden')
-        // console.log('atas',document.getElementById('wrapper-btn-reset-bg-image'))
+        
       }else{
         document.getElementById('wrapper-btn-reset-bg-image').classList.add('hidden')
-        // console.log('bawah',document.getElementById('wrapper-btn-reset-bg-image'))
+        
       }
     }else{
       let stylingWebpage=['heading-text-wrapper','accordion-head-indicator-wrapper','accordion-modal-type','accordion-accordion-type',
         'accordion-carousel-styling','accordion-font-styling','font-order-list','font-unorder-list',
         'accordion-box-field','box-width-field','box-height-field','flex-position','accordion-border-field',
-        'accordion-border-wave-section','accordion-background','bg-image-styling','accordion-padding','accordion-margin','wrapper-btn-save'
+        'accordion-border-wave-section','accordion-background','bg-image-styling','accordion-padding','accordion-margin'
       ]
       
       stylingWebpage.forEach(id=>{

@@ -13,6 +13,7 @@ class Questions extends Model
         'input_type',
         'rules',
         'section_id',
+        'order'
         ];
     public function answers(){
        return $this->hasMany(Answers::class, 'question_id');

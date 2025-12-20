@@ -9,28 +9,14 @@ import { createField, createDropdownField } from './field.js';
 // ======== updateContent ========
 import { updateActionProperty } from './utils/updateContent.js';
 import { renderSvg } from './utils/svgEdit.js';
+import { setListenerSetImage } from './styling/baseStyling.js';
+
+import {arraySubsequenceMatch, generateUniqueId, handleElementCount, replaceIdSuffix} from './utils/elementNumberingId.js'
 
 let webpageDb=  globals.webpageDb
 let editCarouselItem=globals.editCarouselItem
 let carouselSelect=globals.carouselSelect
 let bodyItem=globals.bodyItem
-
-function arraySubsequenceMatch(parts, targetParts) {
-  for (let i = 0; i <= parts.length - targetParts.length; i++) {
-    let match = true;
-
-    for (let j = 0; j < targetParts.length; j++) {
-      if (parts[i + j] !== targetParts[j]) {
-        match = false;
-        break;
-      }
-    }
-
-    if (match) return true;
-  }
-
-  return false;
-}
 
 const createCarousel = (carousel, childElements,editorContainer) => {
     let dataSet = parseStyleObj(carousel.content)
@@ -69,15 +55,16 @@ const createCarousel = (carousel, childElements,editorContainer) => {
       </div>
     `
 }
+
 const createCarouselItem = (carousel, childElements,editorContainer, textPosition, textStatus, btnHide) => {
   let item=``
-  // console.log(childElements)
+
   childElements = childElements.sort((a,b) => a.element_order - b.element_order)
   childElements.forEach(el=>{
       if(el.id.startsWith('item') && arraySubsequenceMatch(el.id.split('-'), carousel.id.split('-'))){
         let field= childElements.filter(field=>field.id === `field-${el.id}`)
         let textImage=''
-          // console.log(`field-${el.id}`, field, el)
+     
         if(textStatus === 'true' ){
             editorContainer.insertAdjacentHTML('afterend', createDropdownField(field[0].id))
             if(textPosition === 'on-image'){
@@ -87,14 +74,13 @@ const createCarouselItem = (carousel, childElements,editorContainer, textPositio
 
               let imgTxt = childElements.filter(img=>img.id === `img-text-on-image-${el.id}`)
               textImage = `
-                  <div style="width:100%;height:30%;">
-                    <img id="${imgTxt[0].id}" src="${imgTxt[0].content}" style="width:100%;">"
+                  <div id="${imgTxt[0].id}" style="width:100%;height:30%;">
+                    <img src="${imgTxt[0].content}" style="width:100%;" loading="lazy">"
                   </div>
                   <div class="flex justify-center items-start h-full w-full ${btnHide ? 'px-3' : 'px-6'} ${btnHide} py-5 overflow-y-auto" style="${el.style}">
                     ${createField(field[0])}
                   </div>
                   `
-              // console.log(imgTxt, `img-text-on-image-${el.id}`)
             }
         }
 
@@ -115,14 +101,18 @@ const createCarouselItem = (carousel, childElements,editorContainer, textPositio
   })
   return item
 }
+
 const slideIndicator = (carousel, childElements)=>{
   let itemCarouselLength = childElements.filter(el => arraySubsequenceMatch(el.id.split('-'), carousel.id.split('-')) && el.type === 'item-carousel').length
-  // console.log('length item carousel', itemCarouselLength)
+
   let slide=``
   for(let i=0;i <= itemCarouselLength-1;i++){
       let indicator = i
       slide += `
-      <button type="button" style="${parseStyleObj(carousel.style).indicatorSize}" class="rounded-full" aria-current="true" aria-label="Slide ${indicator+1}" data-carousel-slide-to="${i}"></button>
+      <button type="button" style="${parseStyleObj(carousel.style).indicatorSize}" 
+      class="rounded-full dark:hover:bg-white bg-white dark:bg-gray-400" 
+
+      aria-current="true" aria-label="Slide ${indicator+1}" data-carousel-slide-to="${i}"></button>
       `
   }
 
@@ -131,6 +121,7 @@ const slideIndicator = (carousel, childElements)=>{
       ${slide}
   </div>`
 }
+
 const createDropdownCarousel = (idPrefix)=> `
   <div id="dropdown-${idPrefix}" data-accordion="open" class="absolute mt-2 left-0 w-30 z-40 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700">
       <ul class="py-2 text-sm text-gray-700 dark:text-gray-200">
@@ -143,6 +134,7 @@ const createDropdownCarousel = (idPrefix)=> `
       </ul>
   </div>
 `
+
 const addCarousel = (event)=>{
   webpageDb=globals.webpageDb
     const idParts = event.target.id.split('-')
@@ -201,6 +193,7 @@ const addCarousel = (event)=>{
         <ul class="py-2 text-sm text-gray-700 dark:text-gray-200">
           <li><a id="down-${idPrefix}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Move Down</a></li>
           <li><a id="up-${idPrefix}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Move Up</a></li>
+          <li><a id="copy-${idPrefix}" class="text-blue-600 cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Duplikat</a></li>
         </ul>
         <ul class="py-2 text-sm text-gray-700 dark:text-gray-200 border-t border-gray-500">
           <li><a id="delete-${idPrefix}" class="cursor-pointer font-bold block text-red-700 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Delete</a></li>
@@ -212,12 +205,10 @@ const addCarousel = (event)=>{
       idAppend = `wrapper-section-${idParts.slice(2, idParts.length).join('-')}`;
 
       bodyAppend = document.getElementById(idAppend);
-      fieldNumber = parseInt(bodyAppend.getAttribute('data-element-count')) + 1;
+      fieldNumber = handleElementCount(bodyAppend, bodyAppend.dataset.elementCount)
       bodyAppend.dataset.elementCount = fieldNumber;
 
-      // console.log('add: ',fieldNumber, parseInt(bodyAppend.getAttribute('data-element-count')) + 1)
-
-      idPrefix = `${idParts.slice(1, idParts.length).join('-')}-${fieldNumber}`
+      idPrefix = generateUniqueId(`${idParts.slice(1, idParts.length).join('-')}-${fieldNumber}`,bodyAppend)
   
       widthCarousel='300px'
       heightCarousel='200px'
@@ -232,11 +223,10 @@ const addCarousel = (event)=>{
       idAppend = `editor-container-section-${idParts[4]}`;
       const section = document.getElementById(idAppend)
 
-      fieldNumber = section.dataset.elementCount;
-      fieldNumber++
+      fieldNumber = handleElementCount(section, section.dataset.elementCount)
       section.dataset.elementCount = fieldNumber
 
-      idPrefix = `${idParts.slice(1, idParts.length).join('-')}-${fieldNumber}`
+      idPrefix = generateUniqueId(`${idParts.slice(1, idParts.length).join('-')}-${fieldNumber}`,section)
   
       widthCarousel='400px'
       heightCarousel='300px'
@@ -303,13 +293,9 @@ const addCarousel = (event)=>{
           const carouselElement = document.getElementById(idPrefix);
           if (carouselElement) {
               new Carousel(carouselElement);
-              // console.log('✅ Carousel berhasil diinisialisasi:', carouselElement.id);
           } else {
               console.warn('⚠️ Elemen Crousel tidak ditemukan setelah appendChild');
           }
-
-          // Panggil initFlowbite setelah inisialisasi accordion spesifik ini
-          // dan setelah ada sedikit penundaan
           initFlowbite();
 
       } catch (error) {
@@ -318,7 +304,7 @@ const addCarousel = (event)=>{
     }, 100);  
 
     globals.webpageDb=webpageDb
-    console.log('add carousel',webpageDb)
+
 }
 const copyCarousel=(idCarousel, mode="all")=>{
   try {
@@ -337,22 +323,22 @@ const copyCarousel=(idCarousel, mode="all")=>{
       }
 
       // hitung count baru & simpan
-      const countNumber = (parseInt(container.dataset.elementCount || '0', 10) || 0) + 1;
-
+      const countNumber = handleElementCount(container, parseInt(container.dataset.elementCount))
+      container.dataset.elementCount = countNumber
       // clone elemen (btn + modal body)
       const carouselCopy = carouselEl.cloneNode(true);
 
       // buat id baru dengan mengganti angka terakhir
       const oldCarId = carouselEl.id;
-      const newCarId = replaceTrailingNumber(oldCarId, countNumber);
-      // console.log('test',countNumber, {oldBtnId, oldModalId, newBtnId,newModalId})
+      const tempId = replaceTrailingNumber(oldCarId,countNumber)
+      const newCarId = generateUniqueId(tempId, container);
 
       carouselCopy.id = newCarId;
 
       function updateCarouselAttributes(carouselCopyElement, oldCarId, newCarId) {
         const oldSuffix = oldCarId.split('-').slice(1).join('-');
         const newSuffix = newCarId.split('-').slice(1).join('-');
-
+ 
         // Ambil semua elemen di dalam modal yang disalin
         carouselCopyElement.querySelectorAll('*').forEach(el => {
           // 1️⃣ Cek setiap atribut
@@ -362,14 +348,14 @@ const copyCarousel=(idCarousel, mode="all")=>{
 
             // 2️⃣ Kalau value mengandung ID lama, ganti jadi ID baru
             if (arraySubsequenceMatch(val.split('-'), oldSuffix.split('-'))) {
-              const newVal = val.replaceAll(oldSuffix, newSuffix);
+              const newVal = replaceIdSuffix(val,oldSuffix, newSuffix);
               el.setAttribute(attr, newVal);
             }
           }
 
           // 3️⃣ Kalau ID-nya sendiri mengandung substring lama, ganti juga
           if (el.id && arraySubsequenceMatch(el.id.split('-'), oldSuffix.split('-'))) {
-            const newId = el.id.replaceAll(oldSuffix, newSuffix);
+            const newId = replaceIdSuffix(el.id,oldSuffix, newSuffix);
 
             // Update id di DOM
             el.id = newId;
@@ -392,7 +378,6 @@ const copyCarousel=(idCarousel, mode="all")=>{
       if(mode=='all'){
         // update element order btnCopy: +1 dari original (jika ada)
         carouselCopy.dataset.elementOrder = String(newOrderBase);
-        container.dataset.elementCount = String(countNumber);
 
         // 1) Perbarui element_order pada sibling (hanya direct children container)
         Array.from(container.children).forEach(el => {
@@ -437,7 +422,7 @@ const copyCarousel=(idCarousel, mode="all")=>{
             clonedObj.element_order = String(newOrderBase);
           }
 
-          clonedObj.id = clonedObj.id.replaceAll(oldCarId, newCarId);
+          clonedObj.id = replaceIdSuffix(clonedObj.id,oldCarId, newCarId);
           clonedObj.action = 'new-add';
           webpageDb.push(clonedObj);
         });   
@@ -464,19 +449,20 @@ const copyCarousel=(idCarousel, mode="all")=>{
         }
       }
 
+      carouselCopy?.removeAttribute('data-listener-added')
+      carouselCopy
+        .querySelectorAll('[data-listener-added]')
+        .forEach(el => el.removeAttribute('data-listener-added'));
+
       // Duplikat body Dropdowns
       const bodyDropdown = carouselEl.querySelectorAll(`[data-dropdown-toggle]`);
       bodyDropdown.forEach(dropdown=>{
         let bodyDropdown = document.getElementById(dropdown.dataset.dropdownToggle)
         let copyBodyDropdown = bodyDropdown.cloneNode(true);
-        copyBodyDropdown.id = copyBodyDropdown.id.replaceAll(oldCarId, newCarId);
-
-        // if(copyBodyDropdown.id.includes('head')){
-        //   console.log('id Dropdown:',copyBodyDropdown)
-        // }
+        copyBodyDropdown.id = replaceIdSuffix(copyBodyDropdown.id,oldCarId, newCarId);
         
         copyBodyDropdown.querySelectorAll('[id]').forEach(el => {
-          el.id = el.id.replaceAll(oldCarId,newCarId)
+          el.id = replaceIdSuffix(el.id,oldCarId,newCarId)
         });
         copyBodyDropdown.dataset.initialized = ''; 
         copyBodyDropdown.className = 'w-25 z-40 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700';
@@ -508,14 +494,13 @@ const copyCarousel=(idCarousel, mode="all")=>{
       }
 
       globals.webpageDb=webpageDb
-      console.log('duplicated carousel success', { oldCarId, newCarId}, globals.webpageDb);
 
       // init accordion
       setTimeout(() => {
         try {
           initFlowbite();
         } catch (error) {
-          console.error('❌ Gagal inisialisasi carousel', error);
+          // console.error('❌ Gagal inisialisasi carousel', error);
         }
       }, 100);
 
@@ -525,7 +510,128 @@ const copyCarousel=(idCarousel, mode="all")=>{
     return false;
   }
 }
-// ======= SYLING =======
+function addItemCarousel(event){
+  webpageDb=globals.webpageDb
+  carouselSelect=globals.carouselSelect
+
+  const btnAdd = event.target;
+  const idSuffix = btnAdd.id.replace('add-item-', '');
+
+  const slideIndicator = carouselSelect.querySelector(`#slide-indicator-${idSuffix}`);
+  const indicators = slideIndicator.children;
+  const lastIndicator = indicators[indicators.length - 1];
+  const newIndex = Number(lastIndicator.dataset.carouselSlideTo) + 1;
+
+  slideIndicator.insertAdjacentHTML('beforeend', `
+    <button type="button"
+      class="${lastIndicator.classList} rounded-full"
+      style="${lastIndicator.getAttribute('style')}"
+      aria-current="false"
+      aria-label="Slide ${newIndex + 1}"
+      data-carousel-slide-to="${newIndex}">
+    </button>
+  `);
+
+  const itemCarouselWrapper = carouselSelect.querySelector(`#element-${idSuffix}`);
+  const newItemCount = handleElementCount(itemCarouselWrapper.children[0], itemCarouselWrapper.dataset.itemCount);
+  itemCarouselWrapper.dataset.itemCount = newItemCount;
+
+  const itemCarousel = itemCarouselWrapper.querySelector(`[id^="item-${idSuffix}"]`)
+  let rgba
+  if(carouselSelect.dataset.textPosition === 'on-image'){
+    if(itemCarousel.style.backgroundImage){
+      rgba = itemCarousel.style.backgroundImage.split('rgba(')[1].split(')')[0]
+    }else{
+      rgba = itemCarousel.style.backgroundColor
+    }
+  }else{
+    rgba = 0,0,0,0.0
+  }
+
+  const newItemId = generateUniqueId(`item-${idSuffix}-${newItemCount}`, itemCarouselWrapper);
+  
+  let itemContent =''
+  let classList = itemCarousel.classList
+  let styleItem
+  let style
+  if(carouselSelect.dataset.text === "true"){
+    if(carouselSelect.dataset.textPosition === "on-image"){
+      itemContent = `
+      <div id="field-${newItemId}" class="border border-b-1 border-gray-500 p-1 max-w-[100%] scroll-hidden overflow-scroll" style="ol{list-style-type:decimal;}ul{list-style-type:disc;}" contenteditable="true"></div>
+      `
+      style = `padding:25px;background-image: linear-gradient(rgba(${rgba})), url(/assets/img/almond1DefaultImageCarousel.jpg); background-size: cover; background-position: center;`
+      styleItem=style
+   
+    }else{
+      let copyItem = itemCarousel.cloneNode(true)
+      copyItem.querySelector('img').setAttribute('src', '/assets/img/almond1DefaultImageCarousel.jpg')
+
+      copyItem.children[1].innerHTML = `
+      <div id="field-${newItemId}" class="border border-b-1 border-gray-500 p-1 max-w-[100%] scroll-hidden overflow-scroll" style="ol{list-style-type:decimal;}ul{list-style-type:disc;}" contenteditable="true"></div>
+      `
+      itemContent= copyItem.innerHTML
+      classList = copyItem.classList
+      
+      style=copyItem.children[1].getAttribute('style')
+      styleItem='flex-direction:column;'
+
+      webpageDb.push(
+      {
+        id: `img-text-on-image-${newItemId}`,
+        type:'img-carousel',
+        action:'new-add',
+        content:'/assets/img/almond1DefaultImageCarousel.jpg',
+      })
+    }
+
+    webpageDb.push({
+      id:`field-${newItemId}`,
+      type:'field',
+      action:'new-add'
+    })
+  }else{
+    style = `padding:25px;background-image: linear-gradient(rgba(${rgba})), url(/assets/img/almond1DefaultImageCarousel.jpg); background-size: cover; background-position: center;`
+    styleItem = `padding:25px;background-image: linear-gradient(rgba(${rgba})), url(/assets/img/almond1DefaultImageCarousel.jpg); background-size: cover; background-position: center;`
+  }
+
+  webpageDb.push({
+    id: newItemId,
+    type:'item-carousel',
+    element_order:newItemCount,
+    style:style,
+    action:'new-add'
+  })
+
+  webpageDb.forEach(field =>{
+    if(field.id === idSuffix){
+      field.action= updateActionProperty(field.action, 'update')
+      field.element_count = newItemCount
+    }
+  })
+  
+  let newItem = `
+    <div id="${newItemId}"
+      data-item-order="${newItemCount}"
+      class="${classList}"
+      style="${styleItem}"
+      data-carousel-item>
+      ${itemContent}
+    </div>
+  `
+
+  itemCarouselWrapper.children[0].insertAdjacentHTML('beforeend', newItem);
+
+  globals.webpageDb=webpageDb
+  updateStylingControls(carouselSelect);
+
+  setTimeout(() => {
+    try {
+      initFlowbite();
+    } catch (error) {
+      console.error('❌ Gagal menginisialisasi Carousel:', error);
+    }
+  }, 100);
+}
 const copyItemCarousel=(idItemCarousel, mode="all")=>{
   try {
       webpageDb=globals.webpageDb
@@ -547,16 +653,24 @@ const copyItemCarousel=(idItemCarousel, mode="all")=>{
       }
 
       // hitung count baru & simpan
-      const countNumber = (parseInt(containerItem.dataset.itemCount || '0', 10) || 0) + 1;
+      const countNumber = handleElementCount(itemCarouselEl.parentElement, containerItem.dataset.itemCount);
 
       // clone elemen (btn + modal body)
       const itemCarouselCopy = itemCarouselEl.cloneNode(true);
       const editItemCarouselCopy = editItemCarouselEl.cloneNode(true);
 
+      const originalOrder = parseInt(itemCarouselCopy.dataset.itemOrder || '0', 10);
+      const newOrderBase = originalOrder + 1;
+
+      // update element order btnCopy: +1 dari original (jika ada)
+      itemCarouselCopy.dataset.itemOrder = String(newOrderBase);
+      editItemCarouselCopy.dataset.itemOrder = String(newOrderBase);
+      containerItem.dataset.itemCount = String(countNumber);
+      editContainerItem.dataset.itemCount = String(countNumber);
+
       // buat id baru dengan mengganti angka terakhir
       const oldItemCarId = itemCarouselEl.id;
-      const newItemCarId = replaceTrailingNumber(oldItemCarId, countNumber);
-      // console.log('test',countNumber, {oldBtnId, oldModalId, newBtnId,newModalId})
+      const newItemCarId = generateUniqueId(oldItemCarId, containerItem);
 
       itemCarouselCopy.id = newItemCarId;
       editItemCarouselCopy.id = `edit-${newItemCarId}`;
@@ -574,14 +688,14 @@ const copyItemCarousel=(idItemCarousel, mode="all")=>{
 
             // 2️⃣ Kalau value mengandung ID lama, ganti jadi ID baru
             if (arraySubsequenceMatch(val.split('-'), oldSuffix.split('-'))) {
-              const newVal = val.replaceAll(oldSuffix, newSuffix);
+              const newVal = replaceIdSuffix(val, oldSuffix, newSuffix);
               el.setAttribute(attr, newVal);
             }
           }
 
           // 3️⃣ Kalau ID-nya sendiri mengandung substring lama, ganti juga
           if (el.id && arraySubsequenceMatch(el.id.split('-'), oldSuffix.split('-'))) {
-            const newId = el.id.replaceAll(oldSuffix, newSuffix);
+            const newId = replaceIdSuffix(el.id, oldSuffix, newSuffix);
 
             // Update id di DOM
             el.id = newId;
@@ -597,15 +711,6 @@ const copyItemCarousel=(idItemCarousel, mode="all")=>{
           }
         });
       }
-      
-      const originalOrder = parseInt(itemCarouselCopy.dataset.itemOrder || '0', 10);
-      const newOrderBase = originalOrder + 1;
-
-      // update element order btnCopy: +1 dari original (jika ada)
-      itemCarouselCopy.dataset.itemOrder = String(newOrderBase);
-      editItemCarouselCopy.dataset.itemOrder = String(newOrderBase);
-      containerItem.dataset.itemCount = String(countNumber);
-      editContainerItem.dataset.itemCount = String(countNumber);
 
       // 1) Perbarui element_order pada sibling (hanya direct children container)
       Array.from(itemCarouselEl.parentElement.children).forEach(el => {
@@ -640,6 +745,16 @@ const copyItemCarousel=(idItemCarousel, mode="all")=>{
       itemCarouselEl.insertAdjacentElement('afterend', itemCarouselCopy);
       editItemCarouselEl.insertAdjacentElement('afterend', editItemCarouselCopy);
 
+      itemCarouselCopy?.removeAttribute('data-listener-added')
+      itemCarouselCopy
+        .querySelectorAll('[data-listener-added]')
+        .forEach(el => el.removeAttribute('data-listener-added'));
+        
+      editItemCarouselCopy?.removeAttribute('data-listener-added')
+      editItemCarouselCopy
+        .querySelectorAll('[data-listener-added]')
+        .forEach(el => el.removeAttribute('data-listener-added'));
+
       // tambahin indicator
       const slideIndicator = containerItem.querySelector(`[id^="slide-indicator"]`)
       const newIndicator = slideIndicator.querySelector('[type=button]').cloneNode(true)
@@ -649,7 +764,6 @@ const copyItemCarousel=(idItemCarousel, mode="all")=>{
         ind.setAttribute('data-carousel-slide-to', count+1)
       })
 
-      // console.log('indicarto', newIndicator)
       slideIndicator.insertAdjacentElement('afterbegin', newIndicator)
 
       // ✅ Duplikasi semua elemen di webpageDb yang terkait dengan oldItemCarId
@@ -662,13 +776,12 @@ const copyItemCarousel=(idItemCarousel, mode="all")=>{
           clonedObj.element_order = String(newOrderBase);
         }
 
-        clonedObj.id = clonedObj.id.replaceAll(oldItemCarId, newItemCarId);
+        clonedObj.id = replaceIdSuffix(clonedObj.id, oldItemCarId, newItemCarId);
         clonedObj.action = 'new-add';
         webpageDb.push(clonedObj);
       });   
 
       //update element count container
-      // console.log('container: ',containerItem.id)
       if (containerItem.id.startsWith('element-carousel')) {
         const containerField = webpageDb.find(f => f.id === containerItem.id.split('-').slice(1).join('-'));
         if (containerField) {
@@ -682,50 +795,47 @@ const copyItemCarousel=(idItemCarousel, mode="all")=>{
       bodyDropdown.forEach(btnDropdown=>{
         let bodyDropdown = document.getElementById(btnDropdown.dataset.dropdownToggle)
         let copyBodyDropdown = bodyDropdown.cloneNode(true);
-        copyBodyDropdown.id = copyBodyDropdown.id.replaceAll(oldItemCarId, newItemCarId);
-        // if(copyBodyDropdown.id.includes('head')){
-        //   console.log('id Dropdown:',copyBodyDropdown)
-        // }
+        copyBodyDropdown.id = replaceIdSuffix(copyBodyDropdown.id, oldItemCarId, newItemCarId);
         
         copyBodyDropdown.querySelectorAll('[id]').forEach(el => {
-          el.id = el.id.replaceAll(oldItemCarId,newItemCarId)
+          el.id = replaceIdSuffix(el.id, oldItemCarId,newItemCarId)
         });
         copyBodyDropdown.dataset.initialized = ''; 
         copyBodyDropdown.setAttribute('class', 'w-25 z-40 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700');
         copyBodyDropdown.setAttribute('style', 'position: absolute; inset: auto auto 0px 0px; margin: 0px; transform: translate3d(216.8px, -229.6px, 0px);');
 
-        console.log(copyBodyDropdown)
         bodyDropdown.insertAdjacentElement('afterend', copyBodyDropdown);
       }) 
 
       const dropdownBtn = editItemCarouselEl.querySelector('[data-dropdown-toggle]')
-      console.log(dropdownBtn)
+     
       const bodyEditItemDropdown = document.getElementById(dropdownBtn.dataset.dropdownToggle)
 
       const copyEditItemDropdwon = bodyEditItemDropdown.cloneNode(true)
-      copyEditItemDropdwon.id = copyEditItemDropdwon.id.replaceAll(oldItemCarId, newItemCarId);
+      copyEditItemDropdwon.id = replaceIdSuffix(copyEditItemDropdwon.id, oldItemCarId, newItemCarId);
 
       copyEditItemDropdwon.querySelectorAll('[id]').forEach(el => {
-        el.id = el.id.replaceAll(oldItemCarId,newItemCarId)
+        el.id = replaceIdSuffix(el.id, oldItemCarId, newItemCarId)
       });
       copyEditItemDropdwon.dataset.initialized = ''; 
       copyEditItemDropdwon.setAttribute('class', 'w-25 z-40 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700');
       copyEditItemDropdwon.setAttribute('style', 'position: absolute; inset: auto auto 0px 0px; margin: 0px; transform: translate3d(216.8px, -229.6px, 0px);');
 
       bodyEditItemDropdown.insertAdjacentElement('afterend', copyEditItemDropdwon);
+      copyEditItemDropdwon.removeAttribute('data-listener-added')
+      copyEditItemDropdwon
+        .querySelectorAll('[data-listener-added]')
+        .forEach(el => el.removeAttribute('data-listener-added'));
 
       const editBodyDropdown = editItemCarouselCopy.parentElement.querySelectorAll(`[data-dropdown-toggle]`);
       editBodyDropdown.forEach(btnDropdown=>{
-        // console.log(btnDropdown)
         let bodyDropdown = document.getElementById(btnDropdown.dataset.dropdownToggle)
-        // bodyDropdown.querySelectorAll('[id]').forEach(el => {
-        //   el.id = el.id.replaceAll(oldItemCarId,newItemCarId)
-        // });
         
         bodyDropdown.setAttribute('class', 'w-25 z-40 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700');
         bodyDropdown.setAttribute('style', 'position: absolute; inset: auto auto 0px 0px; margin: 0px; transform: translate3d(216.8px, -229.6px, 0px);');
 
       }) 
+
 
       // inisialisasi dropdown baru: coba id dropdown baru dari btnCopy's toggles
       if(mode=='all'){
@@ -738,15 +848,16 @@ const copyItemCarousel=(idItemCarousel, mode="all")=>{
         }
       }
       
-      console.log('duplicated carousel success', {oldItemCarId, newItemCarId}, webpageDb);
       globals.webpageDb=webpageDb
+
+      setListenerSetImage()
 
       // init accordion
       setTimeout(() => {
         try {
           initFlowbite();
         } catch (error) {
-          console.error('❌ Gagal inisialisasi carousel', error);
+          // console.error('❌ Gagal inisialisasi carousel', error);
         }
       }, 100);
 
@@ -757,16 +868,15 @@ const copyItemCarousel=(idItemCarousel, mode="all")=>{
   }
 }
 
+// ======= SYLING =======
 function setImageItem(idParts){
   editCarouselItem=globals.editCarouselItem
   editCarouselItem = document.getElementById(`edit-${idParts.slice(2).join('-')}`)
 
-  // console.log('edit carousel:', editCarouselItem, idParts, `edit-${idParts.slice(2).join('-')}`)
   bodyItem = editCarouselItem.parentElement.parentElement
   globals.bodyItem = editCarouselItem.parentElement.parentElement
   globals.editCarouselItem=editCarouselItem
 
-  // console.log('edit item carousel:',editCarouselItem)
 }
 
 function resetImage(idParts){
@@ -805,128 +915,6 @@ function resetImage(idParts){
   globals.editCarouselItem = editCarouselItem
 }
 
-function addItemCarousel(event){
-  webpageDb=globals.webpageDb
-  carouselSelect=globals.carouselSelect
-
-  const btnAdd = event.target;
-  const idSuffix = btnAdd.id.replace('add-item-', '');
-
-  const slideIndicator = carouselSelect.querySelector(`#slide-indicator-${idSuffix}`);
-  const indicators = slideIndicator.children;
-  const lastIndicator = indicators[indicators.length - 1];
-  const newIndex = Number(lastIndicator.dataset.carouselSlideTo) + 1;
-
-  slideIndicator.insertAdjacentHTML('beforeend', `
-    <button type="button"
-      class="${lastIndicator.classList} rounded-full"
-      style="${lastIndicator.getAttribute('style')}"
-      aria-current="false"
-      aria-label="Slide ${newIndex + 1}"
-      data-carousel-slide-to="${newIndex}">
-    </button>
-  `);
-
-  const itemCarouselWrapper = carouselSelect.querySelector(`#element-${idSuffix}`);
-  const newItemCount = Number(itemCarouselWrapper.dataset.itemCount) + 1;
-  itemCarouselWrapper.dataset.itemCount = newItemCount;
-
-  const itemCarousel = itemCarouselWrapper.querySelector(`[id^="item-${idSuffix}"]`)
-  let rgba
-  if(carouselSelect.dataset.textPosition === 'on-image'){
-    rgba = itemCarousel.style.backgroundImage.split('rgba(')[1].split(')')[0]
-  }else{
-    rgba = 0,0,0,0.0
-  }
-
-  const newItemId = `item-${idSuffix}-${newItemCount}`;
-  
-  let itemContent =''
-  let classList = itemCarousel.classList
-  let styleItem
-  let style
-  if(carouselSelect.dataset.text === "true"){
-    if(carouselSelect.dataset.textPosition === "on-image"){
-      itemContent = `
-      <div id="field-${newItemId}" class="border border-b-1 border-gray-500 p-1 max-w-[100%] scroll-hidden overflow-scroll" style="ol{list-style-type:decimal;}ul{list-style-type:disc;}" contenteditable="true"></div>
-      `
-      style = `padding:25px;background-image: linear-gradient(rgba(${rgba})), url(/assets/img/almond1DefaultImageCarousel.jpg); background-size: cover; background-position: center;`
-      styleItem=style
-      console.log('on-iamge')
-    }else{
-      let copyItem = itemCarousel.cloneNode(true)
-      copyItem.querySelector('img').setAttribute('src', '/assets/img/almond1DefaultImageCarousel.jpg')
-
-      copyItem.children[1].innerHTML = `
-      <div id="field-${newItemId}" class="border border-b-1 border-gray-500 p-1 max-w-[100%] scroll-hidden overflow-scroll" style="ol{list-style-type:decimal;}ul{list-style-type:disc;}" contenteditable="true"></div>
-      `
-      itemContent= copyItem.innerHTML
-      classList = copyItem.classList
-      
-      style=copyItem.children[1].getAttribute('style')
-      styleItem='flex-direction:column;'
-
-      // console.log(copyItem.children[1])
-      webpageDb.push(
-      {
-        id: `img-text-on-image-${newItemId}`,
-        type:'img-carousel',
-        action:'new-add',
-        content:'/assets/img/almond1DefaultImageCarousel.jpg',
-      })
-    }
-
-    webpageDb.push({
-      id:`field-${newItemId}`,
-      type:'field',
-      action:'new-add'
-    })
-  }else{
-    style = `padding:25px;background-image: linear-gradient(rgba(${rgba})), url(/assets/img/almond1DefaultImageCarousel.jpg); background-size: cover; background-position: center;`
-    styleItem = `padding:25px;background-image: linear-gradient(rgba(${rgba})), url(/assets/img/almond1DefaultImageCarousel.jpg); background-size: cover; background-position: center;`
-  }
-  console.log(style)
-  webpageDb.push({
-    id: newItemId,
-    type:'item-carousel',
-    element_order:newItemCount,
-    style:style,
-    action:'new-add'
-  })
-
-  webpageDb.forEach(field =>{
-    if(field.id === idSuffix){
-      field.action= updateActionProperty(field.action, 'update')
-      field.element_count = newItemCount
-    }
-  })
-  
-  let newItem = `
-    <div id="${newItemId}"
-      data-item-order="${newItemCount}"
-      class="${classList}"
-      style="${styleItem}"
-      data-carousel-item>
-      ${itemContent}
-    </div>
-  `
-  console.log(styleItem)
-
-  itemCarouselWrapper.children[0].insertAdjacentHTML('beforeend', newItem);
-
-  globals.webpageDb=webpageDb
-  console.log('add item carousel',globals.webpageDb)
-  updateStylingControls(carouselSelect);
-
-  setTimeout(() => {
-    try {
-      initFlowbite();
-    } catch (error) {
-      console.error('❌ Gagal menginisialisasi Carousel:', error);
-    }
-  }, 100);
-}
-
 function addTextCarousel(event){
   webpageDb=globals.webpageDb
   carouselSelect=globals.carouselSelect
@@ -936,7 +924,7 @@ function addTextCarousel(event){
       carouselSelect.querySelectorAll('[id^="item-carousel-"]').forEach(item=>{
         if(carouselSelect.dataset.textPosition === 'on-image'){
           item.innerHTML=`
-          <div id="field-${item.id}" class="border border-b-1 border-gray-500 p-1 max-w-[100%] scroll-hidden overflow-scroll" style="ol{list-style-type:decimal;}ul{list-style-type:disc;}" contenteditable="true">Text Field</div>
+          <div id="field-${item.id}" class="border border-b-1 border-gray-500 p-1 max-w-[100%] max-h-[100%] scroll-hidden overflow-scroll" style="ol{list-style-type:decimal;}ul{list-style-type:disc;}" contenteditable="true">Text Field</div>
           `
         }else{
           let img = item.querySelector('img').getAttribute('src') 
@@ -954,8 +942,6 @@ function addTextCarousel(event){
 
       carouselSelect.dataset.text = "true"
       
-      // console.log(webpageDb)
-      
     }else{
       carouselSelect.querySelectorAll('[id^="item-carousel-"]').forEach(item=>{
         let img
@@ -967,24 +953,35 @@ function addTextCarousel(event){
         if(carouselSelect.dataset.textPosition === 'below-image'){
           webpageDb.forEach(field =>{
             if(field.id === item.id){
-              field.file = webpageDb.find(img => img.id === `img-text-on-image-${field.id}`).file,
+              // field.file = webpageDb.find(img => img.id === `img-text-on-image-${field.id}`).file,
               field.action = updateActionProperty(field.action, 'update')
               field.style= `background-image:linear-gradient(rgba(0,0,0,0.0)), url("${img}");background-size:cover;background-position:center;`
             }
           })
         }
-        webpageDb.forEach((field,index) => {
-         if(field.id !== `field-${item.id}` && field.id !== `img-text-on-image-${item.id}`){
-          field.action='delete'
-          let update = updateActionProperty(field.action, 'delete')
-          
-          if (update.includes('new')) {
-            webpageDb.splice(index, 1); // field.remove() tidak berlaku di array biasa
-          } else {
-            field.action = update;
+
+        const findField = webpageDb.findIndex(field=>field.id===`field-${item.id}`)
+        if(findField > 0){
+          const updateAction = updateActionProperty(webpageDb[findField].action, 'delete')
+  
+          if(updateAction.includes('new')){
+            webpageDb.splice(findField,1)
+          }else{
+            webpageDb[findField].action=updateAction
           }
-         }
-        })
+        }
+
+        const findImg = webpageDb.findIndex(field=>field.id===`img-text-on-image-${item.id}`)
+        if(findImg > 0){
+         
+          const updateActionImg = updateActionProperty(webpageDb[findImg].action, 'delete')
+  
+          if(updateActionImg.includes('new')){
+            webpageDb.splice(findImg,1)
+          }else{
+            webpageDb[findImg].action=updateActionImg
+          }
+        }
       })
       
       carouselSelect.dataset.textPosition = 'on-image'
@@ -1006,7 +1003,6 @@ function addTextCarousel(event){
     globals.webpageDb=webpageDb
     globals.carouselSelect=carouselSelect
 
-    // console.log(webpageDb)
     btnAddText.textContent = btnAddText.textContent == "Add Text" ? "Remove Text" : "Add Text"
 }
 
@@ -1046,7 +1042,7 @@ function btnHideNext(event){
       field.action=updateActionProperty(field.action, 'update')
     }
   })
-  // console.log(webpageDb)
+
   globals.webpageDb=webpageDb
   globals.carouselSelect=carouselSelect
   btnHide.textContent = carouselSelect.dataset.nextBtnHide == "true" ? "Unhide" : "Hide"
@@ -1086,15 +1082,20 @@ function btnTextPosition(event){
       let imgUrl = rawUrl.replace(/^['"]|['"]$/g, '');
 
       imgWrapper.id = `img-text-on-image-${item.id}`
-      // imgWrapper.setAttribute('style', 'height:30%;width:100%;')
+  
       imgWrapper.style.height='30%'
       imgWrapper.style.width='100%'
       newImg.setAttribute('src', imgUrl)
-      // newImg.setAttribute('style', 'width;100%;')
+
       newImg.style.width='100%'
 
-      // console.log(item.classList)
+
       item.classList.remove('p-6')
+
+      item.querySelector('[id^="field-"]').removeAttribute('data-listener-added')
+      item.querySelector('[id^="field-"]').removeAttribute('data-listener-mouse-added')
+
+
       
       imgWrapper.appendChild(newImg)
       let newText = `
@@ -1103,6 +1104,9 @@ function btnTextPosition(event){
           ${item.querySelector('[id^="field-"]').outerHTML}
         </div>
       `
+ 
+
+
       item.innerHTML =''
       item.insertAdjacentHTML('beforeend', newText)
       item.classList.add('flex-col')
@@ -1114,7 +1118,6 @@ function btnTextPosition(event){
           field.action=updateActionProperty(field.action, 'update')
         }
       })
-
       
       webpageDb.push({
         id:`img-text-on-image-${item.id}`,
@@ -1122,7 +1125,6 @@ function btnTextPosition(event){
         content: imgUrl,
         action:'new-add'
       })
-      console.log('item: ', carouselItem)
 
     }else{
       let imgField = item.querySelector('img')
@@ -1138,17 +1140,16 @@ function btnTextPosition(event){
         }
       })
 
-      webpageDb.forEach((field,index)=>{
-        if(field.id !== imgField.parentElement.id){
-          let update = updateActionProperty(field.action, 'delete')
-          
-          if (update.includes('new')) {
-            webpageDb.splice(index, 1); // item.remove() tidak berlaku di array biasa
-          } else {
-            field.action = update;
-          }
+      const findItem = webpageDb.findIndex(field=>field.id === imgField.parentElement.id)
+      if(findItem > 0){
+        const updateAction = updateActionProperty(webpageDb[findItem].action, 'delete')
+
+        if(updateAction.includes('new')){
+          webpageDb.splice(findItem,1)
+        }else{
+          webpageDb[findItem].action=updateAction
         }
-      })
+      }
 
       webpageDb.forEach(field => {
         if(field.id === item.id){
@@ -1171,7 +1172,7 @@ function btnTextPosition(event){
     }
   })
   globals.webpageDb=webpageDb
-  console.log(webpageDb)
+
   const btnPosition = event.target
   btnPosition.textContent = btnPosition.textContent == "On Image" ? "Below Image" : "On Image"
 }

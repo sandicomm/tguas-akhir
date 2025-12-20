@@ -7,13 +7,14 @@ use Livewire\WithFileUploads;
 use App\Models\Emodul as EmodulModel;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\File;
 use Intervention\Image\Facades\Image;
 
 class Emodul extends Component
 {
     use WithFileUploads;
 
-    public $emodulId, $judul, $penulis, $pengarang, $penerbit, $tahun_terbit, $halaman, $deskripsi, $file;
+    public $emodulId, $judul, $penyusun, $file;
 
     public $confirmDelete;
     public $statsAction;
@@ -24,26 +25,30 @@ class Emodul extends Component
         try{
             $this->validate([
                 'judul' => 'required|string|max:255',
-                'penulis' => 'required|string|max:255',
-                'pengarang' => 'required|string|max:255',
-                'penerbit' => 'required|string|max:255',
-                'tahun_terbit' => 'required|integer',
-                'halaman' => 'required|integer',
-                'deskripsi' => 'required|string|max:255',
-                'file' => 'required|max:2048',
+                'penyusun' => 'required|string|max:255',
+                'file' => 'required|mimes:pdf|max:2048',
             ]);
 
-            $filePath = $this->file->store('media', 'public');
+            // ambil nama asli
+            $ext = $this->file->getClientOriginalExtension();
+
+            // pastikan judul aman dijadikan filename
+            $safeTitle = preg_replace('/[^A-Za-z0-9_\-]/', '_', $this->judul);
+
+            // final filename
+            $filename = $safeTitle . '_' . time() . '.' . $ext;
+
+            // pindahkan dari tmp livewire ke PUBLIC/media
+            $this->file->storeAs('/', $filename, [
+                'disk' => 'public_uploads'
+            ]);
+
+            
 
             $emodul = new EmodulModel();
             $emodul->judul = $this->judul;
-            $emodul->penulis = $this->penulis;
-            $emodul->pengarang = $this->pengarang;
-            $emodul->penerbit = $this->penerbit;
-            $emodul->tahun_terbit = $this->tahun_terbit;
-            $emodul->halaman = $this->halaman;
-            $emodul->deskripsi = $this->deskripsi;
-            $emodul->file_path = $filePath;
+            $emodul->penyusun = $this->penyusun;
+            $emodul->file_path = 'media/' . $filename;
 
             $emodul->save();
 
@@ -61,10 +66,7 @@ class Emodul extends Component
         } catch (ValidationException $e) {
             // Tangani error validasi secara eksplisit
             $this->addError('judul', $e->validator->errors()->first('judul'));
-            $this->addError('penulis', $e->validator->errors()->first('penulis'));
-            $this->addError('pengarang', $e->validator->errors()->first('pengarang'));
-            $this->addError('tahun_terbit', $e->validator->errors()->first('tahun_terbit'));
-            $this->addError('deskripsi', $e->validator->errors()->first('deskripsi'));
+            $this->addError('penyusun', $e->validator->errors()->first('penyusun'));
             $this->addError('file', $e->validator->errors()->first('file'));
         }catch(\Exception $e){
             session()->flash('error', $e->getMessage());
@@ -75,12 +77,7 @@ class Emodul extends Component
         try{
             $this->validate([
                 'judul' => 'required|string|max:255',
-                'penulis' => 'required|string|max:255',
-                'pengarang' => 'required|string|max:255',
-                'penerbit' => 'required|string|max:255',
-                'tahun_terbit' => 'required|integer',
-                'halaman' => 'required|integer',
-                'deskripsi' => 'required|string|max:255',
+                'penyusun' => 'required|string|max:255',
                 'file' => 'max:50048',
             ]);
 
@@ -88,31 +85,38 @@ class Emodul extends Component
 
             $updateData = [
                 'judul' => $this->judul,
-                'penulis' => $this->penulis,
-                'pengarang' => $this->pengarang,
-                'penerbit' => $this->penerbit,
-                'tahun_terbit' => $this->tahun_terbit,
-                'halaman' => $this->halaman,
-                'deskripsi' => $this->deskripsi,
+                'penyusun' => $this->penyusun,
             ];
 
             if($this->file){
                 if ($emodul) {
-                    $filePath = $this->file->store('media', 'public');
-                    Storage::disk('public')->delete($emodul->file_path);
+
+                    // ambil nama asli
+                    $ext = $this->file->getClientOriginalExtension();
+
+                    // pastikan judul aman dijadikan filename
+                    $safeTitle = preg_replace('/[^A-Za-z0-9_\-]/', '_', $this->judul);
+
+                    // final filename
+                    $filename = $safeTitle . '_' . time() . '.' . $ext;
+
+                    // pindahkan dari tmp livewire ke PUBLIC/media
+                    $this->file->storeAs('/', $filename, [
+                        'disk' => 'public_uploads'
+                    ]);
+
+                    $filePath = 'media/'.$filename;
                     $updateData['file_path'] = $filePath;
-                    $updateData['thumbnail'] = $filePath;
+                }
+                 //Menghapus file di tmp
+                try {
+                    $this->file->delete();
+                } catch (\Exception $e) {
+                    // kalau gagal hapus, abaikan
                 }
             }
             
             $emodul->update($updateData);
-
-             //Menghapus file di tmp
-            try {
-                $this->file->delete();
-            } catch (\Exception $e) {
-                // kalau gagal hapus, abaikan
-            }
             
             $this->reset();
             $this->resetValidation(); // Reset validasi setelah penyimpanan
@@ -123,10 +127,7 @@ class Emodul extends Component
         } catch (ValidationException $e) {
             // Tangani error validasi secara eksplisit
             $this->addError('judul', $e->validator->errors()->first('judul'));
-            $this->addError('penulis', $e->validator->errors()->first('penulis'));
-            $this->addError('pengarang', $e->validator->errors()->first('pengarang'));
-            $this->addError('tahun_terbit', $e->validator->errors()->first('tahun_terbit'));
-            $this->addError('deskripsi', $e->validator->errors()->first('deskripsi'));
+            $this->addError('penyusun', $e->validator->errors()->first('penyusun'));
             $this->addError('file', $e->validator->errors()->first('file'));
         
         }catch(\Exception $e){
@@ -140,8 +141,13 @@ class Emodul extends Component
             try{
                 $emodul = EmodulModel::find($this->emodulId);
                 if ($emodul) {
+                    File::delete(public_path($emodul->file_path));
                     $emodul->delete();
-                    Storage::disk('public')->delete($emodul->file_path);
+
+                    $this->reset();
+                    $this->resetValidation(); // Reset validasi setelah penyimpanan
+                    $this->isModalOpen = false;
+
                     session()->flash('success', 'Emodul berhasil dihapus.');
                 } else {
                     session()->flash('error', 'Emodul tidak ditemukan.');
@@ -154,7 +160,7 @@ class Emodul extends Component
 
     public function setStatsAction($id, $action)
     {
-        $this->reset(['judul', 'penulis', 'pengarang', 'penerbit', 'tahun_terbit', 'halaman', 'deskripsi', 'confirmDelete']); // Reset semua state sebelum diisi
+        $this->reset(['judul', 'penyusun', 'confirmDelete']); // Reset semua state sebelum diisi
         if ($action === 'add') {
             $this->statsAction= $action;
         } else if($action === 'edit') {
@@ -164,20 +170,12 @@ class Emodul extends Component
                 $emodul = EmodulModel::findOrFail($id);
                 //dd($id,$action,$this->statsAction, $emodul);
                 $this->judul = $emodul->judul;
-                $this->penulis = $emodul->penulis;
-                $this->pengarang = $emodul->pengarang;
-                $this->penerbit = $emodul->penerbit;
-                $this->tahun_terbit = $emodul->tahun_terbit;
-                $this->halaman = $emodul->halaman;
-                $this->deskripsi = $emodul->deskripsi;
+                $this->penyusun = $emodul->penyusun;
 
             } catch (ValidationException $e) {
                 // Tangani error validasi secara eksplisit
                 $this->addError('judul', $e->validator->errors()->first('judul'));
-                $this->addError('penulis', $e->validator->errors()->first('penulis'));
-                $this->addError('pengarang', $e->validator->errors()->first('pengarang'));
-                $this->addError('tahun_terbit', $e->validator->errors()->first('tahun_terbit'));
-                $this->addError('deskripsi', $e->validator->errors()->first('deskripsi'));
+                $this->addError('penyusun', $e->validator->errors()->first('penyusun'));
                 $this->addError('file', $e->validator->errors()->first('file'));
             
             }catch(\Exception $e){

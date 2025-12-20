@@ -1,25 +1,25 @@
 <?php
-
 namespace App\Exports;
 
 use Illuminate\Contracts\View\View;
 use Maatwebsite\Excel\Concerns\FromView;
 
-class ResponsesExport implements FromView
+class SingleSheetExport implements FromView
 {
-    protected $response;
-    protected $viewName;
+    public $data;
+    public $viewName;
 
-    public function __construct($response, $viewName)
+    public function __construct($data, $viewName)
     {
-        $this->response = $response;
+        $this->data = $data;
         $this->viewName = $viewName;
     }
 
     public function view(): View
     {
         return view($this->viewName, [
-            'response' => $this->response
+            'data' => $this->data
         ]);
     }
 }
+?>

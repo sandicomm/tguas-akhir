@@ -5,6 +5,16 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
+        <meta name="description" content="Admin Smart Health Diabetes untuk kelola konten edukasi Smart Health Diabetes.">
+        <meta name="keywords" content="smart diabetes, admin smart health diabetes, smart health diabetes">
+        <meta name="robots" content="index, follow">
+        
+        <!-- Open Graph -->
+        <meta property="og:title" content="Admin Smart Health Diabetes">
+        <meta property="og:description" content="Website Admin Kelola Kontent Smart Health diabetes">
+        <meta property="og:url" content="https://shd-admin.smartdiabetes.my.id/">
+        <meta property="og:type" content="website">
+
         <title>{{ config('app.name', 'Laravel') }}</title>
         <link rel="icon" type="image/x-icon" href="{{ asset('shdicon.ico') }}">
         <!-- Fonts -->

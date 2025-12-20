@@ -14,13 +14,7 @@ return new class extends Migration
         Schema::create('emoduls', function (Blueprint $table) {
             $table->id();
             $table->string('judul');
-            $table->string('penulis');
-            $table->string('pengarang');
-            $table->string('penerbit');
-            $table->integer('tahun_terbit');
-            $table->integer('halaman');
-            $table->string('deskripsi');
-            $table->string('thumbnail');
+            $table->string('penyusun');
             $table->string('file_path');
             $table->timestamps();
         });
