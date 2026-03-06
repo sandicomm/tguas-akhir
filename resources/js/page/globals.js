@@ -8,6 +8,7 @@ export const globals = {
   editCarouselItem: null,
   carouselSelect: null,
   itemCarouselId:null,
+  url:'http://127.0.0.1:8000',
   
   accordionPartSelect: null,
   accordionSelect: null,
@@ -18,5 +19,7 @@ export const globals = {
   bodyItem:null,
   
   bodyFieldELement:null,
-  fieldElement:null
+  fieldElement:null,
+
+  isFormDirty:false
 };

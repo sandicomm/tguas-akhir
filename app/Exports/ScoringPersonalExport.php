@@ -1,35 +1,35 @@
 <?php
 namespace App\Exports;
 
-use Maatwebsite\Excel\Concerns\WithMultipleSheets;
+use Illuminate\Contracts\View\View;
+use Maatwebsite\Excel\Concerns\FromView;
+use Maatwebsite\Excel\Concerns\ShouldAutoSize;
+use Maatwebsite\Excel\Concerns\WithTitle;
 
-class ScoringPersonalExport implements WithMultipleSheets
+class ScoringPersonalExport implements FromView, ShouldAutoSize, WithTitle
 {
-    public $groupedForms;
+    public $responses;
+    public $userKey;
+    public $formName;
 
-    public function __construct($groupedForms)
+    public function __construct($responses, $userKey, $formName)
     {
-        $this->groupedForms = $groupedForms;
+        $this->responses = $responses;
+        $this->userKey = $userKey;
+        $this->formName = $formName;
     }
 
-    public function sheets(): array
+    public function view(): View
     {
-        $sheets = [];
+        return view('exports.single-form-scoring', [
+            'responses' => $this->responses,
+            'userKey'   => $this->userKey,
+            'formName'  => $this->formName
+        ]);
+    }
 
-        foreach ($this->groupedForms as $formId => $responses) {
-
-            // Group per attempt
-            $attemptGroups = $responses->groupBy('attempt');
-
-            foreach ($attemptGroups as $attempt => $attemptResponses) {
-                $sheets[] = new SinglePersonalFormSheetExport(
-                    $attemptResponses,
-                    "Form {$formId} - Attempt {$attempt}"
-                );
-            }
-        }
-
-        return $sheets;
+    public function title(): string
+    {
+        return 'Detail Scoring';
     }
 }
-?>

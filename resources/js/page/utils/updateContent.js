@@ -3,6 +3,8 @@ import { globals } from '../globals.js';
 
 // ======== UTILITIES =========
 import { parseStyleObj, stringifyStyleObj } from '../utils/baseStyleObj.js';
+// ======== Validation get element ==========
+import { getEl } from './validationGetElement.js';
 
 export function updateContent(editorFieldSelect, value){
   let webpageDb = globals.webpageDb,
@@ -21,7 +23,10 @@ export function updateContent(editorFieldSelect, value){
   if(id.startsWith('btn-heading-accordion')){
     webpageDb.forEach(item=>{
       if(item.type === 'head-accordion' && item.id === id){
-        item.content = document.getElementById(item.id).children[0].outerHTML
+        const headAccordion = getEl(item.id)
+        if(!headAccordion)return
+
+        item.content = headAccordion.children[0].innerHTML
         item.action=updateActionProperty(item.action, 'update')
       }
     })
@@ -45,6 +50,7 @@ export function updateContent(editorFieldSelect, value){
       }
     })
   }
+  globals.isFormDirty = true
   globals.webpageDb=webpageDb
 }
 

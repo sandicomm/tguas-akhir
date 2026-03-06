@@ -8,6 +8,8 @@ import { dropdownInitialized } from './utils/dropdownInit.js';
 import { renderSvg } from './utils/svgEdit.js';
 
 import {arraySubsequenceMatch, generateUniqueId, handleElementCount, replaceIdSuffix} from './utils/elementNumberingId.js'
+// ======== Validation get element ==========
+import { getEl } from './utils/validationGetElement.js';
 
 let webpageDb=  globals.webpageDb
 let editorFieldSelect=globals.editorFieldSelect
@@ -29,7 +31,7 @@ function accordionStyling(){
           
           if(this.value === 'default'){
             indicator =`
-              <svg data-accordion-icon class="w-3 h-3 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
+              <svg data-accordion-icon class="w-3 h-3 shrink-0" fill="none" viewBox="0 0 10 6">
                 <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5 5 1 1 5"/>
               </svg>
             `
@@ -72,7 +74,7 @@ function accordionStyling(){
         
         if(this.value === 'default'){
           indicator =`
-            <svg class="w-3 h-3 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
+            <svg class="w-3 h-3 shrink-0" fill="none" viewBox="0 0 10 6">
               <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5 5 1 1 5"/>
             </svg>
           `
@@ -99,6 +101,7 @@ function accordionStyling(){
       globals.editorFieldSelect=editorFieldSelect
     }
   })
+
   document.getElementById('accordion-type').addEventListener('change', function(){
     accordionSelect=globals.accordionSelect
     webpageDb=globals.webpageDb
@@ -125,6 +128,8 @@ function accordionStyling(){
       })
     }
 
+    globals.isFormDirty = true
+
     globals.webpageDb=webpageDb
     setTimeout(() => {
       try {
@@ -137,7 +142,8 @@ function accordionStyling(){
     }, 100);  
   })
 }
-const createItemAccordion = (itemId, item, accordionEl)=>{
+
+const createItemAccordion = (itemId, item, accordionEl,edit)=>{
     let indicator=''
     if(parseStyleObj(accordionEl.content).headType === 'question'){
       indicator = `<div class="btn-cta">
@@ -148,24 +154,30 @@ const createItemAccordion = (itemId, item, accordionEl)=>{
     }else if(parseStyleObj(accordionEl.content).headType === 'none'){
       indicator = ``
     }else{
-      indicator = `<svg data-accordion-icon class="w-3 h-3 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
+      indicator = `<svg data-accordion-icon class="w-3 h-3 shrink-0" fill="none" viewBox="0 0 10 6">
                     <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5 5 1 1 5"/>
                   </svg>`
     }
 
     return`
         <div id="${itemId}" class="relative z-10" data-element-order="${item.element_order}">
-          <div type="button" class="bg-red-400 rounded-full absolute right-0 top-0 z-20 cursor-pointer" data-dropdown-toggle="dropdown-head-${itemId}" data-dropdown-placement="right-end">
-            ${renderSvg()}   
-          </div>
-    
+          ${
+            edit ? 
+              `<div type="button" class="bg-red-400 rounded-full absolute right-0 top-0 z-20 cursor-pointer" data-dropdown-toggle="dropdown-head-${itemId}" data-dropdown-placement="right-end">
+                ${renderSvg()}   
+              </div>`
+              :''
+          }
+          
           <h2 id="heading-${itemId}">
             <button type="button" id="btn-heading-${itemId}" style="${item.style}"
             class="flex items-center justify-between w-full p-5 font-medium text-left text-gray-500 border border-gray-400 dark:!text-inherit"
             data-accordion-target="#body-${itemId}"
             aria-expanded="false"
             aria-controls="body-${itemId}">
-              ${item.content}
+              <div style="width:100%;">
+                ${item.content}
+              </div>
               ${indicator}
             </button>
           </h2>
@@ -174,15 +186,19 @@ const createItemAccordion = (itemId, item, accordionEl)=>{
           </div>
         </div>
     `
-
 }
-const createAccordion = (accordion)=>`
+
+const createAccordion = (accordion,edit)=>`
   <div id="${accordion.id}" class="relative cursor-pointer" data-element-order="${accordion.element_order}" data-type-indicator="${parseStyleObj(accordion.content).headType}" style="${accordion.style}">
-    <div type="button" class="bg-white rounded-full absolute right-[-1.7rem] top-[0.2rem] z-20 cursor-pointer" data-dropdown-toggle="dropdown-${accordion.id}" data-dropdown-placement="right-end">
-      ${renderSvg()}                 
-    </div>
+    ${
+      edit ?
+        `<div type="button" class="bg-white rounded-full absolute right-[-1.7rem] top-[0.2rem] z-20 cursor-pointer" data-dropdown-toggle="dropdown-${accordion.id}" data-dropdown-placement="right-end">
+          ${renderSvg()}                 
+        </div>`
+        :''
+    }
+    
     <div id="parent-${accordion.id}" data-item-accordion="${accordion.element_count}" data-accordion="${parseStyleObj(accordion.content).accordionType}">
-  
     </div>
   </div>
 `
@@ -331,7 +347,7 @@ const addAccordion=(event)=>{
       type: 'field',
       content: `<font size="3">isi section ${1} di field ${1}</font>`,
       element_order:1,
-      style:`ol{list-style-type:decimal;}ul{list-style-type:disc;}`,
+      style:``,
       action:'new-add'
     })
 
@@ -345,7 +361,7 @@ const addAccordion=(event)=>{
     }else if(content === 'none'){
       indicator = ``
     }else{
-      indicator = `<svg data-accordion-icon class="w-3 h-3 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
+      indicator = `<svg data-accordion-icon class="w-3 h-3 shrink-0" fill="none" viewBox="0 0 10 6">
                     <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5 5 1 1 5"/>
                   </svg>`
     }
@@ -363,8 +379,10 @@ const addAccordion=(event)=>{
         data-accordion-target="#body-${newPrefix}"
         aria-expanded="false"
         aria-controls="body-${newPrefix}">
-          <div style="width:100%;text-align:left;">
-            <font size="3">Section ${i}</font>
+          <div class="w-full">
+            <div style="width:100%;text-align:left;">
+              <font size="3">Section ${i}</font>
+            </div>
           </div>
           ${indicator}
         </button>
@@ -383,7 +401,7 @@ const addAccordion=(event)=>{
                 ${renderSvg()}   
               </div>
               
-              <div id="field-${newPrefix}-1-${1}" style="ol{list-style-type:decimal;}ul{list-style-type:disc;}" class="border border-b-1 border-gray-500 px-1 max-w-[100%] scroll-hidden overflow-scroll" contenteditable="true">
+              <div id="field-${newPrefix}-1-${1}" style="" class="border border-b-1 border-gray-500 px-1 max-w-[100%] scroll-hidden overflow-scroll" contenteditable="true">
                 <font size="3">isi section ${1} di field ${1}</font>
               </div>
             </div>  
@@ -563,7 +581,10 @@ const addAccordion=(event)=>{
   if(idParts[2] === 'head'){
 
     let parentAccordionId=`parent-${idParts.slice(3, idParts.length).join('-')}`
-    accordionParentBody = document.getElementById(parentAccordionId)
+
+    accordionParentBody = getEl(parentAccordionId)
+    if (!accordionParentBody) return false;
+    
     itemCount = handleElementCount(accordionParentBody, accordionParentBody.dataset.itemAccordion)
     
     accordionId = `${idParts.slice(3, idParts.length).join('-')}`
@@ -576,7 +597,10 @@ const addAccordion=(event)=>{
     accordionParentBody.innerHTML += createItemAccordionHTML(newBtnId,itemCount, accordionParentBody.parentElement.dataset.typeIndicator, lastNumberId);
     accordionParentBody.setAttribute('data-item-accordion', itemCount.toString());
 
-    document.getElementById(`webpage-section-${idParts.find(part => !isNaN(part))}`).insertAdjacentHTML('beforeend',createItemBodyDropdownHTML(idPrefix,idParts,lastNumberId))
+    const webpageSection = getEl(`webpage-section-${idParts.find(part => !isNaN(part))}`)
+    if (!webpageSection) return false;
+
+    webpageSection.insertAdjacentHTML('beforeend',createItemBodyDropdownHTML(idPrefix,idParts,lastNumberId))
     webpageDb.forEach(page =>{
       if(page.id === idParts.slice(3, idParts.length).join('-')){
         page.element_count = itemCount
@@ -588,8 +612,10 @@ const addAccordion=(event)=>{
     if(idParts.join('-').includes('accordion-in-accordion')){
 
       idAppendAccordion = `wrapper-section-${idParts.slice(3, idParts.length).join('-')}`
-      bodyAppend = document.getElementById(idAppendAccordion)
 
+      bodyAppend = getEl(idAppendAccordion)
+      if (!bodyAppend) return false;
+      
       fieldNumber = handleElementCount(bodyAppend, bodyAppend.dataset.elementCount)
       bodyAppend.dataset.elementCount = fieldNumber;
 
@@ -601,8 +627,10 @@ const addAccordion=(event)=>{
       
     }else{
       idAppendAccordion = `editor-container-section-${idParts[4]}`
-      const section = document.getElementById(idAppendAccordion)
 
+      const section = getEl(idAppendAccordion)
+      if (!section) return false;
+    
       fieldNumber = handleElementCount(section, section.dataset.elementCount)
       section.dataset.elementCount = fieldNumber
       idPrefix = generateUniqueId(`${idParts.slice(1, idParts.length).join('-')}-${fieldNumber}`, section)
@@ -611,9 +639,13 @@ const addAccordion=(event)=>{
       accordionWidth= '400px'
     }
 
-    document.getElementById(`webpage-section-${idParts.find(part => !isNaN(part))}`).insertAdjacentHTML('beforeend', createBodyDropdownHTML(idPrefix,idParts))
+    const webpageSection = getEl(`webpage-section-${idParts.find(part => !isNaN(part))}`)
+    const appendAccordion = getEl(idAppendAccordion)
 
-    document.getElementById(idAppendAccordion).insertAdjacentHTML('beforeend',createAccordionHTML(idPrefix,fieldNumber,accordionWidth));
+    if (!webpageSection || !appendAccordion) return false;
+
+    webpageSection.insertAdjacentHTML('beforeend', createBodyDropdownHTML(idPrefix,idParts))
+    appendAccordion.insertAdjacentHTML('beforeend',createAccordionHTML(idPrefix,fieldNumber,accordionWidth));
 
     webpageDb.forEach(item=>{
       if(item.id === `webpage-section-${idParts.find(part => !isNaN(part))}` && idParts.filter(part => !isNaN(part)).length == 1){
@@ -626,20 +658,25 @@ const addAccordion=(event)=>{
     })
   }
 
-  document.getElementById(accordionId).querySelectorAll('[data-listener-added]').forEach(el =>{
+  globals.isFormDirty = true
+
+  const accordionEl = getEl(accordionId, 'acc652')
+  if (!accordionEl) return false;
+  
+  accordionEl.querySelectorAll('[data-listener-added]').forEach(el =>{
     el.dataset.listenerAdded=''
   })
 
   setTimeout(() => {
       try {
-          const accordionElement = document.getElementById(accordionId);
+          const accordionElement = getEl(accordionId, 'acc661');
           if (accordionElement) {
               const accordion = new Accordion(accordionElement, {
                   alwaysOpen: false,
                   activeClasses: 'bg-gray-100 text-gray-900',
                   inactiveClasses: 'text-gray-500'
               });
-              console.log('✅ Accordion berhasil diinisialisasi:', accordionElement.id);
+              //console.log('✅ Accordion berhasil diinisialisasi:', accordionElement.id);
           } else {
               // console.warn('⚠️ Elemen Accordion tidak ditemukan setelah appendChild');
           }
@@ -656,18 +693,20 @@ const addAccordion=(event)=>{
 
   globals.webpageDb=webpageDb
 }
+
 const copyAccordion=(idAccordion, mode="all")=>{
   try {
     webpageDb=globals.webpageDb
       let accordionId = idAccordion
-      const accordionEl = document.getElementById(accordionId);
-      if (!accordionEl) {
-        console.error('button modal tidak ditemukan:', accordionId);
-        return false;
-      }
-
+      const accordionEl = getEl(accordionId, 'acc690');
+      if (!accordionEl) return false;
+      
       const container = accordionEl.parentElement;
       if (!container) {
+        window.dispatchEvent(new CustomEvent('notif-pesan', { 
+          detail: { pesan: 'accordionEl add carousel tidak ditemukan', status:false} 
+        }));
+
         console.error('container parent accordion tidak ditemukan');
         return false;
       }
@@ -770,8 +809,6 @@ const copyAccordion=(idAccordion, mode="all")=>{
           Array.from(wrapper.children).forEach(el=>{
             if(el.id.startsWith('modal')){
               copyModal(el.id, 'body', newAccId, oldAccId)
-            }else if(el.id.startsWith('accordion')){
-              copyAccordion(el.id, 'dropdown')
             }
           })
         })
@@ -783,6 +820,11 @@ const copyAccordion=(idAccordion, mode="all")=>{
 
         relatedObjects.forEach(originalObj => {
           const clonedObj = deepClone(originalObj);
+          
+          if(clonedObj.action=='delete'){
+            return
+          }
+
           if(clonedObj.file){
             delete clonedObj.file
           }
@@ -829,7 +871,9 @@ const copyAccordion=(idAccordion, mode="all")=>{
       // Duplikat body Dropdowns
       const bodyDropdown = accordionEl.querySelectorAll(`[data-dropdown-toggle]`);
       bodyDropdown.forEach(dropdown=>{
-        let bodyDropdown = document.getElementById(dropdown.dataset.dropdownToggle)
+        let bodyDropdown = getEl(dropdown.dataset.dropdownToggle, 'acc860')
+        if(!bodyDropdown)return
+        
         let copyBodyDropdown = bodyDropdown.cloneNode(true);
         copyBodyDropdown.id = replaceIdSuffix(copyBodyDropdown.id, oldAccId, newAccId);
         
@@ -856,22 +900,25 @@ const copyAccordion=(idAccordion, mode="all")=>{
       // init accordion
       setTimeout(() => {
         try {
-          const accordionElement = document.getElementById(newAccId);
+          const accordionElement = getEl(newAccId, 'acc889');
           if (accordionElement) {
             new Accordion(accordionElement, {
               alwaysOpen: false,
               activeClasses: 'bg-gray-100 text-gray-900',
               inactiveClasses: 'text-gray-500'
             });
-            // console.log('✅ Accordion berhasil diinisialisasi:', newAccId);
+            // //console.log('✅ Accordion berhasil diinisialisasi:', newAccId);
           }
           initFlowbite();
         } catch (error) {
+          
           console.error('❌ Gagal inisialisasi accordion', error);
         }
       }, 100);
       let webpageDbParentSection = globals.webpageDbParentSection
-      // CheckData(webpageDb, webpageDbParentSection)
+
+      globals.isFormDirty = true
+
       globals.webpageDb=webpageDb
 
       return true;
@@ -880,19 +927,22 @@ const copyAccordion=(idAccordion, mode="all")=>{
     return false;
   }
 }
+
 const copyHeadAccordion=(idHeadAcc, mode="all")=>{
   try {
-    
     webpageDb=globals.webpageDb
       let headAccordionId = idHeadAcc
-      const headAccordionEl = document.getElementById(headAccordionId);
-      if (!headAccordionEl) {
-        console.error('button modal tidak ditemukan:', headAccordionId);
-        return false;
-      }
 
+      const headAccordionEl = getEl(headAccordionId, 'acc922');
+      if (!headAccordionEl) return false;
+      
       const container = headAccordionEl.parentElement;
       if (!container) {
+
+        window.dispatchEvent(new CustomEvent('notif-pesan', { 
+          detail: { pesan: 'container copyhead accordion tidak ditemukan', status:false} 
+        }));
+      
         console.error('container parent accordion tidak ditemukan');
         return false;
       }
@@ -963,7 +1013,9 @@ const copyHeadAccordion=(idHeadAcc, mode="all")=>{
       // Duplikat body Dropdowns
       const bodyDropdown = headAccordionEl.querySelectorAll(`[data-dropdown-toggle]`);
       bodyDropdown.forEach(dropdown=>{
-        let bodyDropdown = document.getElementById(dropdown.dataset.dropdownToggle)
+        let bodyDropdown = getEl(dropdown.dataset.dropdownToggle, 'acc1019')
+        if (!bodyDropdown) return false;
+
         let copyBodyDropdown = bodyDropdown.cloneNode(true);
         copyBodyDropdown.id= replaceIdSuffix(copyBodyDropdown.id, oldHeadAccId, newHeadAccId);
         
@@ -978,7 +1030,9 @@ const copyHeadAccordion=(idHeadAcc, mode="all")=>{
 
       const copyDropdown = headAccordionEl.querySelectorAll(`[data-dropdown-toggle]`)
       copyDropdown.forEach(dropdown=>{
-        let bodyDropdown = document.getElementById(dropdown.dataset.dropdownToggle)
+        let bodyDropdown =getEl(dropdown.dataset.dropdownToggle, 'acc1019')
+        if (!bodyDropdown) return false;
+        
         bodyDropdown.className = 'w-25 z-40 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700';
       })
 
@@ -986,8 +1040,6 @@ const copyHeadAccordion=(idHeadAcc, mode="all")=>{
         Array.from(wrapper.children).forEach(el=>{
           if(el.id.startsWith('modal')){
             copyModal(el.id, 'body', newHeadAccId, oldHeadAccId)
-          }else if(el.id.startsWith('accordion')){
-            copyAccordion(el.id, 'dropdown')
           }
         })
       })
@@ -1006,7 +1058,9 @@ const copyHeadAccordion=(idHeadAcc, mode="all")=>{
 
       relatedObjects.forEach(originalObj => {
         const clonedObj = deepClone(originalObj);
-
+        if(clonedObj.action=='delete'){
+          return
+        }
         if(clonedObj.file){
           delete clonedObj.file
         }
@@ -1059,19 +1113,20 @@ const copyHeadAccordion=(idHeadAcc, mode="all")=>{
       }
 
       globals.webpageDb=webpageDb
+      globals.isFormDirty = true
 
       // init accordion
       setTimeout(() => {
         try {
           
-          const accordionElement = document.getElementById(newHeadAccId.split('-').slice(0,-1).join('-'));
+          const accordionElement = getEl(newHeadAccId.split('-').slice(0,-1).join('-'));
           if (accordionElement) {
             new Accordion(accordionElement, {
               alwaysOpen: false,
               activeClasses: 'bg-gray-100 text-gray-900',
               inactiveClasses: 'text-gray-500'
             });
-            // console.log('✅ Accordion berhasil diinisialisasi:', newHeadAccId.split('-').slice(0,-1).join('-'));
+            // //console.log('✅ Accordion berhasil diinisialisasi:', newHeadAccId.split('-').slice(0,-1).join('-'));
           }
           initFlowbite();
         } catch (error) {

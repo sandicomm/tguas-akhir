@@ -26,7 +26,7 @@
         <!-- <link rel="stylesheet" href="{{ asset('build/assets/app.css') }}"> -->
         <!-- <script type="module" src="{{ asset('build/assets/app.js') }}"></script> -->
     </head>
-    <body class="font-sans text-gray-900 antialiased">
+    <body class="font-sans text-gray-900 antialiased bg-gradient-to-t dark:from-gray-800 dark:to-gray-600 from-gray-300 to-white">
         <div class="login-page min-h-screen flex flex-col sm:justify-center items-center lg:pt-6 pt-28 sm:pt-0">
             <div>
                 <a href="/">

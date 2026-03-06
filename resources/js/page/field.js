@@ -5,32 +5,40 @@ import { renderSvg } from './utils/svgEdit.js';
 import { updateActionProperty } from './utils/updateContent.js';
 
 import {arraySubsequenceMatch, generateUniqueId, handleElementCount, replaceIdSuffix} from './utils/elementNumberingId.js'
+// ======== Validation get element ==========
+import { getEl } from './utils/validationGetElement.js';
 
 let webpageDb=  globals.webpageDb, param=globals.param
 
-const createField = (page) =>{
+const createField = (page,edit) =>{
     let field=''
     if(page){
-      let dropdown=`
+      let svg
+
+      if(edit){
+        svg=renderSvg()
+      }
+
+      let dropdown= `
           <div type="button" class="bg-white rounded-full absolute right-[-0.5rem] top-[-0.5rem] z-0 cursor-pointer" data-dropdown-toggle="dropdown-${page.id}" data-dropdown-placement="right-end">   
-            ${renderSvg()}      
+            ${svg}      
           </div>`
       if(page.id.includes('carousel')){
         dropdown=''
         field = `
-          <div id="${page.id}" contenteditable="true" style="ol{list-style-type:decimal;}ul{list-style-type:disc;};${page.style}" class="border border-b-1 border-gray-500 p-1 max-w-[100%] max-h-[100%] scroll-hidden overflow-scroll" >${page.content ?? ''}</div>
+          <div id="${page.id}" ${edit ? 'contenteditable="true"' : ''} style="${page.style}" class="${edit ? 'border border-b-1 border-gray-500':''} p-1 max-w-[100%] max-h-[100%] scroll-hidden overflow-scroll" >${page.content ?? ''}</div>
         `
       }else{
         if(page.id.includes('accordion') && !page.id.includes('modal')){
           dropdown=`
           <div type="button" class="bg-white rounded-full absolute right-[-1.5rem] top-[1rem] z-0 cursor-pointer" data-dropdown-toggle="dropdown-${page.id}" data-dropdown-placement="right-end">   
-            ${renderSvg()}      
+            ${svg}      
           </div>`
         }
         field = `
           <div data-element-order="${page.element_order}" style="z-index:10;position:relative;display:flex;justify-content:center;align-items:center;flex-direction:column;">
-            ${dropdown}
-            <div id="${page.id}" contenteditable="true" style="ol{list-style-type:decimal;}ul{list-style-type:disc;};${page.style}" class="border border-b-1 border-gray-500 p-1 max-w-[100%] max-h-[100%] scroll-hidden overflow-scroll" >${page.content ?? ''}</div>
+            ${edit ? dropdown:''}
+            <div id="${page.id}" ${edit ? 'contenteditable="true"' : ''} style="${page.style}" class="${edit ? 'border border-b-1 border-gray-500':''} p-1 max-w-[100%] max-h-[100%] scroll-hidden overflow-scroll" >${page.content ?? ''}</div>
           </div>
         `
       }
@@ -75,7 +83,7 @@ const addField=(event)=>{
     }
     return `<div data-element-order="${fieldNumber}" style="position:relative;display:flex;justify-content:center;align-items:center;flex-direction:column;">
       ${dropdown}
-      <div id="${idPrefix}" contenteditable="true" style="ol{list-style-type:decimal;}ul{list-style-type:disc;};" 
+      <div id="${idPrefix}" contenteditable="true" style="" 
           class="border border-b-1 border-gray-500 p-1 max-w-[100%] scroll-hidden overflow-scroll">
           <font size="3">Type Here</font>
         </div>
@@ -85,7 +93,9 @@ const addField=(event)=>{
   let sectionId=''
   if(idParts[2] === 'accordion'){
     idAppendField = `wrapper-section-${idParts.slice(2,idParts.length).join('-')}`
-    bodyAppend = document.getElementById(idAppendField)
+    bodyAppend = getEl(idAppendField)
+
+    if(!bodyAppend)return
 
     fieldNumber = handleElementCount(bodyAppend, bodyAppend.dataset.elementCount)
 
@@ -100,7 +110,9 @@ const addField=(event)=>{
 
     sectionId = `body-${idParts.slice(2,idParts.length).join('-')}`
 
-    bodyAppend = document.getElementById(idAppendField)
+    bodyAppend = getEl(idAppendField)
+    if(!bodyAppend)return
+    
     fieldNumber = parseInt(bodyAppend.getAttribute('data-element-count'))+1
 
     bodyAppend.dataset.elementCount = fieldNumber
@@ -110,7 +122,9 @@ const addField=(event)=>{
   }else{
     if(idParts.join('-').includes('prolog-web')){
       idAppendField = `editor-container-section-prolog-web-${idParts[6]}`
-      bodyAppend = document.getElementById(idAppendField)
+
+      bodyAppend = getEl(idAppendField)
+      if(!bodyAppend) return
 
       sectionId = `webpage-section-prolog-web-${idParts[6]}`
 
@@ -120,7 +134,9 @@ const addField=(event)=>{
       
     }else if(idParts.join('-').includes('prolog-emodul')){
       idAppendField = `editor-container-section-prolog-emodul-${idParts[6]}`
-      bodyAppend = document.getElementById(idAppendField)
+
+      bodyAppend = getEl(idAppendField)
+      if(!bodyAppend)return
 
       sectionId = `webpage-section-prolog-emodul-${idParts[6]}`
 
@@ -131,7 +147,9 @@ const addField=(event)=>{
 
     }else if(idParts.includes('footer')){
       idAppendField = `editor-container-section-footer`
-      bodyAppend = document.getElementById(idAppendField)
+
+      bodyAppend = getEl(idAppendField)
+      if(!bodyAppend)return
 
       sectionId = `webpage-section-footer`
 
@@ -142,7 +160,9 @@ const addField=(event)=>{
 
     }else{
       idAppendField = `editor-container-section-${idParts[4]}`
-      bodyAppend = document.getElementById(idAppendField)
+
+      bodyAppend = getEl(idAppendField)
+      if(!bodyAppend)return
 
       sectionId = `webpage-section-${idParts[4]}`
 
@@ -173,26 +193,41 @@ const addField=(event)=>{
   `
   
   if(idParts.includes('modal')){
-    document.getElementById(idAppendField).parentElement.parentElement.insertAdjacentHTML('beforeend', bodyDropdown)
+    const modalAppendField = getEl(idAppendField)
+    if(!modalAppendField)return
+    
+    modalAppendField.parentElement.parentElement.insertAdjacentHTML('beforeend', bodyDropdown)
   }else{
     if(idParts.join('-').includes('prolog-web')){
-      document.getElementById(`webpage-section-prolog-web-${idParts.find(part => !isNaN(part))}`).insertAdjacentHTML('beforeend', bodyDropdown)
+      const sectionPrologWeb =getEl(`webpage-section-prolog-web-${idParts.find(part => !isNaN(part))}`) 
+      if(!sectionPrologWeb)return
+      
+      sectionPrologWeb.insertAdjacentHTML('beforeend', bodyDropdown)
+
     }else if(idParts.join('-').includes('prolog-emodul')){
-      document.getElementById(`webpage-section-prolog-emodul-${idParts.find(part => !isNaN(part))}`).insertAdjacentHTML('beforeend', bodyDropdown)
+      const sectionPrologEmodul =getEl(`webpage-section-prolog-emodul-${idParts.find(part => !isNaN(part))}`)
+      if(!sectionPrologEmodul)return
+
+      sectionPrologEmodul.insertAdjacentHTML('beforeend', bodyDropdown)
 
     }else if(idPrefix.includes('footer')){
-      document.getElementById(`webpage-section-footer`).insertAdjacentHTML('beforeend', bodyDropdown)
+      const sectionFooter =getEl(`webpage-section-footer`)
+      if(!sectionFooter)return
+      
+      sectionFooter.insertAdjacentHTML('beforeend', bodyDropdown)
 
     }else{
-      document.getElementById(`webpage-section-${idParts.find(part => !isNaN(part))}`).insertAdjacentHTML('beforeend', bodyDropdown)
-
+      const sectionWebpage =getEl(`webpage-section-${idParts.find(part => !isNaN(part))}`)
+      if(!sectionWebpage)return
+      
+      sectionWebpage.insertAdjacentHTML('beforeend', bodyDropdown)
     }
   }
 
   webpageDb.push({
     id: idPrefix,
     type: 'field',
-    style: 'ol{list-style-type:decimal;}ul{list-style-type:disc;};',
+    style: '',
     action:'new-add',
     content:'Field Text',
     element_order: fieldNumber
@@ -205,19 +240,22 @@ const addField=(event)=>{
   }
 
   globals.webpageDb=webpageDb
-  
+
+  globals.isFormDirty = true
+
   const field = createFieldHTML(idPrefix,fieldNumber)
-  document.getElementById(idAppendField).insertAdjacentHTML('beforeend',field);
+
+  const elAppendField = getEl(idAppendField)
+  if(!elAppendField)return
+
+  elAppendField.insertAdjacentHTML('beforeend',field);
   dropdownInitialized('',  `dropdown-${idPrefix}`)
 }
 const copyField = (idParts) => {
   webpageDb=  globals.webpageDb
   // --- 1️⃣ Ambil elemen sumber ---
-  const element = document.getElementById(idParts.slice(1).join('-'));
-  if (!element) {
-    console.error('Element asal tidak ditemukan:', idParts.slice(1).join('-'));
-    return;
-  }
+  const element = getEl(idParts.slice(1).join('-'));
+  if (!element)return;
   
   const parent = element.parentElement;
   const container = parent?.parentElement;
@@ -308,7 +346,9 @@ const copyField = (idParts) => {
 
   // --- 5️⃣ Duplikasi dropdown body-nya ---
   
-    const bodyDropdown = document.getElementById(`dropdown-${idParts.slice(1).join('-')}`);
+    const bodyDropdown = getEl(`dropdown-${idParts.slice(1).join('-')}`);
+    if(!bodyDropdown)return
+    
     bodyDropdown.className = 'w-25 z-40 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700';
     if (bodyDropdown) {
       const copyBodyDropdown = bodyDropdown.cloneNode(true);
@@ -319,8 +359,7 @@ const copyField = (idParts) => {
 
       updateFieldAttributes(copyBodyDropdown, oldSuffix, newSuffix);
       bodyDropdown.insertAdjacentElement('afterend', copyBodyDropdown)
-    } else {
-      console.warn('Dropdown body tidak ditemukan untuk:', oldId);
+
     }
   
 
@@ -359,6 +398,8 @@ const copyField = (idParts) => {
   }
   dropdownInitialized('', `dropdown-${newId}`);
 
+  globals.isFormDirty = true
+  
   globals.webpageDb=webpageDb
 };
 

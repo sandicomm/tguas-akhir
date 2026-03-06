@@ -6,29 +6,35 @@ import { renderSvg } from './utils/svgEdit.js';
 import { updateActionProperty } from './utils/updateContent.js';
 
 import {arraySubsequenceMatch, generateUniqueId, handleElementCount, replaceIdSuffix} from './utils/elementNumberingId.js'
+// ======== Validation get element ==========
+import { getEl } from './utils/validationGetElement.js';
 
 let webpageDb=  globals.webpageDb
 
-const createVideo = (page) => `
-<div id="${page.id}" data-element-order="${page.element_order}" style="${page.style}" class="border border-b-1 border-gray-500 max-w-[100%] cursor-pointer relative">
-    <input type="file" id="input-${page.id}" accept="video/*" class="hidden">
-    <div type="button" class="bg-white rounded-full absolute right-[-1.7rem] top-0 z-30 cursor-pointer" data-dropdown-toggle="dropdown-${page.id}" data-dropdown-placement="right-end">
-      ${renderSvg()}
-    </div>
-
-    <label id="label-input-${page.id}" for="input-${page.id}" class="w-full h-auto hover:bg-gray-300 flex justify-center items-center">
-    ${
-        page.content
-        ? `<video controls 
-            preload="auto"
-            loading="lazy" src="${page.content}"></video>`
-        :`<svg class="w-12 h-12 text-gray-500 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
-            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 4H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V5a1 1 0 0 0-1-1Zm0 0-4 4m5 0H4m1 0 4-4m1 4 4-4m-4 7v6l4-3-4-3Z"/>
-            </svg>`
-    }
-    </label>
-</div>
-`
+const createVideo = (page,edit) =>`
+  <div id="${page.id}" data-element-order="${page.element_order}" style="${page.style}" class="border border-b-1 border-gray-500 max-w-[100%] cursor-pointer relative">
+      <label id="label-input-${page.id}" for="input-${page.id}" class="w-full h-auto hover:bg-gray-300 flex justify-center items-center">
+      ${ 
+          edit ? 
+          `<input type="file" id="input-${page.id}" accept="video/*" class="hidden">
+          <div type="button" class="bg-white rounded-full absolute right-[-1.7rem] top-0 z-30 cursor-pointer" data-dropdown-toggle="dropdown-${page.id}" data-dropdown-placement="right-end">
+            ${renderSvg()}
+          </div>` 
+          : ''
+       }
+      ${
+          page.content
+          ? `<video controls 
+              preload="auto"
+              loading="lazy" src="${page.content}"></video>`
+          :`<svg class="w-12 h-12 text-gray-500 dark:text-white" aria-hidden="true" width="24" height="24" fill="none" viewBox="0 0 24 24">
+              <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 4H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V5a1 1 0 0 0-1-1Zm0 0-4 4m5 0H4m1 0 4-4m1 4 4-4m-4 7v6l4-3-4-3Z"/>
+              </svg>`
+      }
+      </label>
+  </div>
+  `
+  
 const createDropdownVideo = (idPrefix) => `
 <div id="dropdown-${idPrefix}" data-accordion="open" class="w-20 z-30 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700">
     <ul class="py-2 text-sm text-gray-700 dark:text-gray-200">
@@ -56,7 +62,7 @@ const addVideo = (event)=>{
       ${renderSvg()}  
     </div>
     <label id="label-input-${idPrefix}" for="input-${idPrefix}" class="w-full h-auto hover:bg-gray-300 flex justify-center items-center">
-      <svg class="w-12 h-12 text-gray-500 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+      <svg class="w-12 h-12 text-gray-500 dark:text-white" aria-hidden="true" width="24" height="24" fill="none" viewBox="0 0 24 24">
         <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 4H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V5a1 1 0 0 0-1-1Zm0 0-4 4m5 0H4m1 0 4-4m1 4 4-4m-4 7v6l4-3-4-3Z"/>
       </svg>
     </label>`;
@@ -77,7 +83,8 @@ const addVideo = (event)=>{
 
   if(idParts[2] === 'accordion'){
     idAppendVideo = `wrapper-section-${idParts.slice(2, idParts.length).join('-')}`;
-    bodyAppend = document.getElementById(idAppendVideo);
+    bodyAppend = getEl(idAppendVideo)
+    if(!bodyAppend) return
 
     fieldNumber = handleElementCount(bodyAppend,  parseInt(bodyAppend.dataset.elementCount))
     bodyAppend.dataset.elementCount = fieldNumber;
@@ -89,7 +96,8 @@ const addVideo = (event)=>{
     
   }else if(idParts[2] === 'modal'){
     idAppendVideo = `body-${idParts.slice(2, idParts.length).join('-')}`;
-    bodyAppend = document.getElementById(idAppendVideo);
+    bodyAppend = getEl(idAppendVideo);
+    if(!bodyAppend) return
 
     fieldNumber = handleElementCount(bodyAppend,  parseInt(bodyAppend.dataset.elementCount))
     bodyAppend.dataset.elementCount = fieldNumber;
@@ -99,7 +107,8 @@ const addVideo = (event)=>{
 
   }else{
     idAppendVideo = `editor-container-section-${idParts[4]}`;
-    const section = document.getElementById(idAppendVideo)
+    const section = getEl(idAppendVideo)
+    if(!section) return
 
     fieldNumber = handleElementCount(section,  parseInt(section.dataset.elementCount))
  
@@ -113,9 +122,15 @@ const addVideo = (event)=>{
   bodyDropdown = createBodyDropdown(idPrefix);
 
   if(idParts.includes('modal')){
-    document.getElementById(`parent-${idParts.slice(2, idParts.length).join('-')}`).insertAdjacentHTML('afterbegin',bodyDropdown)
+    const parentAddVideo = getEl(`parent-${idParts.slice(2, idParts.length).join('-')}`)
+    if(!parentAddVideo) return
+
+    parentAddVideo.insertAdjacentHTML('afterbegin',bodyDropdown)
   }else{
-    document.getElementById(`webpage-section-${idParts.find(part => !isNaN(part))}`).insertAdjacentHTML('beforeend', bodyDropdown)
+    const webpageSection = getEl(`webpage-section-${idParts.find(part => !isNaN(part))}`)
+    if(!webpageSection) return
+
+    webpageSection.insertAdjacentHTML('beforeend', bodyDropdown)
   }
 
   // Inject the template and styles
@@ -126,7 +141,10 @@ const addVideo = (event)=>{
   videoField.innerHTML += createVideoFieldHTML(idPrefix);
 
   // Append to DOM
-  document.getElementById(idAppendVideo)?.appendChild(videoField);
+  const appendVideo = getEl(idAppendVideo)
+  if(!appendVideo) return
+  appendVideo.appendChild(videoField);
+
   dropdownInitialized('',`dropdown-${idPrefix}`);
 
   webpageDb.push({
@@ -153,22 +171,17 @@ const addVideo = (event)=>{
   }
 
   globals.webpageDb=webpageDb
+  globals.isFormDirty = true
 
 }
+
 const copyVideo=(idParts)=>{
   webpageDb=globals.webpageDb
     // --- 1️⃣ Ambil elemen sumber ---
-    const element = document.getElementById(idParts.slice(1).join('-'));
-    if (!element) {
-      console.error('Element asal tidak ditemukan:', idParts.slice(1).join('-'));
-      return;
-    }
-    
-    const container = element.parentElement;
-    if (!container) {
-      console.error('Container tidak ditemukan');
-      return;
-    }
+    const element = getEl(idParts.slice(1).join('-'))
+    const container = getEl( element.parentElement)
+
+    if(!element || !container) return
 
     const oldId = element.id;
     const countNumber = handleElementCount(container, parseInt(container.dataset.elementCount || '0', 10));
@@ -250,7 +263,9 @@ const copyVideo=(idParts)=>{
 
     // --- 5️⃣ Duplikasi dropdown body-nya ---
     if(!copyElement.querySelector(`[id*=modal]`)){
-      const bodyDropdown = document.getElementById(`dropdown-${idParts.slice(1).join('-')}`);
+      const bodyDropdown = getEl(`dropdown-${idParts.slice(1).join('-')}`)
+      if(!bodyDropdown) return
+      
       bodyDropdown.className= "w-25 z-40 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700"
       if (bodyDropdown) {
           const copyBodyDropdown = bodyDropdown.cloneNode(true);
@@ -310,6 +325,7 @@ const copyVideo=(idParts)=>{
     }
     dropdownInitialized('', `dropdown-${newId}`);
     globals.webpageDb=webpageDb
- 
+    globals.isFormDirty = true
 }
+
 export { createVideo, createDropdownVideo, addVideo, copyVideo }

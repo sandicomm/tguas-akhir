@@ -10,57 +10,62 @@ import { initFlowbite } from 'flowbite';
 import { updateActionProperty } from './utils/updateContent.js';
 
 import {arraySubsequenceMatch, generateUniqueId, handleElementCount, replaceIdSuffix} from './utils/elementNumberingId.js'
+// ======== Validation get element ==========
+import { getEl } from './utils/validationGetElement.js';
 
 let webpageDb=  globals.webpageDb, param=globals.param
 let webpageDbParentSection=globals.webpageDbParentSection
 
-const createSection = (idPrefix,borderWave,order,count,style)=>{
+const createSection = (idPrefix,borderWave,order,count,style,edit)=>{
     let section=``
-    let dropdownSection = `
-            <ul class="py-2 text-sm text-gray-700 dark:text-gray-200 border-0 border-b-1 border-gray-500 " aria-labelledby="dropdownDefaultButton">
-              <li>
-                  <a id="add-${idPrefix}" class="font-bold block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Section</a>
-              </li>
-              <li>
-                  <a id="up-${idPrefix}" class="font-bold block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Move Up</a>
-              </li>
-              <li>
-                  <a id="down-${idPrefix}" class="font-bold block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Move Down</a>
-              </li>
-              <li>
-                  <a id="copy-${idPrefix}" class="text-blue-600 font-bold block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Duplikat</a>
-              </li>
-              <li>
-                  <a id="delete-${idPrefix}" class="font-bold block text-red-700 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Delete Section</a>
-              </li>
-            </ul>`
-    let dropdownElement = `
-             <li>
-                  <a id="add-field-element-${idPrefix}" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Field</a>
-              </li>
-              <li>
-                  <a id="add-video-element-${idPrefix}" class=" block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Video</a>
-              </li>
-              <li>
-                  <a id="add-modal-element-${idPrefix}" class=" block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Modal</a>
-              </li>
-              <li>
-                  <a id="add-accordion-element-${idPrefix}" class=" block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Accordion</a>
-              </li>
-              <li>
-              <a id="add-carousel-element-${idPrefix}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Carousel</a>
-              </li>`
+    let dropdownSection=''
+    let dropdownElement=''
 
-    if(idPrefix.includes('prolog') || idPrefix.includes('footer')){
+    if(edit){
+      dropdownSection = `
+              <ul class="py-2 text-sm text-gray-700 dark:text-gray-200 border-0 border-b-1 border-gray-500 " aria-labelledby="dropdownDefaultButton">
+                <li>
+                    <a id="add-${idPrefix}" class="font-bold block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Section</a>
+                </li>
+                <li>
+                    <a id="up-${idPrefix}" class="font-bold block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Move Up</a>
+                </li>
+                <li>
+                    <a id="down-${idPrefix}" class="font-bold block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Move Down</a>
+                </li>
+                <li>
+                    <a id="copy-${idPrefix}" class="text-blue-600 font-bold block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Duplikat</a>
+                </li>
+                <li>
+                    <a id="delete-${idPrefix}" class="font-bold block text-red-700 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Delete Section</a>
+                </li>
+              </ul>
+      `
+      dropdownElement=`
+               <li>
+                    <a id="add-field-element-${idPrefix}" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Field</a>
+                </li>
+                <li>
+                    <a id="add-video-element-${idPrefix}" class=" block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Video</a>
+                </li>
+                <li>
+                    <a id="add-modal-element-${idPrefix}" class=" block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Modal</a>
+                </li>
+                <li>
+                    <a id="add-accordion-element-${idPrefix}" class=" block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Accordion</a>
+                </li>
+                <li>
+                <a id="add-carousel-element-${idPrefix}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Carousel</a>
+                </li>
+      `
+    }
+
+    if((idPrefix.includes('prolog') || idPrefix.includes('footer')) && edit){
       dropdownSection = ``
       dropdownElement=`
          <li>
             <a id="add-field-element-${idPrefix}" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Field</a>
         </li>`
-    }
-    let wave=''
-    if(borderWave.length > 0){
-      wave=borderWave[0].style
     }
  
     let styleEditor = '';
@@ -79,39 +84,83 @@ const createSection = (idPrefix,borderWave,order,count,style)=>{
     // 🧹 Rapikan spasi ganda
     styleWebpage = styleWebpage.replace(/\s{2,}/g, ' ');
 
-    section=`
-      <div id="webpage-${idPrefix}" data-element-order="${order}" class="bg-gray-200 flex flex-col ${idPrefix.includes('prolog') ? 'min-h-[100dvh]' : ''} justify-center items-center border border-gray-700" style="${styleWebpage}">
+    let svg=''
+    let dropdown=''
+    if(edit){
+      svg=`
         <div class="bg-green-400 rounded-full absolute right-1 top-1 z-20 cursor-pointer" data-dropdown-toggle="dropdown-${idPrefix}" data-dropdown-placement="right-end">
           ${renderSvg()}               
         </div>
-  
+      `
+      dropdown=`
         <div id="dropdown-${idPrefix}" data-accordion="open" class="z-50 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700">
-          ${dropdownSection}
-          <ul class="py-2 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownDefaultButton">
-              ${dropdownElement}
-          </ul>
+            ${dropdownSection}
+            <ul class="py-2 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownDefaultButton">
+                ${dropdownElement}
+            </ul>
+          </div>
+      `
+    }
+    let btnNextProlog=''
+    if(idPrefix.includes('prolog')){
+      let btnMedia = edit ? 
+          `` 
+          : 
+          `<a href="/form-test/pre-test-interaktif" class="w-full text-center cursor-pointer md:p-3 p-2 md:px-5 px-3 bg-blue-700 border-2 border-white text-white font-bold rounded-md md:text-lg">
+              Interaktif Page
+          </a>
+          <a href="/form-test/pre-test-emodul" class="w-full text-center cursor-pointer md:p-3 p-2 md:px-5 px-3 bg-blue-700 border-2 border-white text-white font-bold rounded-md md:text-lg">
+              Emodul Page
+          </a>`
+
+      let btnAdmin = edit ? 
+          ``
+          :
+          `<a href="/admin" class="absolute top-0 right-0 text-center opacity-50 hover:opacity-100 cursor-pointer bg-gray-300/50 text-black font-bold rounded-full m-3">
+            <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-8">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+            </svg>
+          </a>`
+      btnNextProlog=`
+      <div class="flex justify-center items-center flex-col gap-2 md:w-1/2 w-full px-3 pb-20">
+        <div class="flex gap-4 w-full">
+        
+          ${btnMedia}
         </div>
+        ${btnAdmin}
+      </div>
+      `
+    }
+    section=`
+      <div id="webpage-${idPrefix}" data-element-order="${order}" class="bg-gray-200 flex flex-col ${idPrefix.includes('prolog') ? 'min-h-[100dvh]' : ''} justify-center items-center border border-gray-700" style="${styleWebpage}">
+        ${dropdown}
     
-        <div id="editor-container-${idPrefix}" data-element-count="${count}" class="px-3 py-5 w-full flex flex-col flex-1" style="${styleEditor}"></div>
-        ${wave}
+        <div id="editor-container-${idPrefix}" data-element-count="${count}" class="md:px-3 md:py-5 md:pt-0 px-4 py-5 pt-10 w-full flex flex-col" style="${styleEditor}"></div>
+        ${btnNextProlog}
       </div>   
    `
    return section
 }
-const createSectionFooter = (idPrefix,order,count,style)=>{
+
+const createSectionFooter = (idPrefix,order,count,style,edit)=>{
+
 let section=`
     <div id="webpage-${idPrefix}" data-element-order="${order}" class="relative bg-gray-200 flex flex-col justify-center items-center border border-gray-700" style="${style}">
-    <div class="bg-green-400 rounded-full absolute right-0 top-0 z-20 cursor-pointer" data-dropdown-toggle="dropdown-${idPrefix}" data-dropdown-placement="right-end">
+    ${
+      edit ?
+      `<div class="bg-green-400 rounded-full absolute right-0 top-0 z-20 cursor-pointer" data-dropdown-toggle="dropdown-${idPrefix}" data-dropdown-placement="right-end">
         ${renderSvg()}                 
-    </div>
-
-    <div id="dropdown-${idPrefix}" data-accordion="open" class="z-50 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700">
-        <ul class="py-2 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownDefaultButton">
-            <li>
-            <a id="add-field-element-${idPrefix}" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white cursor-pointer">Field</a>
-            </li>
-        </ul>
-    </div>
+      </div>
+      <div id="dropdown-${idPrefix}" data-accordion="open" class="z-50 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700">
+          <ul class="py-2 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownDefaultButton">
+              <li>
+              <a id="add-field-element-${idPrefix}" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white cursor-pointer">Field</a>
+              </li>
+          </ul>
+      </div>
+      `
+      :''
+    }
 
     <div id="editor-container-${idPrefix}" data-element-count="${count}" class="p-5 w-full flex flex-col flex-1" style="justify-content:start;align-items:start;"></div>
     <div class="bg-white text-center p-2 w-full text-sm">Copyright © 2024 Smart Health Diabetes. All Right Reserved</div>
@@ -119,11 +168,16 @@ let section=`
 `
 return section
 }
-const createSectionAccordion = (section) => `
+
+const createSectionAccordion = (section,edit) => `
 <div id="${section.id}" data-element-order="${section.element_order}" style="${section.style}" class="relative w-full flex flex-col justify-center items-center border border-gray-400">
-    <div type="button" class="bg-blue-400 rounded-full absolute right-0 top-0 z-20 cursor-pointer" data-dropdown-toggle="dropdown-body-${section.id.split('-').slice(1).join('-')}" data-dropdown-placement="right-end">
-      ${renderSvg()}   
-    </div>
+    ${
+      edit ?
+        `<div type="button" class="bg-blue-400 rounded-full absolute right-0 top-0 z-20 cursor-pointer" data-dropdown-toggle="dropdown-body-${section.id.split('-').slice(1).join('-')}" data-dropdown-placement="right-end">
+          ${renderSvg()}   
+        </div>`
+        :''
+    }
 
     <div id="wrapper-${section.id}" data-element-count="${section.element_count}" class="p-2 w-full flex justify-start items-center flex-col">
     <!-- Body Accordion -->
@@ -142,7 +196,8 @@ const addSection = (event)=>{
   let newSection
   
   if(idParts[2] === 'accordion'){
-    let elementCollapse = document.getElementById(`body-${idPrefix}`)
+    let elementCollapse = getEl(`body-${idPrefix}`)
+    if(!elementCollapse)return
 
     let elementCount = parseInt(elementCollapse.dataset.elementCount)
     let newCount= handleElementCount(elementCollapse,elementCount)
@@ -165,7 +220,7 @@ const addSection = (event)=>{
             <div type="button" class="bg-white right-[-1.3rem] top-0 rounded-full absolute z-10 cursor-pointer" data-dropdown-toggle="dropdown-field-${newId}-1" data-dropdown-placement="right-end">
               ${svg}    
             </div>
-            <div id="field-${newId}-1" style="ol{list-style-type:decimal;}ul{list-style-type:disc;}" class="border border-b-1 border-gray-500 px-1 max-w-[100%] scroll-hidden overflow-scroll" contenteditable="true">
+            <div id="field-${newId}-1" style="" class="border border-b-1 border-gray-500 px-1 max-w-[100%] scroll-hidden overflow-scroll" contenteditable="true">
               text
             </div>
           </div>  
@@ -207,9 +262,16 @@ const addSection = (event)=>{
       </div>
     `
     //inisialisasi html
-    document.getElementById(`webpage-section-${idParts.find(part => !isNaN(part))}`).insertAdjacentHTML('beforeend',fieldDropdown)
-    document.getElementById(`webpage-section-${idParts.find(part => !isNaN(part))}`).appendChild(newDropdown) 
-    document.getElementById(`body-${idPrefix}`).insertAdjacentHTML('beforeend', newSection)
+    const webpageSectionAccordion= getEl(`webpage-section-${idParts.find(part => !isNaN(part))}`)
+    if(!webpageSectionAccordion)return
+
+    webpageSectionAccordion.insertAdjacentHTML('beforeend',fieldDropdown)
+    webpageSectionAccordion.appendChild(newDropdown) 
+
+    const bodyAccordion = getEl(`body-${idPrefix}`)
+    if(!bodyAccordion) return
+
+    bodyAccordion.insertAdjacentHTML('beforeend', newSection)
 
     //push new array
     webpageDb.push ({
@@ -223,18 +285,28 @@ const addSection = (event)=>{
       id: `field-${newId}-1`,
       type: 'field',
       action:'new-add',
-      style: 'ol{list-style-type:decimal;}ul{list-style-type:disc;}',
+      style: '',
       element_order: 1,
       content: 'test'
     })
     
     //update element count to parent section
     const btnHeading = webpageDb.find(item=>item.id=== `btn-heading-${idPrefix}`)
+
+    if(!btnHeading) {
+      window.dispatchEvent(new CustomEvent('notif-pesan', { 
+        detail: { pesan: 'heading accordion tidak ditemukan', status:false} 
+      }));
+      return;
+    }
+
     btnHeading.element_count=newCount
     btnHeading.action=updateActionProperty(btnHeading.action,'update')
 
   }else{
-    const webpage = document.getElementById(`webpage`)
+    const webpage = getEl('webpage')
+    if(!webpage)return
+
     let elementCount = parseInt(webpage.dataset.elementCount)
     let newCount=handleElementCount(webpage,elementCount)
     webpage.dataset.elementCount = newCount
@@ -265,6 +337,9 @@ const addSection = (event)=>{
                     <a id="down-section-${newCount}" class="font-bold block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Move Down</a>
                 </li>
                 <li>
+                    <a id="copy-section-${newCount}" class="text-blue-600 font-bold block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Duplikat</a>
+                </li>
+                <li>
                     <a id="delete-section-${newCount}" class="font-bold block text-red-700 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Delete Section</a>
                 </li>
             </ul>
@@ -291,7 +366,15 @@ const addSection = (event)=>{
         </div>
     `
 
-    webpage.querySelector('[id="webpage-section-footer"]').insertAdjacentHTML('beforebegin', newSection)
+    const footerSection = webpage.querySelector('[id="webpage-section-footer"]')
+    if(!footerSection) {
+      window.dispatchEvent(new CustomEvent('notif-pesan', { 
+        detail: { pesan: 'footer section tidak ditemukan', status:false} 
+      }));
+      return;
+    }
+
+    footerSection.insertAdjacentHTML('beforebegin', newSection)
 
     webpageDbParentSection[0].element_count = newCount
     webpageDbParentSection[0].action =  updateActionProperty(webpageDbParentSection[0].action, 'update')
@@ -299,6 +382,8 @@ const addSection = (event)=>{
     globals.webpageDb=webpageDb
     globals.webpageDbParentSection=webpageDbParentSection
   }
+
+  globals.isFormDirty = true
 
   setTimeout(() => {
       try {
@@ -318,19 +403,22 @@ const copySection=(idSection, mode="all", event)=>{
     let sectionEl
       
     if(idSection.includes('accordion')){
-      sectionEl = document.getElementById(sectionId);
+      sectionEl = getEl(sectionId)
     }else{
-      sectionEl = document.getElementById(`webpage-${sectionId}`);
+      sectionEl = getEl(`webpage-${sectionId}`)
     }
 
-    if (!sectionEl) {
-      console.error('accordion tidak ditemukan:', sectionId);
-      return false;
-    }
+    if (!sectionEl)return false;
+    
 
     const container = sectionEl.parentElement;
     if (!container) {
       console.error('container parent accordion tidak ditemukan');
+
+      window.dispatchEvent(new CustomEvent('notif-pesan', { 
+        detail: { pesan: 'container parent accordion tidak ditemukan', status:false} 
+      }));
+
       return false;
     }
 
@@ -413,7 +501,14 @@ const copySection=(idSection, mode="all", event)=>{
         let id = el.id;
         if (!id) {
           const childWithId = el.querySelector('[id^="field-"]');
-          if (childWithId) id = childWithId.id;
+          if (!childWithId) {
+            window.dispatchEvent(new CustomEvent('notif-pesan', { 
+              detail: { pesan: 'child with id field copy section tidak ditemukan', status:false} 
+            }));
+            return
+          }
+
+          id = childWithId.id;
         }
 
         if (!id) return;
@@ -444,13 +539,17 @@ const copySection=(idSection, mode="all", event)=>{
       elementSection = sectionEl.querySelectorAll(`[id^="editor-container"]`)
     }
 
+    if(!elementSection){
+      window.dispatchEvent(new CustomEvent('notif-pesan', { 
+        detail: { pesan: 'elementSection copySection tidak ditemukan', status:false} 
+      }));
+      return
+    }
+
     elementSection.forEach(wrapper=>{
       Array.from(wrapper.children).forEach(el=>{
         if(el.id.startsWith('modal')){
-          
           copyModal(el.id, 'body', newSecId.split('-').slice(1).join('-'), oldSecId.split('-').slice(1).join('-'))
-        }else if(el.id.startsWith('accordion')){
-          copyAccordion(el.id, 'dropdown')
         }
       })
     })
@@ -464,7 +563,9 @@ const copySection=(idSection, mode="all", event)=>{
     const relatedObjects = webpageDb.filter(obj => arraySubsequenceMatch(obj.id.split('-'), targetId.split('-')));
     relatedObjects.forEach(originalObj => {
       const clonedObj = deepClone(originalObj);
-
+      if(clonedObj.action == 'delete'){
+        return
+      }
       if(clonedObj.file){
         delete clonedObj.file
       }
@@ -483,34 +584,63 @@ const copySection=(idSection, mode="all", event)=>{
     //=========================================
     if (container.id.startsWith('wrapper-section-accordion')) {
       const containerField = webpageDb.find(f => f.id === container.id.split('-').slice(1).join('-'));
-      if (containerField) {
-        containerField.element_count = newCount;
-        containerField.action =  updateActionProperty(containerField.action, 'update');
+      if (!containerField) {
+        window.dispatchEvent(new CustomEvent('notif-pesan', { 
+          detail: { pesan: 'containerField tidak ditemukan', status:false} 
+        }));
+        return
       }
+
+      containerField.element_count = newCount;
+      containerField.action =  updateActionProperty(containerField.action, 'update');
+
     }else if(container.id.startsWith('editor')){
       const containerField = webpageDb.find(f => f.id === `webpage-section-${container.id.split('-').find(part => !isNaN(part))}`);
-      if (containerField) {
-        containerField.element_count = newCount;
-        containerField.action =  updateActionProperty(containerField.action, 'update');
+      if (!containerField) {
+        window.dispatchEvent(new CustomEvent('notif-pesan', { 
+          detail: { pesan: 'containerField tidak ditemukan', status:false} 
+        }));
+        return
       }
+
+      containerField.element_count = newCount;
+      containerField.action =  updateActionProperty(containerField.action, 'update');
+    
     }else if(container.id.startsWith('webpage')){
       const containerField = webpageDbParentSection.find(f => f.id === `webpage`);
-      if (containerField) {
-        containerField.element_count = newCount;
-        containerField.action =  updateActionProperty(containerField.action, 'update');
+      if (!containerField) {
+        window.dispatchEvent(new CustomEvent('notif-pesan', { 
+          detail: { pesan: 'containerField tidak ditemukan', status:false} 
+        }));
+        return
       }
+
+      containerField.element_count = newCount;
+      containerField.action =  updateActionProperty(containerField.action, 'update');
+
     }else if(container.id.startsWith('body-accordion')){
       const containerField = webpageDb.find(f => f.id === `btn-heading-${container.id.split('-').slice(1).join('-')}`);
-      if (containerField) {
-        containerField.element_count = newCount;
-        containerField.action =  updateActionProperty(containerField.action, 'update');
+      if (!containerField) {
+        window.dispatchEvent(new CustomEvent('notif-pesan', { 
+          detail: { pesan: 'containerField tidak ditemukan', status:false} 
+        }));
+        return
       }
+
+      containerField.element_count = newCount;
+      containerField.action =  updateActionProperty(containerField.action, 'update');
+    
     }else{
       const containerField = webpageDb.find(f => f.id === container.id);
-      if (containerField) {
-        containerField.element_count = newCount;
-        containerField.action =  updateActionProperty(containerField.action, 'update');
+      if (!containerField) {
+        window.dispatchEvent(new CustomEvent('notif-pesan', { 
+          detail: { pesan: 'containerField tidak ditemukan', status:false} 
+        }));
+        return
       }
+      
+      containerField.element_count = newCount;
+      containerField.action =  updateActionProperty(containerField.action, 'update');
     }
 
     // =======================================
@@ -522,10 +652,18 @@ const copySection=(idSection, mode="all", event)=>{
     }else{
       dropdownToggle = sectionCopy.querySelectorAll(`[data-dropdown-toggle]`)
     }
+
+    if(!dropdownToggle){
+      window.dispatchEvent(new CustomEvent('notif-pesan', { 
+        detail: { pesan: 'dropdownToggle section copy tidak ditemukan', status:false} 
+      }));
+      return
+    }
     
     dropdownToggle.forEach(dropdown=>{
-      let bodyDropdown = document.getElementById(dropdown.dataset.dropdownToggle)
-      
+      let bodyDropdown = getEl(dropdown.dataset.dropdownToggle)
+      if(!bodyDropdown) return
+
       bodyDropdown.dataset.initialized = ''; 
       bodyDropdown.className = 'w-25 z-40 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700';
 
@@ -545,14 +683,18 @@ const copySection=(idSection, mode="all", event)=>{
 
     // inisialisasi dropdown baru: coba id dropdown baru dari btnCopy's toggles
     const anyToggle = sectionCopy.querySelectorAll('[data-dropdown-toggle]');
-    if (anyToggle) {
+    if (!anyToggle) {
+        window.dispatchEvent(new CustomEvent('notif-pesan', { 
+          detail: { pesan: 'anyToggle copysection tidak ditemukan delete head', status:false} 
+        }));
+        return
+    }else if(anyToggle){
       anyToggle.forEach(target=>{
-  
         const newDropdownTarget = target.getAttribute('data-dropdown-toggle');
         dropdownInitialized('', newDropdownTarget);
       })
     }
-
+    globals.isFormDirty = true
     globals.webpageDb=webpageDb
     globals.webpageDbParentSection=webpageDbParentSection
     // init accordion

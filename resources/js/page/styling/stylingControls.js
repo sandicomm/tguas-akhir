@@ -3,6 +3,8 @@ import { dropdownInitialized } from '../utils/dropdownInit.js';
 import { renderSvg } from '../utils/svgEdit.js';
 import { deepClone } from '../utils/utilsDuplikatFunction.js';
 import { setListenerSetImage } from './baseStyling.js';
+// ======== Validation get element ==========
+import { getEl } from '../utils/validationGetElement.js';
 
 function setPaddingMarginBoxBorder(computedField){
     document.getElementById('padding-field').value = parseInt(computedField.padding);
@@ -102,26 +104,29 @@ export function updateStylingControls(data, field) {
       let stylingWebpage=['heading-text-wrapper','accordion-head-indicator-wrapper','accordion-modal-type','accordion-accordion-type',
         'accordion-carousel-styling','accordion-font-styling','font-order-list','font-unorder-list','reset-box',
         'accordion-box-field','box-width-field','box-height-field','flex-position','accordion-border-field',
-        'accordion-border-wave-section','accordion-background','bg-image-styling','accordion-padding','accordion-margin','wrapper-btn-save'
+        'accordion-background','bg-image-styling',
+        'accordion-padding','accordion-margin','wrapper-btn-save',
       ]
       
-      stylingWebpage.forEach(id=>{
-        if(id !== 'wrapper-btn-save'){
-          document.getElementById(id).classList.add('hidden')
+      stylingWebpage.forEach(id => {
+        const el = document.getElementById(id);
+        if (el && id !== 'wrapper-btn-save') {
+            // 1. Tambahkan class hidden ke kontainer
+            el.classList.add('hidden')
         }
-      })
+    });
 
       if(idParts[0] == 'webpage'){
         let stylingWebpage
         if(idParts.includes('prolog')){
           stylingWebpage=[ 
-            'accordion-box-field','flex-position','accordion-border-wave-section',
+            'accordion-box-field','flex-position',
             'accordion-background','bg-image-styling','accordion-padding','wrapper-btn-save'
           ]
         }else{
           stylingWebpage=[ 
             'accordion-box-field','box-height-field','flex-position','accordion-border-field',
-            'accordion-border-wave-section','accordion-background','bg-image-styling','accordion-padding',
+            'accordion-background','bg-image-styling','accordion-padding',
             'accordion-margin','wrapper-btn-save','reset-box'
           ]
         }
@@ -159,30 +164,8 @@ export function updateStylingControls(data, field) {
         document.getElementById('color-field-input').value = fieldColor
         document.getElementById('border-color-field').value = borderColor;
 
-        if(data.querySelector('[id^="border-wave"]')){
-          let svg = data.querySelector('[id^="border-wave"]')
-          let path=svg.querySelector('path')
-
-          let position = svg.style.cssText
-          document.getElementById('btn-reset-border-wave').classList.remove('hidden')
-
-          if(position.includes('bottom')){
-            document.getElementById('border-wave-position-bottom').checked  = true
-          }else{
-            document.getElementById('border-wave-position-top').checked  = true
-          }
-          document.getElementById('border-wave-color').value=path.getAttribute('fill')
-        }else{
-          document.getElementById('border-wave-position-bottom').checked  = false
-          document.getElementById('border-wave-position-top').checked  = false
-          document.getElementById('border-wave-color').value='#ffff'
-          document.getElementById('btn-reset-border-wave').classList.add('hidden')
-        }
-
-  
-
       }else if(idParts[0] == 'field'){
-        console.log('field')
+        //console.log('field')
         let stylingWebpage=['accordion-font-styling','font-order-list','font-unorder-list',
           'accordion-box-field','box-width-field','box-height-field','accordion-border-field','reset-box',
           'accordion-background','bg-image-styling','accordion-padding','accordion-margin','wrapper-btn-save'
@@ -194,8 +177,7 @@ export function updateStylingControls(data, field) {
 
         let fontColor
         if (data) {
-          fontColor = findTextColor(data) ?? ''
-  ;
+          fontColor = findTextColor(data) ?? '';
         } else {
           console.error("Variabel 'field' bernilai null atau tidak ditemukan.");
         }
@@ -223,10 +205,10 @@ export function updateStylingControls(data, field) {
           document.getElementById('accordion-box-field').classList.add('hidden')
         }
 
-        // console.log('field')
+        // //console.log('field')
 
       }else if(data.id == 'heading-text'){
-        console.log('hedaing text')
+        //console.log('hedaing text')
         let stylingWebpage=['heading-text-wrapper','accordion-head-indicator-wrapper',
           'accordion-font-styling','accordion-box-field','box-width-field',
           'accordion-border-field','accordion-background','bg-image-styling','accordion-padding',
@@ -274,10 +256,10 @@ export function updateStylingControls(data, field) {
           document.getElementById('accordion-box-field').classList.add('hidden')
         }
 
-        // console.log('field')
+        // //console.log('field')
 
       }else if(data.id.startsWith('video')){
-        // console.log('video')
+        // //console.log('video')
         let stylingWebpage=[
           'accordion-box-field','box-width-field','accordion-margin','wrapper-btn-save'
         ]
@@ -288,7 +270,7 @@ export function updateStylingControls(data, field) {
       }else if(data.id.startsWith('btn-modal') || data.id.startsWith('btn-heading-accordion')){
         let headingText = document.getElementById("heading-text")
         headingText.innerHTML = ''
-        headingText.innerHTML = data.children[0].outerHTML
+        headingText.innerHTML = data.children[0].innerHTML
 
         let colorFontHeading = findTextColor(headingText) ?? '';
 
@@ -299,7 +281,7 @@ export function updateStylingControls(data, field) {
       
         let bgColor = isLightColor(colorFontHeading) ? '#000000' : '#ffffff';
         headingText.style.backgroundColor = bgColor;
-        // console.log('btn head modal accordion')
+        // //console.log('btn head modal accordion')
         let stylingWebpage=['heading-text-wrapper','accordion-head-indicator-wrapper',
           'accordion-font-styling','accordion-box-field','box-width-field',
           'accordion-border-field','accordion-background','bg-image-styling','accordion-padding',
@@ -320,7 +302,7 @@ export function updateStylingControls(data, field) {
         let indicatorType = data.dataset.typeIndicator
         if(data.id.startsWith('btn-heading')){
           indicatorType = data.parentElement.parentElement.parentElement.parentElement.dataset.typeIndicator
-          // console.log(indicatorType, )
+
         }else{
           indicatorType = data.dataset.typeIndicator
         }
@@ -359,8 +341,6 @@ export function updateStylingControls(data, field) {
         document.getElementById('color-field-input').value = fieldColor
         document.getElementById('border-color-field').value = borderColor;
 
-        // console.log('btn modal')
-
       }else if(data.id.startsWith('parent-modal')){
         let stylingWebpage=['accordion-head-indicator-wrapper','accordion-modal-type',
           'accordion-background','bg-image-styling','wrapper-btn-save'
@@ -398,7 +378,7 @@ export function updateStylingControls(data, field) {
       }else if(data.id.startsWith('section-accordion')){
 
         document.getElementById("heading-text").innerHTML = ''
-        document.getElementById("heading-text").innerHTML = data.parentElement.parentElement.querySelector('[id^="btn-heading-accordion"]').children[0].outerHTML
+        document.getElementById("heading-text").innerHTML = data.parentElement.parentElement.querySelector('[id^="btn-heading-accordion"]').children[0].innerHTML
 
         let stylingWebpage=['heading-text-wrapper','accordion-head-indicator-wrapper',
           'accordion-font-styling','accordion-box-field','box-width-field','accordion-accordion-type',
@@ -438,7 +418,7 @@ export function updateStylingControls(data, field) {
         document.getElementById('border-color-field').value = borderColor
 
       }else if(data.id.startsWith('carousel')){
-  
+      
         document.getElementById('add-text-carousel').textContent = carouselSelect.dataset.text === "true" ? "Remove Text" : "Add Text"
         document.getElementById('btn-text-position').textContent = carouselSelect.dataset.textPosition === "on-image" ? "On Image" : "Below Image"
         document.getElementById('btn-hide-next').textContent = carouselSelect.dataset.nextBtnHide === "true" ? "Unhide" : "Hide"
@@ -446,6 +426,13 @@ export function updateStylingControls(data, field) {
         let stylingWebpage=[
           'accordion-box-field','box-width-field','box-height-field','accordion-background','accordion-margin','wrapper-btn-save','accordion-border-field'
         ]
+
+        // 2. Cari button di dalamnya dan paksa aria-expanded jadi false
+        const fontStyling = document.getElementById('accordion-font-styling')
+        const btn = fontStyling.querySelector('button[data-accordion-target]');
+        if (btn) {
+            btn.setAttribute('aria-expanded', 'false');
+        }
         
         stylingWebpage.forEach(id=>{
           document.getElementById(id).classList.remove('hidden')
@@ -496,7 +483,9 @@ export function updateStylingControls(data, field) {
           accordionCarouselStyling.querySelector('[id="edit-carousel-item-wrapping"]').insertAdjacentHTML('beforeend', itemWrapped)
           accordionCarouselStyling.querySelector('[id="edit-carousel-item-wrapping"]').querySelector(`#edit-${item.id}`).setAttribute('style', style)
 
-          document.getElementById(`set-image-from-recent-${item.id}`).addEventListener('click', function(e){
+          const setImgFromRecent = getEl(`set-image-from-recent-${item.id}`)
+          if(!setImgFromRecent) return
+          setImgFromRecent.addEventListener('click', function(e){
             e.target.parentElement.parentElement.parentElement.classList.add('hidden')
           })
         })
@@ -535,7 +524,7 @@ export function updateStylingControls(data, field) {
         // Masukkan nilai heksadesimal ke input
         document.getElementById('color-field-input').value = hexColor;
         document.getElementById('bg-color-opacity').value = opacityValue; 
-
+        
         setTimeout(() => {
           try {
             initFlowbite();
@@ -546,6 +535,7 @@ export function updateStylingControls(data, field) {
         
         setListenerSetImage()
         dropdownInitialized('multi', data.id)
+        document.getElementById('accordion-font-styling-body-1').classList.add('hidden')
       }
 
       let rgba = null
@@ -669,11 +659,12 @@ export function updateStylingControls(data, field) {
       let stylingWebpage=['heading-text-wrapper','accordion-head-indicator-wrapper','accordion-modal-type','accordion-accordion-type',
         'accordion-carousel-styling','accordion-font-styling','font-order-list','font-unorder-list',
         'accordion-box-field','box-width-field','box-height-field','flex-position','accordion-border-field',
-        'accordion-border-wave-section','accordion-background','bg-image-styling','accordion-padding','accordion-margin'
+        'accordion-background','bg-image-styling','accordion-padding','accordion-margin'
       ]
       
       stylingWebpage.forEach(id=>{
         document.getElementById(id).classList.add('hidden')
       })
+      globals.isFormDirty = true
     }
 }

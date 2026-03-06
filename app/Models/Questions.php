@@ -12,6 +12,7 @@ class Questions extends Model
         'question',
         'input_type',
         'rules',
+        'image',
         'section_id',
         'order'
         ];

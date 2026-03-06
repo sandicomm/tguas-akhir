@@ -7,14 +7,9 @@ import { globals } from '../globals.js';
 // ======== updateContent ========
 import { updateActionProperty } from '../utils/updateContent.js';
 import { updateStylingControls } from '../styling/stylingControls.js';
+// ======== Validation get element ==========
+import { getEl } from '../utils/validationGetElement.js';
 
-// ======== GLOBAL VARIABLE ASSIGNMENT =========
-let webpageDb = globals.webpageDb,
-  webpageDbParentSection = globals.webpageDbParentSection,
-  editCarouselItem = globals.editCarouselItem,
-  carouselSelect = globals.carouselSelect,
-  actualBodyItem = globals.actualBodyItem,
-  actualField = globals.actualField
 
   // ======== gpt ver  =============
 function resolveFieldId(el) {
@@ -37,44 +32,67 @@ function getTargetElement(idParts) {
   let fieldElement = null, bodyElement = null, type = 'generic';
 
   if (idParts[1] === 'item') {
-    fieldElement = document.getElementById(idParts.slice(1).join('-'));
+    fieldElement = getEl(idParts.slice(1).join('-'));
+    if(!fieldElement)return
+
     bodyElement = fieldElement?.parentElement?.parentElement;
-    globals.actualField = document.getElementById(fieldElement.id)
-    globals.actualBodyItem = document.getElementById(fieldElement.id).parentElement.parentElement
+    const actualField = getEl(fieldElement.id)
+
+    if(!actualField)return
+
+    globals.actualField = actualField
+    globals.actualBodyItem = actualField.parentElement.parentElement
+    
     type = 'item carousel';
 
 
   } else if(idParts[1] === 'carousel'){
-    fieldElement = document.getElementById(idParts.slice(1).join('-'));
+    fieldElement = getEl(idParts.slice(1).join('-'));
+    if(!fieldElement) return
+    
     bodyElement = fieldElement.parentElement;
     type = 'carousel';
 
   } else if (idParts[1] === 'field') {
-    fieldElement = document.getElementById(idParts.slice(1).join('-')).parentElement;
+    fieldElement = getEl(idParts.slice(1).join('-')).parentElement;
+    if(!fieldElement) return
+
     bodyElement = fieldElement.parentElement;
 
   }else if (idParts[1] === 'video') {
-    fieldElement = document.getElementById(idParts.slice(1).join('-'));
+    fieldElement = getEl(idParts.slice(1).join('-'));
+    if(!fieldElement) return
+
     bodyElement = fieldElement.parentElement;
 
   }  else if (idParts[1] === 'section' && idParts[2] !== 'accordion') {
-    fieldElement = document.getElementById(`webpage-${idParts.slice(1).join('-')}`);
+    fieldElement = getEl(`webpage-${idParts.slice(1).join('-')}`);
+    if(!fieldElement) return
+
     bodyElement = fieldElement.parentElement;
 
   } else if(idParts[1] === 'section' && idParts[2] === 'accordion'){
-    fieldElement = document.getElementById(idParts.slice(1).join('-'));
+    fieldElement = getEl(idParts.slice(1).join('-'));
+    if(!fieldElement) return
+    
     bodyElement = fieldElement.parentElement;
 
   } else if (idParts[1] === 'accordion') {
-    fieldElement = document.getElementById(idParts.slice(1).join('-'));
+    fieldElement = getEl(idParts.slice(1).join('-'));
+    if(!fieldElement)return
+
     bodyElement = fieldElement.parentElement;
 
   } else if (idParts[1] === 'head') {
-    fieldElement = document.getElementById(idParts.slice(2).join('-'));
+    fieldElement = getEl(idParts.slice(2).join('-'));
+    if(!fieldElement) return
+    
     bodyElement = fieldElement.parentElement;
 
   } else if (idParts[1] === 'btn' && idParts[2] === 'modal') {
-    fieldElement = document.getElementById(idParts.slice(2).join('-'));
+    fieldElement = getEl(idParts.slice(2).join('-'));
+    if(!fieldElement)return
+    
     bodyElement = fieldElement.parentElement;
     type = 'modal';
   }
@@ -147,8 +165,6 @@ function handleElementAction(action, fieldElement, bodyElement, options = {}, id
 
     const actual = fieldElement.id ? fieldElement : fieldElement.querySelector('[id^="field"]');
     if (!actual) return;
-
-
 
     const updateElementCount = (el, key = 'elementCount') => {
       el.dataset[key] = Math.max(0, parseInt(el.dataset[key]) - 1);
@@ -269,7 +285,9 @@ function handleElementAction(action, fieldElement, bodyElement, options = {}, id
 
       if(editCarousel.children.length <= 1 ) return
       
-      const indicatorWrapper = document.getElementById(`slide-indicator-${idParts.slice(2, -1).join('-')}`);
+      const indicatorWrapper = getEl(`slide-indicator-${idParts.slice(2, -1).join('-')}`);
+      if(!indicatorWrapper)return
+      
       const items = [...fieldElement.parentElement.querySelectorAll('[data-item-order]')];
 
       // Urutkan dan buat mapping
@@ -299,7 +317,10 @@ function handleElementAction(action, fieldElement, bodyElement, options = {}, id
         }
       });
 
-      document.getElementById(`edit-${fieldElement.id}`)?.remove();
+      const editCarouselDel = getEl(`edit-${fieldElement.id}`)
+      if(!editCarouselDel)return
+      
+      editCarouselDel.remove();
       setDeleteStatus(fieldElement.id)
       setTimeout(() => {
         try {
@@ -311,7 +332,7 @@ function handleElementAction(action, fieldElement, bodyElement, options = {}, id
     }
 
     // ========== Modal Delete =============
-    else if(idParts[2] == 'modal'){
+    else if(idParts[2] == 'modal' && !idParts.includes('field')){
      
       let elementOrder = actual.dataset.elementOrder
 
@@ -344,15 +365,17 @@ function handleElementAction(action, fieldElement, bodyElement, options = {}, id
           }
         });
       }
-  
-      document.getElementById(`element-${fieldElement.id}`).remove()
+      const elementRemove = getEl(`element-${fieldElement.id}`)
+      if(!elementRemove) return
+
+      elementRemove.remove()
       setDeleteStatus(actual.id)
       updateStylingControls()
     }
 
     // ========== Field in Section / Normal Field ==========
     else {
-  
+      
       let elementOrder = actual.dataset.elementOrder
       if(actual.id.startsWith('field')){
         elementOrder = actual.parentElement.dataset.elementOrder
@@ -393,14 +416,17 @@ function handleElementAction(action, fieldElement, bodyElement, options = {}, id
     globals.webpageDbParentSection = webpageDbParentSection;
 
     if(!idParts.join('-').startsWith('delete-section')){
+      const section = getEl(idParts.join('-'))
+      if(!section) return
       
-      document.getElementById(idParts.join('-')).parentElement.parentElement.parentElement.remove()
+      section.parentElement.parentElement.parentElement.remove()
     }
   }
 
   // =========================
   // REINIT FLOWBITE
   // =========================
+  globals.isFormDirty = true
   if (reinitFlowbite) {
     setTimeout(() => {
       try {

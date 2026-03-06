@@ -30,18 +30,40 @@
     </head>
     <body class="font-sans antialiased">
         <div class="min-h-screen bg-gray-100">
-            @include('layouts.navigation')
+            @include('layouts.navigation.navigation')
             
-            <header class="dark:bg-white bg-slate-700 shadow-md p-3 sm:ml-64">
+            @if(session('success'))
+                <div class="fixed top-5 left-1/2 transform -translate-x-1/2 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded shadow-lg z-50">
+                    <div class="flex items-center justify-between gap-4">
+                        <span>{{ session('success') }}</span>
+                        <button type="button" class="text-green-700 hover:text-green-900" onclick="this.parentElement.parentElement.remove()">
+                            &times;
+                        </button>
+                    </div>
+                </div>
+            @endif
+
+            @if (session('error'))
+                <div class="fixed top-5 left-1/2 transform -translate-x-1/2 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded shadow-lg z-50">
+                    <div class="flex items-center justify-between gap-4">
+                        <span>{{ session('error') }}</span>
+                        <button type="button" class="text-red-700 hover:text-red-900" onclick="this.parentElement.parentElement.remove()">
+                            &times;
+                        </button>
+                    </div>
+                </div>
+            @endif
+
+            <header class="bg-white dark:bg-slate-700 shadow-md p-3 sm:ml-64">
                 <div class="flex justify-between">
                     <div class="max-w-7xl sm:px-6 lg:px-8">
-                        <h1 class="font-extrabold text-xl dark:text-black text-white">Admin Smart Health Diabetes</h1>
+                        <h1 class="font-extrabold text-xl text-black dark:text-white">Admin Smart Health Diabetes</h1>
                     </div>
                 </div>
             </header>
 
             <!-- Page Content -->
-            <main class="bg-gray-500 dark:bg-slate-100" style="min-height: 100dvh;">
+            <main class="dark:bg-gray-600 bg-slate-100" style="min-height: 100dvh;">
                 {{ $slot }}
             </main>
         </div>
@@ -51,11 +73,11 @@
                 const savedTheme = localStorage.getItem('theme');
 
                 if (savedTheme === 'dark') {
-                    document.documentElement.classList.remove('dark');
+                    document.documentElement.classList.add('dark');
                     txtMode.textContent = 'Dark'
                     txtMode.classList.add('text-white')
                 } else {
-                    document.documentElement.classList.add('dark');
+                    document.documentElement.classList.remove('dark');
                     txtMode.textContent = 'Light'
                     txtMode.classList.add('text-white')
                 }
@@ -67,15 +89,15 @@
 
                 if (root.classList.contains('dark')) {
                     root.classList.remove('dark');
-                    localStorage.setItem('theme', 'dark');
-
-                    txtMode.textContent = 'Dark'
-                    txtMode.classList.add('text-white')
-                } else {
-                    root.classList.add('dark');
                     localStorage.setItem('theme', 'light');
 
                     txtMode.textContent = 'Light'
+                    txtMode.classList.add('text-white')
+                } else {
+                    root.classList.add('dark');
+                    localStorage.setItem('theme', 'dark');
+
+                    txtMode.textContent = 'Dark'
                 }
             }
 

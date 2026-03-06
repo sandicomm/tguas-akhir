@@ -5,6 +5,8 @@ import { globals } from '../globals.js';
 import { updateContent, updateActionProperty } from '../utils/updateContent.js';
 import { parseStyleObj, stringifyStyleObj } from '../utils/baseStyleObj.js';
 import { updateStylingControls, isLightColor } from './stylingControls.js';
+// ======== Validation get element ==========
+import { getEl } from '../utils/validationGetElement.js';
 
 // ======== GLOBAL VARIABLE ASSIGNMENT =========
 let webpageDb = globals.webpageDb,
@@ -223,7 +225,7 @@ function updateStyle(editorFieldSelect, indicator, file, indicatorCarousel, url,
           item.style = stringifyStyleObj(styleObj);
           
         }else{
-          // console.log('bukan carousel')
+          // //console.log('bukan carousel')
           if(id.startsWith('item-carousel')){
        
             let baseStyle = editorFieldSelect.style.cssText
@@ -293,6 +295,7 @@ function updateStyle(editorFieldSelect, indicator, file, indicatorCarousel, url,
     delete target.action;
   }
 
+  globals.isFormDirty = true
   globals.webpageDb=webpageDb
   globals.file=fileDb
 }
@@ -303,10 +306,18 @@ function fontStylingField(){
 
     if(editorFieldSelect.id.startsWith('section-accordion')){
       const heading = document.getElementById(`btn-heading-${editorFieldSelect.id.split('-').slice(1,-1).join('-')}`)
-      heading.children[0].outerHTML = this.innerHTML
+      if(!heading){
+        window.dispatchEvent(new CustomEvent('notif-pesan', { 
+          detail: { pesan: 'heading styling tidak ditemukan', status:false} 
+        }));
+        console.error('heading tidak ditemukan')
+        return
+      }
+      console.log('ll')
+      heading.children[0].innerHTML = this.innerHTML
       updateContent(heading)
     }else{
-      editorFieldSelect.children[0].outerHTML = this.innerHTML;
+      editorFieldSelect.children[0].innerHTML = this.innerHTML;
       updateContent(editorFieldSelect)
     }
 
@@ -317,75 +328,78 @@ function fontStylingField(){
     editorFieldSelect = globals.editorFieldSelect
     savedSelection = globals.savedSelection
 
-    let headingTextWrapper = document.getElementById('heading-text-wrapper')
-    let headingText = document.getElementById('heading-text')
-
-    const sel = window.getSelection();
- 
-    let fontField = null
-    if(headingTextWrapper.classList.contains('hidden')){
-      fontField = editorFieldSelect
-    }else{
-      fontField = document.getElementById('heading-text')
-    }
+    if(!editorFieldSelect.id?.startsWith('section-accordion')){
+      let headingTextWrapper = document.getElementById('heading-text-wrapper')
+      let headingText = document.getElementById('heading-text')
   
+      const sel = window.getSelection();
+   
+      let fontField = null
+      if(headingTextWrapper.classList.contains('hidden')){
+        fontField = editorFieldSelect
+      }else{
+        fontField = document.getElementById('heading-text')
+      }
+    
+      if (savedSelection) {
+        sel.removeAllRanges();
+        sel.addRange(savedSelection);
+    
+        let range = sel.getRangeAt(0);
+    
+        const startInside = fontField.contains(range.startContainer.nodeType === 3 ? range.startContainer.parentNode : range.startContainer);
+        const endInside = fontField.contains(range.endContainer.nodeType === 3 ? range.endContainer.parentNode : range.endContainer);
+    
+        if (startInside && endInside && !range.collapsed) {
+          fontField.dataset.fieldFontColor = this.value;
   
-    if (savedSelection) {
-      sel.removeAllRanges();
-      sel.addRange(savedSelection);
+          if(!(headingTextWrapper.classList.contains('hidden'))){
+            editorFieldSelect.dataset.fieldFontColor = this.value;
+            let bgColor = isLightColor(this.value) ? '#000000' : '#ffffff';
+            headingText.style.backgroundColor = bgColor;
+          }
   
-      let range = sel.getRangeAt(0);
+          document.execCommand('foreColor', false, this.value);
+        } else {
+          const range = document.createRange();
+          range.selectNodeContents(fontField);
+          
+          const selection = window.getSelection();
+          selection.removeAllRanges();
+          selection.addRange(range);
+          
+          // Terapkan warna ke seluruh teks dalam fontField
+          fontField.dataset.fieldFontColor = this.value;
   
-      const startInside = fontField.contains(range.startContainer.nodeType === 3 ? range.startContainer.parentNode : range.startContainer);
-      const endInside = fontField.contains(range.endContainer.nodeType === 3 ? range.endContainer.parentNode : range.endContainer);
+          if(!(headingTextWrapper.classList.contains('hidden'))){
+            editorFieldSelect.dataset.fieldFontColor = this.value;
+            let bgColor = isLightColor(this.value) ? '#000000' : '#ffffff';
+            headingText.style.backgroundColor = bgColor;
+          }
   
-      if (startInside && endInside && !range.collapsed) {
-        fontField.dataset.fieldFontColor = this.value;
-
-        if(!(headingTextWrapper.classList.contains('hidden'))){
-          editorFieldSelect.dataset.fieldFontColor = this.value;
-          let bgColor = isLightColor(this.value) ? '#000000' : '#ffffff';
-          headingText.style.backgroundColor = bgColor;
+          document.execCommand('foreColor', false, this.value);
+  
+          const listItems = editorFieldSelect.querySelectorAll('li');
+          if(listItems && fontField.id.startsWith('field-')){
+            listItems.forEach(li => {
+              li.style.color=this.value;
+            });
+          }
+    
+          // Optional: hapus seleksi biar gak kelihatan disorot
+          selection.removeAllRanges();
         }
-
-        document.execCommand('foreColor', false, this.value);
+  
+        if(!fontField.id.startsWith('field-')){
+          editorFieldSelect.children[0].innerHTML = fontField.innerHTML;
+        }
+        updateContent(editorFieldSelect)
+        globals.editorFieldSelect = editorFieldSelect
       } else {
-        const range = document.createRange();
-        range.selectNodeContents(fontField);
-        
-        const selection = window.getSelection();
-        selection.removeAllRanges();
-        selection.addRange(range);
-        
-        // Terapkan warna ke seluruh teks dalam fontField
-        fontField.dataset.fieldFontColor = this.value;
-
-        if(!(headingTextWrapper.classList.contains('hidden'))){
-          editorFieldSelect.dataset.fieldFontColor = this.value;
-          let bgColor = isLightColor(this.value) ? '#000000' : '#ffffff';
-          headingText.style.backgroundColor = bgColor;
-        }
-
-        document.execCommand('foreColor', false, this.value);
-
-        const listItems = editorFieldSelect.querySelectorAll('li');
-        if(listItems && fontField.id.startsWith('field-')){
-          listItems.forEach(li => {
-            li.style.setProperty('--marker-color', this.value);
-          });
-        }
-  
-        // Optional: hapus seleksi biar gak kelihatan disorot
-        selection.removeAllRanges();
+        window.dispatchEvent(new CustomEvent('notif-pesan', { 
+          detail: { pesan: 'Tidak ada seleksi tersimpan', status:false} 
+        }));
       }
-
-      if(!fontField.id.startsWith('field-')){
-        editorFieldSelect.children[0].outerHTML = fontField.innerHTML;
-      }
-      updateContent(editorFieldSelect)
-      globals.editorFieldSelect = editorFieldSelect
-    } else {
-     alert('Tidak ada seleksi tersimpan');
     }
   });
 
@@ -394,66 +408,71 @@ function fontStylingField(){
     savedSelection = globals.savedSelection
     const sel = window.getSelection();
 
-    let fontField = null
-    if(!(document.getElementById('heading-text-wrapper').classList.contains('hidden'))){
-      fontField = document.getElementById('heading-text')
-    }else{
-      fontField = editorFieldSelect
-    }
-  
-    if (savedSelection) {
-      sel.removeAllRanges();
-      sel.addRange(savedSelection);
-  
-      let range = sel.getRangeAt(0);
-  
-      const startInside = fontField.contains(range.startContainer.nodeType === 3 ? range.startContainer.parentNode : range.startContainer);
-      const endInside = fontField.contains(range.endContainer.nodeType === 3 ? range.endContainer.parentNode : range.endContainer);
-  
-      if (startInside && endInside && !range.collapsed) {
-        // console.log('test')
-        fontField.dataset.fieldFontFamily = this.value;
+    if(!editorFieldSelect.id.startsWith('section-accordion')){
+      let fontField = null
+      if(!(document.getElementById('heading-text-wrapper').classList.contains('hidden'))){
+        fontField = document.getElementById('heading-text')
+      }else{
+        fontField = editorFieldSelect
+      }
+    
+      if (savedSelection) {
+        sel.removeAllRanges();
+        sel.addRange(savedSelection);
+    
+        let range = sel.getRangeAt(0);
+    
+        const startInside = fontField.contains(range.startContainer.nodeType === 3 ? range.startContainer.parentNode : range.startContainer);
+        const endInside = fontField.contains(range.endContainer.nodeType === 3 ? range.endContainer.parentNode : range.endContainer);
+    
+        if (startInside && endInside && !range.collapsed) {
+          // //console.log('test')
+          fontField.dataset.fieldFontFamily = this.value;
 
-        if(!(document.getElementById('heading-text-wrapper').classList.contains('hidden'))){
-          editorFieldSelect.dataset.fieldFontFamily = this.value;
+          if(!(document.getElementById('heading-text-wrapper').classList.contains('hidden'))){
+            editorFieldSelect.dataset.fieldFontFamily = this.value;
+          }
+
+          document.execCommand('fontName', false, this.value);
+        } else {
+          const range = document.createRange();
+          range.selectNodeContents(fontField);
+          
+          const selection = window.getSelection();
+          selection.removeAllRanges();
+          selection.addRange(range);
+          
+          // Terapkan warna ke seluruh teks dalam editorFieldSelect
+          fontField.dataset.fieldFontFamily = this.value;
+
+          if(!(document.getElementById('heading-text-wrapper').classList.contains('hidden'))){
+            editorFieldSelect.dataset.fieldFontFamily = this.value;
+          }
+
+          document.execCommand('fontName', false, this.value);
+
+          const listItems = editorFieldSelect.querySelectorAll('li');
+          if(listItems && fontField.id.startsWith('field-')){
+            listItems.forEach(li => {
+              li.style.fontFamily=this.value;
+            });
+          }
+
+          // Optional: hapus seleksi biar gak kelihatan disorot
+          selection.removeAllRanges();
         }
 
-        document.execCommand('fontName', false, this.value);
+        if(!fontField.id.startsWith('field-')){
+          editorFieldSelect.children[0].innerHTML = fontField.innerHTML;
+        }
+
+        updateContent(editorFieldSelect)
+        globals.editorFieldSelect=editorFieldSelect
       } else {
-        const range = document.createRange();
-        range.selectNodeContents(fontField);
-        
-        const selection = window.getSelection();
-        selection.removeAllRanges();
-        selection.addRange(range);
-        
-        // Terapkan warna ke seluruh teks dalam editorFieldSelect
-        fontField.dataset.fieldFontFamily = this.value;
-
-        if(!(document.getElementById('heading-text-wrapper').classList.contains('hidden'))){
-          editorFieldSelect.dataset.fieldFontFamily = this.value;
-        }
-
-        document.execCommand('fontName', false, this.value);
-
-        const listItems = editorFieldSelect.querySelectorAll('li');
-        if(listItems && fontField.id.startsWith('field-')){
-          listItems.forEach(li => {
-            li.style.setProperty('--marker-family', this.value);
-          });
-        }
-
-        // Optional: hapus seleksi biar gak kelihatan disorot
-        selection.removeAllRanges();
+        window.dispatchEvent(new CustomEvent('notif-pesan', { 
+          detail: { pesan: `tidak ada seleksi tersimpan`, status:false} 
+        }));
       }
-
-      if(!fontField.id.startsWith('field-')){
-        editorFieldSelect.children[0].outerHTML = fontField.innerHTML;
-      }
-      updateContent(editorFieldSelect)
-      globals.editorFieldSelect=editorFieldSelect
-    } else {
-     alert('Tidak ada seleksi tersimpan');
     }
   })
 
@@ -462,72 +481,76 @@ function fontStylingField(){
     savedSelection = globals.savedSelection
     const sel = window.getSelection();
   
-    let fontField = null
-    if(!(document.getElementById('heading-text-wrapper').classList.contains('hidden'))){
-      fontField = document.getElementById('heading-text')
-    }else{
-      fontField = editorFieldSelect
-    }
+    if(!editorFieldSelect.id.startsWith('section-accordion')){
+      let fontField = null
+      if(!(document.getElementById('heading-text-wrapper').classList.contains('hidden'))){
+        fontField = document.getElementById('heading-text')
+      }else{
+        fontField = editorFieldSelect
+      }
 
-    if (savedSelection) {
-      sel.removeAllRanges();
-      sel.addRange(savedSelection);
-  
-      let range = sel.getRangeAt(0);
-  
-      const startInside = fontField.contains(range.startContainer.nodeType === 3 ? range.startContainer.parentNode : range.startContainer);
-      const endInside = fontField.contains(range.endContainer.nodeType === 3 ? range.endContainer.parentNode : range.endContainer);
-  
-      if (startInside && endInside && !range.collapsed) {
-        // console.log('test')
-        fontField.dataset.fieldFontSize = this.value;
+      if (savedSelection) {
+        sel.removeAllRanges();
+        sel.addRange(savedSelection);
+    
+        let range = sel.getRangeAt(0);
+    
+        const startInside = fontField.contains(range.startContainer.nodeType === 3 ? range.startContainer.parentNode : range.startContainer);
+        const endInside = fontField.contains(range.endContainer.nodeType === 3 ? range.endContainer.parentNode : range.endContainer);
+    
+        if (startInside && endInside && !range.collapsed) {
+          // //console.log('test')
+          fontField.dataset.fieldFontSize = this.value;
 
-        if(!(document.getElementById('heading-text-wrapper').classList.contains('hidden'))){
-          editorFieldSelect.dataset.fieldFontSize = this.value;
+          if(!(document.getElementById('heading-text-wrapper').classList.contains('hidden'))){
+            editorFieldSelect.dataset.fieldFontSize = this.value;
+          }
+
+          document.execCommand('fontSize', false, this.value);
+        } else {
+          const range = document.createRange();
+          range.selectNodeContents(fontField);
+          
+          const selection = window.getSelection();
+          selection.removeAllRanges();
+          selection.addRange(range);
+          
+          // Terapkan warna ke seluruh teks dalam fontField
+          fontField.dataset.fieldFontSize = this.value;
+
+          if(!(document.getElementById('heading-text-wrapper').classList.contains('hidden'))){
+            editorFieldSelect.dataset.fieldFontSize = this.value;
+          }
+
+          document.execCommand('fontSize', false, this.value);
+
+          const sizeMap = {
+            1: '10px', 2: '13px', 3: '16px', 4: '18px', 5: '24px', 6: '32px', 7: '48px'
+          };
+
+          const sizePx = sizeMap[this.value];
+          
+          const listItems = editorFieldSelect.querySelectorAll('li');
+          if(listItems && fontField.id.startsWith('field-')){
+            listItems.forEach(li => {
+              li.style.fontSize=sizePx;
+            });
+          }
+          
+          // Optional: hapus seleksi biar gak kelihatan disorot
+          selection.removeAllRanges();
         }
 
-        document.execCommand('fontSize', false, this.value);
+        if(!fontField.id.startsWith('field-')){
+          editorFieldSelect.children[0].innerHTML = fontField.innerHTML;
+        }
+        updateContent(editorFieldSelect)
+        globals.editorFieldSelect=editorFieldSelect
       } else {
-        const range = document.createRange();
-        range.selectNodeContents(fontField);
-        
-        const selection = window.getSelection();
-        selection.removeAllRanges();
-        selection.addRange(range);
-        
-        // Terapkan warna ke seluruh teks dalam fontField
-        fontField.dataset.fieldFontSize = this.value;
-
-        if(!(document.getElementById('heading-text-wrapper').classList.contains('hidden'))){
-          editorFieldSelect.dataset.fieldFontSize = this.value;
-        }
-
-        document.execCommand('fontSize', false, this.value);
-
-        const sizeMap = {
-          1: '10px', 2: '13px', 3: '16px', 4: '18px', 5: '24px', 6: '32px', 7: '48px'
-        };
-
-        const sizePx = sizeMap[this.value];
-        
-        const listItems = editorFieldSelect.querySelectorAll('li');
-        if(listItems && fontField.id.startsWith('field-')){
-          listItems.forEach(li => {
-            li.style.setProperty('--marker-size', sizePx);
-          });
-        }
-        
-        // Optional: hapus seleksi biar gak kelihatan disorot
-        selection.removeAllRanges();
+        window.dispatchEvent(new CustomEvent('notif-pesan', { 
+          detail: { pesan: `tidak ada seleksi tersimpan`, status:false} 
+        }));
       }
-
-      if(!fontField.id.startsWith('field-')){
-        editorFieldSelect.children[0].outerHTML = fontField.innerHTML;
-      }
-      updateContent(editorFieldSelect)
-      globals.editorFieldSelect=editorFieldSelect
-    } else {
-      alert('Tidak ada seleksi tersimpan');
     }
   })
 
@@ -536,56 +559,60 @@ function fontStylingField(){
     savedSelection = globals.savedSelection
     const sel = window.getSelection();
   
-    let fontField = null
-    if(!(document.getElementById('heading-text-wrapper').classList.contains('hidden'))){
-      fontField = document.getElementById('heading-text')
-    }else{
-      fontField = editorFieldSelect
-    }
+    if(!editorFieldSelect.id.startsWith('section-accordion')){
+      let fontField = null
+      if(!(document.getElementById('heading-text-wrapper').classList.contains('hidden'))){
+        fontField = document.getElementById('heading-text')
+      }else{
+        fontField = editorFieldSelect
+      }
 
-    if (savedSelection) {
-      sel.removeAllRanges();
-      sel.addRange(savedSelection);
-  
-      let range = sel.getRangeAt(0);
-  
-      const startInside = fontField.contains(range.startContainer.nodeType === 3 ? range.startContainer.parentNode : range.startContainer);
-      const endInside = fontField.contains(range.endContainer.nodeType === 3 ? range.endContainer.parentNode : range.endContainer);
-  
-      if (startInside && endInside && !range.collapsed) {
-        // console.log('test')
-        document.execCommand('bold');
+      if (savedSelection) {
+        sel.removeAllRanges();
+        sel.addRange(savedSelection);
+    
+        let range = sel.getRangeAt(0);
+    
+        const startInside = fontField.contains(range.startContainer.nodeType === 3 ? range.startContainer.parentNode : range.startContainer);
+        const endInside = fontField.contains(range.endContainer.nodeType === 3 ? range.endContainer.parentNode : range.endContainer);
+    
+        if (startInside && endInside && !range.collapsed) {
+          // //console.log('test')
+          document.execCommand('bold');
 
-      } else {
-        const range = document.createRange();
-        range.selectNodeContents(fontField);
-  
-        const selection = window.getSelection();
-        selection.removeAllRanges();
-        selection.addRange(range);
-  
-        // Terapkan warna ke seluruh teks dalam fontField
-        document.execCommand('bold');
+        } else {
+          const range = document.createRange();
+          range.selectNodeContents(fontField);
+    
+          const selection = window.getSelection();
+          selection.removeAllRanges();
+          selection.addRange(range);
+    
+          // Terapkan warna ke seluruh teks dalam fontField
+          document.execCommand('bold');
 
-        const listItems = editorFieldSelect.querySelectorAll('li');
-        if(listItems && fontField.id.startsWith('field-')){
-          listItems.forEach(li => {
-            li.style.setProperty('--marker-weight', this.value);
-          });
+          const listItems = editorFieldSelect.querySelectorAll('li');
+          if(listItems && fontField.id.startsWith('field-')){
+            listItems.forEach(li => {
+              li.style.fontWeight=this.value;
+            });
+          }
+
+          // Optional: hapus seleksi biar gak kelihatan disorot
+          selection.removeAllRanges();
         }
 
-        // Optional: hapus seleksi biar gak kelihatan disorot
-        selection.removeAllRanges();
-      }
+        if(!fontField.id.startsWith('field-')){
+          editorFieldSelect.children[0].innerHTML = fontField.innerHTML;
+        }
 
-      if(!fontField.id.startsWith('field-')){
-        editorFieldSelect.children[0].outerHTML = fontField.innerHTML;
+        updateContent(editorFieldSelect)
+        globals.editorFieldSelect=editorFieldSelect
+      } else {
+        window.dispatchEvent(new CustomEvent('notif-pesan', { 
+          detail: { pesan: `tidak ada seleksi tersimpan`, status:false} 
+        }));
       }
-
-      updateContent(editorFieldSelect)
-      globals.editorFieldSelect=editorFieldSelect
-    } else {
-     alert('Tidak ada seleksi tersimpan');
     }
   })
   
@@ -594,54 +621,58 @@ function fontStylingField(){
     savedSelection = globals.savedSelection
     const sel = window.getSelection();
 
-    let fontField = null
-    if(!(document.getElementById('heading-text-wrapper').classList.contains('hidden'))){
-      fontField = document.getElementById('heading-text')
-    }else{
-      fontField = editorFieldSelect
-    }
-  
-    if (savedSelection) {
-      sel.removeAllRanges();
-      sel.addRange(savedSelection);
-  
-      let range = sel.getRangeAt(0);
-  
-      const startInside = fontField.contains(range.startContainer.nodeType === 3 ? range.startContainer.parentNode : range.startContainer);
-      const endInside = fontField.contains(range.endContainer.nodeType === 3 ? range.endContainer.parentNode : range.endContainer);
-  
-      if (startInside && endInside && !range.collapsed) {
-        document.execCommand('italic');
-      } else {
-        const range = document.createRange();
-        range.selectNodeContents(fontField);
-  
-        const selection = window.getSelection();
-        selection.removeAllRanges();
-        selection.addRange(range);
-  
-        // Terapkan warna ke seluruh teks dalam editorFieldSelect
-        document.execCommand('italic');
-        
-        const listItems = editorFieldSelect.querySelectorAll('li');
-        if(listItems && fontField.id.startsWith('field-')){
-          listItems.forEach(li => {
-            li.style.setProperty('--marker-style', this.value);
-          });
+    if(!editorFieldSelect.id.startsWith('section-accordion')){
+      let fontField = null
+      if(!(document.getElementById('heading-text-wrapper').classList.contains('hidden'))){
+        fontField = document.getElementById('heading-text')
+      }else{
+        fontField = editorFieldSelect
+      }
+    
+      if (savedSelection) {
+        sel.removeAllRanges();
+        sel.addRange(savedSelection);
+    
+        let range = sel.getRangeAt(0);
+    
+        const startInside = fontField.contains(range.startContainer.nodeType === 3 ? range.startContainer.parentNode : range.startContainer);
+        const endInside = fontField.contains(range.endContainer.nodeType === 3 ? range.endContainer.parentNode : range.endContainer);
+    
+        if (startInside && endInside && !range.collapsed) {
+          document.execCommand('italic');
+        } else {
+          const range = document.createRange();
+          range.selectNodeContents(fontField);
+    
+          const selection = window.getSelection();
+          selection.removeAllRanges();
+          selection.addRange(range);
+    
+          // Terapkan warna ke seluruh teks dalam editorFieldSelect
+          document.execCommand('italic');
+          
+          const listItems = editorFieldSelect.querySelectorAll('li');
+          if(listItems && fontField.id.startsWith('field-')){
+            listItems.forEach(li => {
+              li.style.fontStyle= this.value;
+            });
+          }
+
+          // Optional: hapus seleksi biar gak kelihatan disorot
+          selection.removeAllRanges();
         }
 
-        // Optional: hapus seleksi biar gak kelihatan disorot
-        selection.removeAllRanges();
-      }
+        if(!fontField.id.startsWith('field-')){
+          editorFieldSelect.children[0].innerHTML = fontField.innerHTML;
+        }
 
-      if(!fontField.id.startsWith('field-')){
-        editorFieldSelect.children[0].outerHTML = fontField.innerHTML;
+        updateContent(editorFieldSelect)
+        globals.editorFieldSelect=editorFieldSelect
+      } else {
+        window.dispatchEvent(new CustomEvent('notif-pesan', { 
+          detail: { pesan: `tidak ada seleksi tersimpan`, status:false} 
+        }));
       }
-
-      updateContent(editorFieldSelect)
-      globals.editorFieldSelect=editorFieldSelect
-    } else {
-      alert('Tidak ada seleksi tersimpan');
     }
   })
   
@@ -650,47 +681,51 @@ function fontStylingField(){
     savedSelection = globals.savedSelection
     const sel = window.getSelection();
   
-    let fontField = null
-    if(!(document.getElementById('heading-text-wrapper').classList.contains('hidden'))){
-      fontField = document.getElementById('heading-text')
-    }else{
-      fontField = editorFieldSelect
-    }
+    if(!editorFieldSelect.id.startsWith('section-accordion')){
+      let fontField = null
+      if(!(document.getElementById('heading-text-wrapper').classList.contains('hidden'))){
+        fontField = document.getElementById('heading-text')
+      }else{
+        fontField = editorFieldSelect
+      }
 
-    if (savedSelection) {
-      sel.removeAllRanges();
-      sel.addRange(savedSelection);
-  
-      let range = sel.getRangeAt(0);
-  
-      const startInside = fontField.contains(range.startContainer.nodeType === 3 ? range.startContainer.parentNode : range.startContainer);
-      const endInside = fontField.contains(range.endContainer.nodeType === 3 ? range.endContainer.parentNode : range.endContainer);
-  
-      if (startInside && endInside && !range.collapsed) {
-        document.execCommand('underline');
+      if (savedSelection) {
+        sel.removeAllRanges();
+        sel.addRange(savedSelection);
+    
+        let range = sel.getRangeAt(0);
+    
+        const startInside = fontField.contains(range.startContainer.nodeType === 3 ? range.startContainer.parentNode : range.startContainer);
+        const endInside = fontField.contains(range.endContainer.nodeType === 3 ? range.endContainer.parentNode : range.endContainer);
+    
+        if (startInside && endInside && !range.collapsed) {
+          document.execCommand('underline');
+        } else {
+          const range = document.createRange();
+          range.selectNodeContents(fontField);
+    
+          const selection = window.getSelection();
+          selection.removeAllRanges();
+          selection.addRange(range);
+    
+          // Terapkan warna ke seluruh teks dalam fontField
+          document.execCommand('underline');
+    
+          // Optional: hapus seleksi biar gak kelihatan disorot
+          selection.removeAllRanges();
+        }
+
+        if(!fontField.id.startsWith('field-')){
+          editorFieldSelect.children[0].innerHTML = fontField.innerHTML;
+        }
+
+        updateContent(editorFieldSelect)
+        globals.editorFieldSelect=editorFieldSelect
       } else {
-        const range = document.createRange();
-        range.selectNodeContents(fontField);
-  
-        const selection = window.getSelection();
-        selection.removeAllRanges();
-        selection.addRange(range);
-  
-        // Terapkan warna ke seluruh teks dalam fontField
-        document.execCommand('underline');
-  
-        // Optional: hapus seleksi biar gak kelihatan disorot
-        selection.removeAllRanges();
+        window.dispatchEvent(new CustomEvent('notif-pesan', { 
+          detail: { pesan: `tidak ada seleksi tersimpan`, status:false} 
+        }));
       }
-
-      if(!fontField.id.startsWith('field-')){
-        editorFieldSelect.children[0].outerHTML = fontField.innerHTML;
-      }
-
-      updateContent(editorFieldSelect)
-      globals.editorFieldSelect=editorFieldSelect
-    } else {
-      alert('Tidak ada seleksi tersimpan');
     }
   })
   
@@ -698,45 +733,49 @@ function fontStylingField(){
     editorFieldSelect = globals.editorFieldSelect
     const sel = window.getSelection();
 
-     let fontField = null
-    if(!(document.getElementById('heading-text-wrapper').classList.contains('hidden'))){
-      fontField = document.getElementById('heading-text')
-    }else{
-      fontField = editorFieldSelect
-    }
-
-    if (sel.rangeCount){
-      const range = sel.getRangeAt(0);
-      const startInside = fontField.contains(range.startContainer.nodeType === 3 ? range.startContainer.parentNode : range.startContainer);
-      const endInside = fontField.contains(range.endContainer.nodeType === 3 ? range.endContainer.parentNode : range.endContainer);
-  
-      if (startInside && endInside && !range.collapsed) {
-        document.execCommand('justifyLeft');
-        // console.log('✅ aligned selected content');
-      } else {
-        const range = document.createRange();
-        range.selectNodeContents(fontField);
-  
-        const selection = window.getSelection();
-        selection.removeAllRanges();
-        selection.addRange(range);
-  
-        // Terapkan warna ke seluruh teks dalam fontField
-        document.execCommand('justifyLeft');
-  
-        // Optional: hapus seleksi biar gak kelihatan disorot
-        // console.log('select all')
+    if(!editorFieldSelect.id.startsWith('section-accordion')){
+      let fontField = null
+      if(!(document.getElementById('heading-text-wrapper').classList.contains('hidden'))){
+        fontField = document.getElementById('heading-text')
+      }else{
+        fontField = editorFieldSelect
       }
 
-      if(!fontField.id.startsWith('field-')){
-  
-        editorFieldSelect.children[0].outerHTML = fontField.innerHTML;
-      }
+      if (sel.rangeCount){
+        const range = sel.getRangeAt(0);
+        const startInside = fontField.contains(range.startContainer.nodeType === 3 ? range.startContainer.parentNode : range.startContainer);
+        const endInside = fontField.contains(range.endContainer.nodeType === 3 ? range.endContainer.parentNode : range.endContainer);
+    
+        if (startInside && endInside && !range.collapsed) {
+          document.execCommand('justifyLeft');
+          // //console.log('✅ aligned selected content');
+        } else {
+          const range = document.createRange();
+          range.selectNodeContents(fontField);
+    
+          const selection = window.getSelection();
+          selection.removeAllRanges();
+          selection.addRange(range);
+    
+          // Terapkan warna ke seluruh teks dalam fontField
+          document.execCommand('justifyLeft');
+    
+          // Optional: hapus seleksi biar gak kelihatan disorot
+          // //console.log('select all')
+        }
 
-      updateContent(editorFieldSelect)
-      globals.editorFieldSelect=editorFieldSelect
-    }else{
-      alert('tidak ada seleksi tersimpan')
+        if(!fontField.id.startsWith('field-')){
+    
+          editorFieldSelect.children[0].innerHTML = fontField.innerHTML;
+        }
+
+        updateContent(editorFieldSelect)
+        globals.editorFieldSelect=editorFieldSelect
+      }else{
+        window.dispatchEvent(new CustomEvent('notif-pesan', { 
+          detail: { pesan: `tidak ada seleksi tersimpan`, status:false} 
+        }));
+      }
     }
   })
   
@@ -744,46 +783,49 @@ function fontStylingField(){
     editorFieldSelect = globals.editorFieldSelect
     const sel = window.getSelection();
 
-    let fontField = null
-    if(!(document.getElementById('heading-text-wrapper').classList.contains('hidden'))){
-      fontField = document.getElementById('heading-text')
-    }else{
-      fontField = editorFieldSelect
-    }
-
-    if (sel.rangeCount){
-      const range = sel.getRangeAt(0);
-      const startInside = fontField.contains(range.startContainer.nodeType === 3 ? range.startContainer.parentNode : range.startContainer);
-      const endInside = fontField.contains(range.endContainer.nodeType === 3 ? range.endContainer.parentNode : range.endContainer);
-  
-      if (startInside && endInside && !range.collapsed) {
-        document.execCommand('justifyRight');
-        // console.log('✅ aligned selected content');
-      } else {
-        const range = document.createRange();
-        range.selectNodeContents(fontField);
-  
-        const selection = window.getSelection();
-        selection.removeAllRanges();
-        selection.addRange(range);
-  
-        // Terapkan warna ke seluruh teks dalam editorFieldSelect
-        document.execCommand('justifyRight');
-  
-        // console.log('select all')
+    if(!editorFieldSelect.id.startsWith('section-accordion')){
+      let fontField = null
+      if(!(document.getElementById('heading-text-wrapper').classList.contains('hidden'))){
+        fontField = document.getElementById('heading-text')
+      }else{
+        fontField = editorFieldSelect
       }
-      
-      if(!fontField.id.startsWith('field-')){
+
+      if (sel.rangeCount){
+        const range = sel.getRangeAt(0);
+        const startInside = fontField.contains(range.startContainer.nodeType === 3 ? range.startContainer.parentNode : range.startContainer);
+        const endInside = fontField.contains(range.endContainer.nodeType === 3 ? range.endContainer.parentNode : range.endContainer);
     
-        editorFieldSelect.children[0].outerHTML = fontField.innerHTML;
+        if (startInside && endInside && !range.collapsed) {
+          document.execCommand('justifyRight');
+          // //console.log('✅ aligned selected content');
+        } else {
+          const range = document.createRange();
+          range.selectNodeContents(fontField);
+    
+          const selection = window.getSelection();
+          selection.removeAllRanges();
+          selection.addRange(range);
+    
+          // Terapkan warna ke seluruh teks dalam editorFieldSelect
+          document.execCommand('justifyRight');
+    
+          // //console.log('select all')
+        }
+        
+        if(!fontField.id.startsWith('field-')){
+      
+          editorFieldSelect.children[0].innerHTML = fontField.innerHTML;
+        }
+
+        updateContent(editorFieldSelect)
+        globals.editorFieldSelect=editorFieldSelect
+      }else{       
+        window.dispatchEvent(new CustomEvent('notif-pesan', { 
+          detail: { pesan: `tidak ada seleksi tersimpan`, status:false} 
+        }));
       }
-
-      updateContent(editorFieldSelect)
-      globals.editorFieldSelect=editorFieldSelect
-    }else{
-       alert('tidak ada seleksi tersimpan')
     }
-
   })
   
   document.getElementById('font-center').addEventListener('click', function () {
@@ -791,45 +833,50 @@ function fontStylingField(){
 
     editorFieldSelect = globals.editorFieldSelect
 
-    let fontField = null
-    if(!(document.getElementById('heading-text-wrapper').classList.contains('hidden'))){
-      fontField = document.getElementById('heading-text')
-    }else{
-      fontField = editorFieldSelect
-    }
+    if(!editorFieldSelect.id.startsWith('section-accordion')){
 
-    if (sel.rangeCount){
-      const range = sel.getRangeAt(0);
-      const startInside = fontField.contains(range.startContainer.nodeType === 3 ? range.startContainer.parentNode : range.startContainer);
-      const endInside = fontField.contains(range.endContainer.nodeType === 3 ? range.endContainer.parentNode : range.endContainer);
-  
-      if (startInside && endInside && !range.collapsed) {
-        document.execCommand('justifyCenter');
-        // console.log('✅ aligned selected content');
-      } else {
-        const range = document.createRange();
-        range.selectNodeContents(fontField);
-  
-        const selection = window.getSelection();
-        selection.removeAllRanges();
-        selection.addRange(range);
-  
-        // Terapkan warna ke seluruh teks dalam editorFieldSelect
-        document.execCommand('justifyCenter');
-  
-        // Optional: hapus seleksi biar gak kelihatan disorot
-        selection.removeAllRanges();
-        // console.log('select all')
+      let fontField = null
+      if(!(document.getElementById('heading-text-wrapper').classList.contains('hidden'))){
+        fontField = document.getElementById('heading-text')
+      }else{
+        fontField = editorFieldSelect
       }
 
-      if(!fontField.id.startsWith('field-')){
-        editorFieldSelect.children[0].outerHTML = fontField.innerHTML;
+      if (sel.rangeCount){
+        const range = sel.getRangeAt(0);
+        const startInside = fontField.contains(range.startContainer.nodeType === 3 ? range.startContainer.parentNode : range.startContainer);
+        const endInside = fontField.contains(range.endContainer.nodeType === 3 ? range.endContainer.parentNode : range.endContainer);
+    
+        if (startInside && endInside && !range.collapsed) {
+          document.execCommand('justifyCenter');
+          // //console.log('✅ aligned selected content');
+        } else {
+          const range = document.createRange();
+          range.selectNodeContents(fontField);
+    
+          const selection = window.getSelection();
+          selection.removeAllRanges();
+          selection.addRange(range);
+    
+          // Terapkan warna ke seluruh teks dalam editorFieldSelect
+          document.execCommand('justifyCenter');
+    
+          // Optional: hapus seleksi biar gak kelihatan disorot
+          selection.removeAllRanges();
+          // //console.log('select all')
+        }
+
+        if(!fontField.id.startsWith('field-')){
+          editorFieldSelect.children[0].innerHTML = fontField.innerHTML;
+        }
+        
+        updateContent(editorFieldSelect)
+        globals.editorFieldSelect=editorFieldSelect
+      }else{
+        window.dispatchEvent(new CustomEvent('notif-pesan', { 
+          detail: { pesan: `tidak ada seleksi tersimpan`, status:false} 
+        }));
       }
-      
-      updateContent(editorFieldSelect)
-      globals.editorFieldSelect=editorFieldSelect
-    }else{
-       alert('tidak ada seleksi tersimpan')
     }
   })
   
@@ -837,46 +884,51 @@ function fontStylingField(){
     editorFieldSelect = globals.editorFieldSelect
     const sel = window.getSelection();
 
-    let fontField = null
-    if(!(document.getElementById('heading-text-wrapper').classList.contains('hidden'))){
-      fontField = document.getElementById('heading-text')
-    }else{
-      fontField = editorFieldSelect
-    }
-
-    if (sel.rangeCount){
-      const range = sel.getRangeAt(0);
-      const startInside = fontField.contains(range.startContainer.nodeType === 3 ? range.startContainer.parentNode : range.startContainer);
-      const endInside = fontField.contains(range.endContainer.nodeType === 3 ? range.endContainer.parentNode : range.endContainer);
-  
-      if (startInside && endInside && !range.collapsed) {
-        document.execCommand('justifyFull');
-        // console.log('✅ aligned selected content');
-      } else {
-        const range = document.createRange();
-        range.selectNodeContents(fontField);
-  
-        const selection = window.getSelection();
-        selection.removeAllRanges();
-        selection.addRange(range);
-  
-        // Terapkan warna ke seluruh teks dalam editorFieldSelect
-        document.execCommand('justifyFull');
-  
-        // Optional: hapus seleksi biar gak kelihatan disorot
-        selection.removeAllRanges();
-        // console.log('select all')
-      }
-      
-      if(!fontField.id.startsWith('field-')){
-        editorFieldSelect.children[0].outerHTML = fontField.innerHTML;
+    if(!editorFieldSelect.id.startsWith('section-accordion')){
+      let fontField = null
+      if(!(document.getElementById('heading-text-wrapper').classList.contains('hidden'))){
+        fontField = document.getElementById('heading-text')
+      }else{
+        fontField = editorFieldSelect
       }
 
-      updateContent(editorFieldSelect)
-    }else{
-       alert('tidak ada seleksi tersimpan')
+      if (sel.rangeCount){
+        const range = sel.getRangeAt(0);
+        const startInside = fontField.contains(range.startContainer.nodeType === 3 ? range.startContainer.parentNode : range.startContainer);
+        const endInside = fontField.contains(range.endContainer.nodeType === 3 ? range.endContainer.parentNode : range.endContainer);
+    
+        if (startInside && endInside && !range.collapsed) {
+          document.execCommand('justifyFull');
+          // //console.log('✅ aligned selected content');
+        } else {
+          const range = document.createRange();
+          range.selectNodeContents(fontField);
+    
+          const selection = window.getSelection();
+          selection.removeAllRanges();
+          selection.addRange(range);
+    
+          // Terapkan warna ke seluruh teks dalam editorFieldSelect
+          document.execCommand('justifyFull');
+    
+          // Optional: hapus seleksi biar gak kelihatan disorot
+          selection.removeAllRanges();
+          // //console.log('select all')
+        }
+        
+        if(!fontField.id.startsWith('field-')){
+          editorFieldSelect.children[0].innerHTML = fontField.innerHTML;
+        }
+
+        updateContent(editorFieldSelect)
+      }else{
+
+        window.dispatchEvent(new CustomEvent('notif-pesan', { 
+          detail: { pesan: `tidak ada seleksi tersimpan`, status:false} 
+        }));
+      }
+      globals.editorFieldSelect=editorFieldSelect
     }
-    globals.editorFieldSelect=editorFieldSelect
   })
 
   document.getElementById('font-order-list').addEventListener('click', function () {
@@ -884,25 +936,26 @@ function fontStylingField(){
     const ol = document.createElement('ol'); // or 'ul' for unordered list
     const li = document.createElement('li');
 
-    ol.appendChild(li);
-    editorFieldSelect.appendChild(ol);
-    applyListStyle();
+    if(!editorFieldSelect.id.startsWith('section-accordion')){
+      ol.appendChild(li);
+      editorFieldSelect.appendChild(ol);
+      applyListStyle();
 
- 
-    const lis = editorFieldSelect.querySelectorAll('li');
-    lis.forEach(li => {
-      if (li.innerText.trim() === '') {
-        li.remove();
-      }
-    });
-    const ols = editorFieldSelect.querySelectorAll('ol');
-    ols.forEach(ol => {
-      if (ol.innerText.trim() === '') {
-        ol.remove();
-      }
-    });
-    updateContent(editorFieldSelect)
-    globals.editorFieldSelect=editorFieldSelect
+      const lis = editorFieldSelect.querySelectorAll('li');
+      lis.forEach(li => {
+        if (li.innerText.trim() === '') {
+          li.remove();
+        }
+      });
+      const ols = editorFieldSelect.querySelectorAll('ol');
+      ols.forEach(ol => {
+        if (ol.innerText.trim() === '') {
+          ol.remove();
+        }
+      });
+      updateContent(editorFieldSelect)
+      globals.editorFieldSelect=editorFieldSelect
+    }
   });
 
   document.getElementById('font-unorder-list').addEventListener('click', function () {
@@ -910,25 +963,27 @@ function fontStylingField(){
     const ul = document.createElement('ul'); // or 'ul' for unordered list
     const li = document.createElement('li');
 
-    ul.appendChild(li);
-    editorFieldSelect.appendChild(ul);
-    applyListStyle();
+    if(!editorFieldSelect.id.startsWith('section-accordion')){
+      ul.appendChild(li);
+      editorFieldSelect.appendChild(ul);
+      applyListStyle();
 
- 
-    const lis = editorFieldSelect.querySelectorAll('li');
-    lis.forEach(li => {
-      if (li.innerText.trim() === '') {
-        li.remove();
-      }
-    });
-    const uls = editorFieldSelect.querySelectorAll('ul');
-    uls.forEach(ul => {
-      if (ul.innerText.trim() === '') {
-        ul.remove();
-      }
-    });
-    updateContent(editorFieldSelect)
-    globals.editorFieldSelect=editorFieldSelect
+      const lis = editorFieldSelect.querySelectorAll('li');
+      lis.forEach(li => {
+        if (li.innerText.trim() === '') {
+          li.remove();
+        }
+      });
+      const uls = editorFieldSelect.querySelectorAll('ul');
+      uls.forEach(ul => {
+        if (ul.innerText.trim() === '') {
+          ul.remove();
+        }
+      });
+
+      updateContent(editorFieldSelect)
+      globals.editorFieldSelect=editorFieldSelect
+    }
   });
 }
 // -------- Box Field Styling -----------
@@ -937,11 +992,11 @@ function widthHeightField(){
     editorFieldSelect = globals.editorFieldSelect
     accordionSelect = globals.accordionSelect
     carouselSelect = globals.carouselSelect
-    // console.log('width')
+    // //console.log('width')
     if(editorFieldSelect){
       if(editorFieldSelect.id.split('-')[0] === "video"){
         editorFieldSelect.style.maxWidth=`${this.value}px`
-        // console.log('video')
+        // //console.log('video')
       }else if(accordionSelect){
         accordionSelect.style.width=`${this.value}px`
       
@@ -1015,20 +1070,20 @@ function flexPosition(){
       section.style.justifyContent = 'start'
       section.style.alignItems = 'center'
 
-      // console.log('ini top')
+      // //console.log('ini top')
     }else if(this.value == 'center'){
       editorFieldSelect.style.justifyContent = 'center'
       editorFieldSelect.style.alignItems = 'center'
       section.style.justifyContent = 'center'
       section.style.alignItems = 'center'
       
-      // console.log('ini center')
+      // //console.log('ini center')
     }else if(this.value == 'end'){
       editorFieldSelect.style.justifyContent = 'end'
       editorFieldSelect.style.alignItems = 'center'
       section.style.justifyContent = 'end'
       section.style.alignItems = 'center'
-      // console.log('ini bottom')
+      // //console.log('ini bottom')
     }
     updateStyle(editorFieldSelect)
     globals.editorFieldSelect=editorFieldSelect
@@ -1431,11 +1486,15 @@ function showLoader(v = true) {
 
 function isValidImage(file, maxMB = 5) {
   if (!file || !file.type.startsWith('image/')) {
-    alert('Please select a valid image file.');
+    window.dispatchEvent(new CustomEvent('notif-pesan', { 
+      detail: { pesan: 'Please select a valid image file.', status:false} 
+    }));
     return false;
   }
   if (file.size > maxMB * 1024 * 1024) {
-    alert(`Ukuran file terlalu besar. Maksimal ${maxMB}MB.`);
+    window.dispatchEvent(new CustomEvent('notif-pesan', { 
+        detail: { pesan: `Ukuran file terlalu besar. Maksimal ${maxMB}MB.`, status:false} 
+      }));
     return false;
   }
   return true;
@@ -1515,8 +1574,10 @@ async function handleCarouselBgUpload(file) {
   const blob = URL.createObjectURL(webp);
   
   const editItem = globals.editCarouselItem;
+
   const itemId = editItem.id.split('-').slice(1).join('-');
-  const item = document.getElementById(itemId);
+  const item = getEl(itemId);
+  if(!item) return
   
   const rgba = extractRGBA(editItem.style.cssText);
   const imgUrl = `url(${blob})`;
@@ -1525,7 +1586,8 @@ async function handleCarouselBgUpload(file) {
   editItem.dataset.nameBg = short;
   item.dataset.nameBg = short;
   
-  const carousel = document.getElementById(item.id.split('-').slice(1, -1).join('-'));
+  const carousel = getEl(item.id.split('-').slice(1, -1).join('-'));
+  if(!carousel) return
   
   if (carousel.dataset.textPosition === 'on-image') {
     editItem.style.backgroundImage = `linear-gradient(${rgba}), ${imgUrl}`;
@@ -1620,7 +1682,7 @@ function colorBackgroundField(){
           }
         })
       }
-      // console.log('tipe 2')
+      // //console.log('tipe 2')
       globals.carouselSelect=carouselSelect
     }else{
       let Style = fieldEditor.style.cssText
@@ -1720,7 +1782,7 @@ function colorBackgroundField(){
     }else{
       let Style = fieldEditor.style.cssText
       if(Style.includes('background-image')){
-        // console.log('ada bgImage')
+        // //console.log('ada bgImage')
         let urlPart = '';
 
         const match = Style.match(/url\(([^)]+)\)/i);
@@ -1756,7 +1818,9 @@ function colorBackgroundField(){
       await handleFieldBgUpload(file);
     } catch (err) {
       console.error(err);
-      alert("Gagal memproses gambar");
+      window.dispatchEvent(new CustomEvent('notif-pesan', { 
+        detail: { pesan: `Gagal memproses gambar`, status:false} 
+      }));
     }
     showLoader(false);
   });
@@ -1771,14 +1835,16 @@ function colorBackgroundField(){
       await handleCarouselBgUpload(file);
     } catch (err) {
       console.error(err);
-      alert("Gagal memproses gambar");
+      window.dispatchEvent(new CustomEvent('notif-pesan', { 
+        detail: { pesan: 'Gagal memproses gambar', status:false} 
+      }));
     }
     showLoader(false);
   });
 
   document.querySelectorAll('[name="bg-image-size"]').forEach(bgImageSize =>{
     bgImageSize.addEventListener('click', function(){
-      // console.log('image sizer')
+      // //console.log('image sizer')
       
       let fieldEditor
       editorFieldSelect = globals.editorFieldSelect
@@ -1873,6 +1939,7 @@ function colorBackgroundField(){
     
     // Reset input file juga (opsional)
     document.getElementById('bg-image-input').value = '';
+    globals.isFormDirty = true
     globals.webpageDb=webpageDb
     globals.file=fileDb
   })
@@ -1881,14 +1948,13 @@ function colorBackgroundField(){
 function setImageGallery(indicator){
   fileDb=globals.file
 
-
   let mediaGallery='-- Belum Ada Gambar --'
   if(fileDb.length > 0){
     mediaGallery=''
   }
   fileDb.forEach(file =>{
     if(file.filetype === 'img' || file.type === 'img'){
-      let url=`https://shd-admin.smartdiabetes.my.id/media/${file.id}`
+      let url=`${globals.url}/media/${file.id}`
       if(file.url){
         url=file.url
       }
@@ -1900,271 +1966,10 @@ function setImageGallery(indicator){
       `
     }
   })
-
+  globals.isFormDirty = true
   document.getElementById('body-media-recent').innerHTML=mediaGallery
 
   setImageRecent()
-}
-// -------------- BORDER WAVE ----------
-function borderWave() {
-  webpageDb=globals.webpageDb
-  
-  editorFieldSelect=globals.editorFieldSelect
-  let idWave = null;
-  let currentWaveColor = document.getElementById('border-wave-color').value; // Default warna awal
-
-  const sanitizeSVG = (svgText) => {
-    // Buang semua tag <script> dan atribut event (onload, onclick, dll.)
-    return svgText
-      .replace(/<script.*?>.*?<\/script>/gi, '')
-      .replace(/\son\w+=".*?"/gi, '');
-  }
-
-  const applyColorToSVG = (svg, color) => {
-    if (!svg) return;
-
-    if(svg.id.startsWith('border-wave')){
-      svg.querySelectorAll('path').forEach(path => {
-        path.setAttribute('fill', color);
-      });
-
-      webpageDb.some(field=>{
-        if(field.id === svg.id){
-          field.action='update'
-          field.style = svg.outerHTML
-          return true
-        }
-      })
-      globals.webpageDb=webpageDb
-    }
-  };
-
-  const getClonedSVG = (waveId, position) => {
-    let svg;
-
-    if (waveId) {
-      svg = document.getElementById(waveId);
-    } else {
-      const svgText = sanitizeSVG(document.getElementById('border-wave-svg').value);
-      const wrapper = document.createElement('div');
-      wrapper.innerHTML = svgText;
-      svg = wrapper.querySelector('svg'); // fresh from textarea input
-    }
-
-    if (!svg) return null;
-
-    const svgClone = svg.cloneNode(true);
-    svgClone.setAttribute('style', `z-index: 40; ${position}: 0; position: absolute;`);
-    svgClone.setAttribute('class', '');
-
-    if (position === 'top') {
-      flipPathVertically(svgClone,position);
-    }
-
-    applyColorToSVG(svgClone, currentWaveColor);
-    return svgClone;
-  };
-
-  function flipPathVertically(svgElement, position) {
-    const viewBox = svgElement.getAttribute('viewBox'); // contoh: "0 0 1440 320"
-    if (!viewBox) return;
-
-    webpageDb=globals.webpageDb
-    editorFieldSelect = globals.editorFieldSelect
-    accordionPartSelect = globals.accordionPartSelect
-
-    if(position){
-      svgElement.setAttribute('style', `z-index: 9; ${position}: 0; position: absolute;`);
-    }
-    const height = parseFloat(viewBox.split(' ')[3]); // ambil tinggi viewBox
-    const paths = svgElement.querySelectorAll('path');
-
-    paths.forEach(path => {
-      const originalD = path.getAttribute('d');
-
-      // Transform angka Y (koordinat ganjil dalam d)
-      const flippedD = originalD.replace(/(-?\d*\.?\d+)/g, (match, num, offset, string) => {
-        // Cari indeks angka
-        const prev = string.slice(0, offset);
-        const commasBefore = (prev.match(/[\d.]+/g) || []).length;
-
-        // Hanya ubah nilai Y (ganjil indeks)
-        if (commasBefore % 2 === 1) {
-          const y = parseFloat(num);
-          return (height - y).toString();
-        }
-        return num;
-      });
-
-      path.setAttribute('d', flippedD);
-    });
-
-    webpageDb.some(field=>{
-      if(field.id === svgElement.id){
-        field.action='update'
-        field.style = svgElement.outerHTML
-        return true
-      }
-    })
-    globals.webpageDb=webpageDb
-  }
-
-  const updateSectionWithWave = (waveId, position) => {
-    editorFieldSelect=globals.editorFieldSelect
-    webpageDb=globals.webpageDb
-
-    const svgClone = getClonedSVG(waveId, position);
-    if (!svgClone){
-      console.log('SVG tidak ditemukan untuk id:', waveId);
-    }
-
-    // Hapus SVG lama
-    editorFieldSelect.querySelectorAll('svg').forEach(svg => {
-      if(svg.id.startsWith('border-wave')){
-        svg.remove()
-      }
-    });
-
-    svgClone.id = `border-wave-${position}-section-${editorFieldSelect.id.split('-')[2]}`;
-
-    let color = document.getElementById('border-wave-color').value
-    svgClone.querySelector('path').setAttribute('fill', color)
-
-    editorFieldSelect.appendChild(svgClone);
-
-    const existingIndex = webpageDb.findIndex(page => 
-      page.id.startsWith('border-wave-') 
-      && (page.id.split('-').find(part => !isNaN(part)) 
-      === svgClone.id.split('-').find(part => !isNaN(part)))
-    );
-
-    if (existingIndex !== -1) {
-      // kalau sudah ada → update style
-      webpageDb[existingIndex].action =  updateActionProperty(webpageDb[existingIndex].action, 'delete');
-    }
-      // kalau belum ada → push baru
-    webpageDb.push({
-      id: svgClone.id,
-      type: 'border-wave',
-      action: 'new-add',
-      style: svgClone.outerHTML,
-    });
-    
-  
-    globals.webpageDb=webpageDb
-  };
-
-  // Event saat tipe wave diklik
-  document.querySelectorAll("[id^='border-wave-type-']").forEach(tipe => {
-    tipe.addEventListener('click', function () {
-      idWave = tipe.querySelector('[id^="type-"]').id;
-
-      const selectedWavePosition = document.querySelector('input[name="border-wave-position"]:checked');
-      const position = selectedWavePosition ? selectedWavePosition.value : 'bottom';
-
-      updateSectionWithWave(idWave, position);
-
-    });
-  });
-
-  // Event saat posisi wave (radio) diganti
-  document.querySelectorAll("[name='border-wave-position']").forEach(radio => {
-    radio.addEventListener('change', function () {
-      editorFieldSelect=globals.editorFieldSelect
-        const borderWave = editorFieldSelect.querySelector('[id^="border-wave-"]')
-      
-        if(!borderWave.getAttribute('style').includes(this.value)){
-          flipPathVertically(borderWave, this.value);
-        }
-    });
-  });
-
-  // Event saat warna wave diubah
-  document.getElementById('border-wave-color').addEventListener('change', function () {
-    currentWaveColor = this.value;
-    editorFieldSelect=globals.editorFieldSelect
-    webpageDb=globals.webpageDb
-
-    editorFieldSelect.querySelectorAll('svg').forEach(svg => {
-      if(!svg.id.startsWith('btn')){
-     
-        applyColorToSVG(svg, currentWaveColor);
-
-        webpageDb.map(page=>{
-          if(page.id === svg.id){
-            page.style= svg.outerHTML
-            page.action= updateActionProperty(page.action, 'update')
-          }
-        })
-     
-      }
-    });
-    globals.webpageDb=webpageDb
-  });
-
-  document.getElementById('apply-border-wave-svg').addEventListener('click', function () {
-    const svgText = sanitizeSVG(document.getElementById('border-wave-svg').value);
-    editorFieldSelect = globals.editorFieldSelect
-    webpageDb = globals.webpageDb
-    editorFieldSelect.querySelectorAll('svg').forEach(svg => {
-      if(svg.id.startsWith('border-wave')){
-        svg.remove()
-      }
-    });
-
-    const wrapper = document.createElement('div');
-    wrapper.innerHTML = svgText;
-
-    const svgElement = wrapper.querySelector('svg');
-    svgElement.id = `border-wave-bottom-section-${editorFieldSelect.id.split('-')[2]}`
-
-    const position = document.querySelector('input[name="border-wave-position"]:checked')?.value || 'bottom';
-
-    if (svgElement) {
-      svgElement.style.position = 'absolute';
-      svgElement.style.zIndex = 9;
-      svgElement.style[position] = '0';
-
-      if (position === 'top') {
-        svgElement.id = `border-wave-top-section-${editorFieldSelect.id.split('-')[2]}`
-        flipPathVertically(svgElement)
-      }
-
-      applyColorToSVG(svgElement, currentWaveColor);
-      editorFieldSelect.appendChild(svgElement);
-
-      webpageDb.map(page=>{
-        if(page.id == svgElement.id){
-          page.style=svgElement.outerHTML
-          page.action= updateActionProperty(page.action, 'update')
-        }
-      })
-    
-      globals.webpageDb=webpageDb
-      globals.editorFieldSelect=editorFieldSelect
-
-    } else {
-      alert('SVG tidak valid!');
-    }
-  });
-
-  document.getElementById('btn-reset-border-wave').addEventListener('click', function(){
-    editorFieldSelect=globals.editorFieldSelect
-    webpageDb=globals.webpageDb
-
-    let borderWave = editorFieldSelect.querySelector('[id^="border-wave"]')
-    borderWave.remove()
-
-    const findWave = webpageDb.findIndex(field=>field.id === borderWave.id)
-    if(findWave > 0){
-      if(findWave.action?.includes('new')){
-        webpageDb.splice(findWave,1)
-      }else{
-        webpageDb[findWave].action='delete'
-      }
-    }
-
-  })
 }
 
 function resetImage(idParts){
@@ -2174,8 +1979,10 @@ function resetImage(idParts){
   let bodyItem=globals.bodyItem
   let editCarouselItem = globals.editCarouselItem
 
-  let carouselItem = document.getElementById(`${idParts.slice(2).join('-')}`)
-  editCarouselItem = document.getElementById(`edit-${idParts.slice(2).join('-')}`) 
+  let carouselItem = getEl(`${idParts.slice(2).join('-')}`)
+  editCarouselItem = getEl(`edit-${idParts.slice(2).join('-')}`) 
+
+   if(!carouselItem||!editCarouselItem)return
 
   bodyItem = editCarouselItem.parentElement.parentElement
   let styleField = carouselItem.getAttribute("style"); // ambil sebagai string
@@ -2220,8 +2027,10 @@ function resetImage(idParts){
 
     globals.webpageDb=webpageDb
     globals.file=fileDb
+    globals.isFormDirty = true
   } else {
     carouselItem.style.backgroundColor = "";
+    globals.isFormDirty = true
   }
 }
 
@@ -2233,7 +2042,7 @@ function applyFieldBgFromUrl(field, imgUrl) {
   field.style.backgroundPosition = 'center';
   field.style.backgroundColor = '';
   field.style.backgroundImage = `linear-gradient(${rgba}), url(${imgUrl})`;
-
+  globals.isFormDirty = true
 }
 
 function applyCarouselBgFromUrl(editItem, targetItem, carousel, imgUrl) {
@@ -2252,6 +2061,7 @@ function applyCarouselBgFromUrl(editItem, targetItem, carousel, imgUrl) {
 
   editItem.style.backgroundColor = "";
   targetItem.style.backgroundColor = "";
+  globals.isFormDirty = true
 }
 
 function setImageRecent() {
@@ -2268,8 +2078,8 @@ function setImageRecent() {
  
       let id = globals.itemCarouselId ?? globals.editorFieldSelect.id;
 
-
-      const targetElement = document.getElementById(id);
+      const targetElement = getEl(id);
+      if(!targetElement)return
 
       let editorFieldSelect = globals.editorFieldSelect;
       let itemCarouselId = globals.itemCarouselId;
@@ -2283,10 +2093,9 @@ function setImageRecent() {
       // ============= CAROUSEL =============
       if (id.includes("item-carousel")) {
 
-        const editItem = document.getElementById(`edit-${id}`);
-        const carousel = document.getElementById(
-          id.split('-').slice(1, -1).join('-')
-        );
+        const editItem = getEl(`edit-${id}`);
+        const carousel = getEl(id.split('-').slice(1, -1).join('-'));
+        if(!editItem||!carousel) return
 
         if (carousel.dataset.textPosition === 'below-image') {
           const webpitem = webpageDb.find(item => item.id === `img-text-on-image-${id}`)
@@ -2388,8 +2197,8 @@ function setImageRecent() {
             const textOnImage = webpageDb[indexTextOnImahe]
             let newContent=name
 
-            if(media.src.includes('http:/') && !media.src.includes('blob')){
-              const match = media.src.match(/^(http?:\/\/[^"]*?media\/)/);
+            if(media.src.includes('https:/') && !media.src.includes('blob')){
+              const match = media.src.match(/^(https?:\/\/[^"]*?media\/)/);
               const base = match ? match[1] : null;
               newContent = base+name
             }
@@ -2406,6 +2215,7 @@ function setImageRecent() {
 
       globals.file = fileDb;
       globals.webpageDb=webpageDb
+      globals.isFormDirty = true
       showLoader(false);
     });
   });
@@ -2429,6 +2239,6 @@ function setListenerSetImage(){
 
 export { fontStylingField, widthHeightField, 
   borderField, paddingMarginField, 
-  colorBackgroundField, borderWave, 
+  colorBackgroundField, 
   flexPosition, resetImage,setListenerSetImage,
   setImageGallery,updateStyle, setImageRecent }

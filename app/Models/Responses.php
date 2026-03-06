@@ -9,6 +9,7 @@ class Responses extends Model
     protected $fillable = [
         'uuid',
         'responden_id',
+        'form_id',
         'answer_id',
         'attempt',
         'input_type',

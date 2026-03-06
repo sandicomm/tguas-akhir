@@ -12,32 +12,38 @@ import { renderSvg } from './utils/svgEdit.js';
 import { setListenerSetImage } from './styling/baseStyling.js';
 
 import {arraySubsequenceMatch, generateUniqueId, handleElementCount, replaceIdSuffix} from './utils/elementNumberingId.js'
+// ======== Validation get element ==========
+import { getEl } from './utils/validationGetElement.js';
 
 let webpageDb=  globals.webpageDb
 let editCarouselItem=globals.editCarouselItem
 let carouselSelect=globals.carouselSelect
 let bodyItem=globals.bodyItem
 
-const createCarousel = (carousel, childElements,editorContainer) => {
+const createCarousel = (carousel, childElements,editorContainer,edit) => {
     let dataSet = parseStyleObj(carousel.content)
     return`
       <div id="${carousel.id}" data-element-order="${carousel.element_order}" data-text-position="${dataSet.dataTextPosition}" data-text="${dataSet.dataText}" data-next-btn-hide="${dataSet.dataNextBtnHide}" data-carousel="static" class="flex justify-center items-center flex-col" style="${parseStyleObj(carousel.style).css}">
-        <div type="button" class="bg-white rounded-full absolute right-[-1.7rem] top-[-0.1rem] z-0 cursor-pointer" data-dropdown-toggle="dropdown-${carousel.id}" data-dropdown-placement="right-end">
-          ${renderSvg()}                 
-        </div>
+        ${
+          edit ? 
+            `<div type="button" class="bg-white rounded-full absolute right-[-1.7rem] top-[-0.1rem] z-0 cursor-pointer" data-dropdown-toggle="dropdown-${carousel.id}" data-dropdown-placement="right-end">
+              ${renderSvg()}                 
+            </div>`
+            : ''
+        }
 
         <div id="element-${carousel.id}" data-item-count="${carousel.element_count}" class="relative w-full h-full" data-carousel="static">
           <!-- Carousel wrapper -->
           <div id="wrapper-item-${carousel.id}" class="relative w-full h-full overflow-hidden rounded-lg text-black">
               <!-- createCarouselItem --!>
-              ${createCarouselItem(carousel, childElements, editorContainer, dataSet.dataTextPosition, dataSet.dataText, dataSet.dataNextBtnHide)}
+              ${createCarouselItem(carousel, childElements, editorContainer, dataSet.dataTextPosition, dataSet.dataText, dataSet.dataNextBtnHide,edit)}
           </div>
           <!-- slideIndicator --!>
           ${slideIndicator(carousel, childElements)}
           <!-- Slider controls -->
           <button id="slider-prev-btn" type="button" style="${parseStyleObj(carousel.style).paddingSlideController}" class="absolute top-0 start-0 z-30 flex items-center justify-center h-full cursor-pointer group focus:outline-none" data-carousel-prev>
               <span style="${parseStyleObj(carousel.style).slideControlWrapperSize}" class="${dataSet.dataNextBtnHide === 'false' ? '':'hidden'} inline-flex items-center justify-center rounded-full bg-gray-400/30 group-hover:bg-gray-400/50 group-focus:ring-4 group-focus:ring-gray-300 group-focus:outline-none">
-                  <svg style="${parseStyleObj(carousel.style).svgControlerSlideSize}" class="text-gray-500 rtl:rotate-180" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10">
+                  <svg style="${parseStyleObj(carousel.style).controlerSlideSize}" class="text-gray-500 rtl:rotate-180" aria-hidden="true" fill="none" viewBox="0 0 6 10">
                       <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 1 1 5l4 4"/>
                   </svg>
                   <span class="sr-only">Previous</span>
@@ -45,7 +51,7 @@ const createCarousel = (carousel, childElements,editorContainer) => {
           </button>
           <button id="slider-next-btn" type="button" style="${parseStyleObj(carousel.style).paddingSlideController}" class="absolute top-0 end-0 z-30 flex items-center justify-center h-full cursor-pointer group focus:outline-none" data-carousel-next>
               <span style="${parseStyleObj(carousel.style).slideControlWrapperSize}" class="${dataSet.dataNextBtnHide === 'false' ? '':'hidden'} inline-flex items-center justify-center rounded-full bg-gray-400/30 group-hover:bg-gray-400/50 group-focus:ring-4 group-focus:ring-gray-300 group-focus:outline-none">
-                  <svg class=" text-gray-500 rtl:rotate-180" aria-hidden="true" style="${parseStyleObj(carousel.style).svgControlerSlideSize}" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10">
+                  <svg class=" text-gray-500 rtl:rotate-180" aria-hidden="true" style="${parseStyleObj(carousel.style).controlerSlideSize}" fill="none" viewBox="0 0 6 10">
                       <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 9 4-4-4-4"/>
                   </svg>
                   <span class="sr-only">Next</span>
@@ -56,7 +62,7 @@ const createCarousel = (carousel, childElements,editorContainer) => {
     `
 }
 
-const createCarouselItem = (carousel, childElements,editorContainer, textPosition, textStatus, btnHide) => {
+const createCarouselItem = (carousel, childElements,editorContainer, textPosition, textStatus, btnHide,edit) => {
   let item=``
 
   childElements = childElements.sort((a,b) => a.element_order - b.element_order)
@@ -66,9 +72,9 @@ const createCarouselItem = (carousel, childElements,editorContainer, textPositio
         let textImage=''
      
         if(textStatus === 'true' ){
-            editorContainer.insertAdjacentHTML('afterend', createDropdownField(field[0].id))
+            if(edit) editorContainer.insertAdjacentHTML('afterend', createDropdownField(field[0].id))
             if(textPosition === 'on-image'){
-              textImage = createField(field[0])
+              textImage = createField(field[0],edit)
 
             }else if(textPosition === 'below-image'){
 
@@ -78,7 +84,7 @@ const createCarouselItem = (carousel, childElements,editorContainer, textPositio
                     <img src="${imgTxt[0].content}" style="width:100%;" loading="lazy">"
                   </div>
                   <div class="flex justify-center items-start h-full w-full ${btnHide ? 'px-3' : 'px-6'} ${btnHide} py-5 overflow-y-auto" style="${el.style}">
-                    ${createField(field[0])}
+                    ${createField(field[0],edit)}
                   </div>
                   `
             }
@@ -110,9 +116,7 @@ const slideIndicator = (carousel, childElements)=>{
       let indicator = i
       slide += `
       <button type="button" style="${parseStyleObj(carousel.style).indicatorSize}" 
-      class="rounded-full dark:hover:bg-white bg-white dark:bg-gray-400" 
-
-      aria-current="true" aria-label="Slide ${indicator+1}" data-carousel-slide-to="${i}"></button>
+      class="rounded-full !bg-gray-300/40 hover:!bg-gray-400/80 dark:!bg-gray-300/40 dark:hover:!bg-gray-400/80" aria-current="true" aria-label="Slide ${indicator+1}" data-carousel-slide-to="${i}"></button>
       `
   }
 
@@ -171,7 +175,7 @@ const addCarousel = (event)=>{
           <!-- Slider controls -->
           <button id="slider-prev-btn" type="button" style="${paddingSlideController}" class="absolute top-0 start-0 z-30 flex items-center justify-center h-full cursor-pointer group focus:outline-none" data-carousel-prev>
               <span style="${slideControlWrapperSize}" class="inline-flex items-center justify-center rounded-full bg-gray-400/30 group-hover:bg-gray-400/50 group-focus:ring-4 group-focus:ring-gray-300 group-focus:outline-none">
-                  <svg style="${svgControlerSlideSize}" class="text-gray-500 rtl:rotate-180" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10">
+                  <svg style="${svgControlerSlideSize}" class="text-gray-500 rtl:rotate-180" aria-hidden="true" fill="none" viewBox="0 0 6 10">
                       <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 1 1 5l4 4"/>
                   </svg>
                   <span class="sr-only">Previous</span>
@@ -179,7 +183,7 @@ const addCarousel = (event)=>{
           </button>
           <button id="slider-next-btn" type="button" style="${paddingSlideController}" class="absolute top-0 end-0 z-30 flex items-center justify-center h-full cursor-pointer group focus:outline-none" data-carousel-next>
               <span style="${slideControlWrapperSize}" class="inline-flex items-center justify-center rounded-full bg-gray-400/30 group-hover:bg-gray-400/50 group-focus:ring-4 group-focus:ring-gray-300 group-focus:outline-none">
-                  <svg class=" text-gray-500 rtl:rotate-180" aria-hidden="true" style="${svgControlerSlideSize}" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10">
+                  <svg class=" text-gray-500 rtl:rotate-180" aria-hidden="true" style="${svgControlerSlideSize}" fill="none" viewBox="0 0 6 10">
                       <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 9 4-4-4-4"/>
                   </svg>
                   <span class="sr-only">Next</span>
@@ -204,7 +208,9 @@ const addCarousel = (event)=>{
     if(idParts[2] === 'accordion'){
       idAppend = `wrapper-section-${idParts.slice(2, idParts.length).join('-')}`;
 
-      bodyAppend = document.getElementById(idAppend);
+      bodyAppend = getEl(idAppend);
+      if(!bodyAppend) return
+
       fieldNumber = handleElementCount(bodyAppend, bodyAppend.dataset.elementCount)
       bodyAppend.dataset.elementCount = fieldNumber;
 
@@ -221,7 +227,9 @@ const addCarousel = (event)=>{
 
     }else{
       idAppend = `editor-container-section-${idParts[4]}`;
-      const section = document.getElementById(idAppend)
+
+      const section = getEl(idAppend)
+      if(!section)return
 
       fieldNumber = handleElementCount(section, section.dataset.elementCount)
       section.dataset.elementCount = fieldNumber
@@ -240,15 +248,19 @@ const addCarousel = (event)=>{
       paddingSlideController = 'padding-left:4px;padding-right:4px;'
     }
 
-    document.getElementById(`webpage-section-${idParts.find(part => !isNaN(part))}`).insertAdjacentHTML('beforeend', createDropdown(idPrefix))
+    const webpageSection = getEl(`webpage-section-${idParts.find(part => !isNaN(part))}`)
+    const appendCarousel = getEl(idAppend)
+    if(!webpageSection || !appendCarousel) return
 
-    document.getElementById(idAppend).insertAdjacentHTML('beforeend', createCarousel(idPrefix,fieldNumber,widthCarousel,heightCarousel,svgControlerSlideSize,slideControlWrapperSize,indicatorSize,bottomIndicatorPosition,paddingSlideController));
+    webpageSection.insertAdjacentHTML('beforeend', createDropdown(idPrefix))
+
+    appendCarousel.insertAdjacentHTML('beforeend', createCarousel(idPrefix,fieldNumber,widthCarousel,heightCarousel,svgControlerSlideSize,slideControlWrapperSize,indicatorSize,bottomIndicatorPosition,paddingSlideController));
 
     webpageDb.push({
       id: `${idPrefix}`,
       type:'carousel',
       element_order: fieldNumber,
-      style: `{"css":"position:relative;width:${widthCarousel};height:${heightCarousel};","svgControlerSlideSize": "${svgControlerSlideSize}","slideControlWrapperSize": "${slideControlWrapperSize}","indicatorSize": "${indicatorSize}","bottomIndicatorPosition": "${bottomIndicatorPosition}","paddingSlideController": "${paddingSlideController}"}`,
+      style: `{"css":"position:relative;width:${widthCarousel};height:${heightCarousel};","controlerSlideSize": "${svgControlerSlideSize}","slideControlWrapperSize": "${slideControlWrapperSize}","indicatorSize": "${indicatorSize}","bottomIndicatorPosition": "${bottomIndicatorPosition}","paddingSlideController": "${paddingSlideController}"}`,
       element_count: 3,
       content:`{"dataTextPosition":"on-image","dataText":"false","dataNextBtnHide":"false"}`,
       action:'new-add'
@@ -286,15 +298,17 @@ const addCarousel = (event)=>{
       }
     })
 
+    globals.isFormDirty = true
     dropdownInitialized('',`dropdown-${idPrefix}`)
 
     setTimeout(() => {
       try {
-          const carouselElement = document.getElementById(idPrefix);
+          const carouselElement = getEl(idPrefix);
           if (carouselElement) {
-              new Carousel(carouselElement);
+            new Carousel(carouselElement);
+
           } else {
-              console.warn('⚠️ Elemen Crousel tidak ditemukan setelah appendChild');
+            console.warn('⚠️ Elemen Crousel tidak ditemukan setelah appendChild');
           }
           initFlowbite();
 
@@ -306,11 +320,15 @@ const addCarousel = (event)=>{
     globals.webpageDb=webpageDb
 
 }
+
 const copyCarousel=(idCarousel, mode="all")=>{
   try {
     webpageDb=globals.webpageDb
       let carouselId = idCarousel
-      const carouselEl = document.getElementById(carouselId);
+
+      const carouselEl = getEl(carouselId);
+      if(!carouselEl)return
+
       if (!carouselEl) {
         console.error('carousel tidak ditemukan:', carouselId);
         return false;
@@ -457,7 +475,9 @@ const copyCarousel=(idCarousel, mode="all")=>{
       // Duplikat body Dropdowns
       const bodyDropdown = carouselEl.querySelectorAll(`[data-dropdown-toggle]`);
       bodyDropdown.forEach(dropdown=>{
-        let bodyDropdown = document.getElementById(dropdown.dataset.dropdownToggle)
+        let bodyDropdown = getEl(dropdown.dataset.dropdownToggle)
+        if(!bodyDropdown) return
+        
         let copyBodyDropdown = bodyDropdown.cloneNode(true);
         copyBodyDropdown.id = replaceIdSuffix(copyBodyDropdown.id,oldCarId, newCarId);
         
@@ -472,13 +492,17 @@ const copyCarousel=(idCarousel, mode="all")=>{
 
       const copyDropdown = carouselCopy.querySelectorAll(`[data-dropdown-toggle]`)
       copyDropdown.forEach(dropdown=>{
-        let bodyDropdown = document.getElementById(dropdown.dataset.dropdownToggle)
+        let bodyDropdown = getEl(dropdown.dataset.dropdownToggle)
+        if(!bodyDropdown) return
+        
         bodyDropdown.className = 'w-25 z-40 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700';
       })
 
       const dropdown = carouselEl.querySelectorAll(`[data-dropdown-toggle]`)
       dropdown.forEach(dropdown=>{
-        let bodyDropdown = document.getElementById(dropdown.dataset.dropdownToggle)
+        let bodyDropdown = getEl(dropdown.dataset.dropdownToggle)
+        if(!bodyDropdown) return
+
         bodyDropdown.className = 'w-25 z-40 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700';
       })
 
@@ -493,6 +517,7 @@ const copyCarousel=(idCarousel, mode="all")=>{
         }
       }
 
+      globals.isFormDirty = true
       globals.webpageDb=webpageDb
 
       // init accordion
@@ -510,6 +535,7 @@ const copyCarousel=(idCarousel, mode="all")=>{
     return false;
   }
 }
+
 function addItemCarousel(event){
   webpageDb=globals.webpageDb
   carouselSelect=globals.carouselSelect
@@ -557,7 +583,7 @@ function addItemCarousel(event){
   if(carouselSelect.dataset.text === "true"){
     if(carouselSelect.dataset.textPosition === "on-image"){
       itemContent = `
-      <div id="field-${newItemId}" class="border border-b-1 border-gray-500 p-1 max-w-[100%] scroll-hidden overflow-scroll" style="ol{list-style-type:decimal;}ul{list-style-type:disc;}" contenteditable="true"></div>
+      <div id="field-${newItemId}" class="border border-b-1 border-gray-500 p-1 max-w-[100%] scroll-hidden overflow-scroll" style="" contenteditable="true"></div>
       `
       style = `padding:25px;background-image: linear-gradient(rgba(${rgba})), url(/assets/img/almond1DefaultImageCarousel.jpg); background-size: cover; background-position: center;`
       styleItem=style
@@ -567,7 +593,7 @@ function addItemCarousel(event){
       copyItem.querySelector('img').setAttribute('src', '/assets/img/almond1DefaultImageCarousel.jpg')
 
       copyItem.children[1].innerHTML = `
-      <div id="field-${newItemId}" class="border border-b-1 border-gray-500 p-1 max-w-[100%] scroll-hidden overflow-scroll" style="ol{list-style-type:decimal;}ul{list-style-type:disc;}" contenteditable="true"></div>
+      <div id="field-${newItemId}" class="border border-b-1 border-gray-500 p-1 max-w-[100%] scroll-hidden overflow-scroll" style="" contenteditable="true"></div>
       `
       itemContent= copyItem.innerHTML
       classList = copyItem.classList
@@ -623,6 +649,7 @@ function addItemCarousel(event){
 
   globals.webpageDb=webpageDb
   updateStylingControls(carouselSelect);
+  globals.isFormDirty = true
 
   setTimeout(() => {
     try {
@@ -632,17 +659,16 @@ function addItemCarousel(event){
     }
   }, 100);
 }
+
 const copyItemCarousel=(idItemCarousel, mode="all")=>{
   try {
       webpageDb=globals.webpageDb
       let itemCarouselId = idItemCarousel
-      const itemCarouselEl = document.getElementById(itemCarouselId);
-      const editItemCarouselEl = document.getElementById(`edit-${itemCarouselId}`);
-      if (!itemCarouselEl) {
-        console.error('carousel tidak ditemukan:', itemCarouselId);
-        return false;
-      }
+      const itemCarouselEl = getEl(itemCarouselId);
+      const editItemCarouselEl = getEl(`edit-${itemCarouselId}`);
 
+      if(!itemCarouselEl || !editItemCarouselEl) return
+      
       const containerItem = itemCarouselEl.parentElement.parentElement;
       const editContainerItem = editItemCarouselEl.parentElement;
 
@@ -720,7 +746,11 @@ const copyItemCarousel=(idItemCarousel, mode="all")=>{
         if (currentOrder >= newOrderBase) {
           const updated = currentOrder + 1;
           el.dataset.itemOrder = String(updated);
-          document.getElementById(`edit-${el.id}`).dataset.itemOrder = String(updated)
+
+          const editItemCarousel = getEl(`edit-${el.id}`)
+          if(!editItemCarousel) return
+        
+          editItemCarousel.dataset.itemOrder = String(updated)
 
           let id = el.id;
 
@@ -793,7 +823,9 @@ const copyItemCarousel=(idItemCarousel, mode="all")=>{
       // Duplikat body Dropdowns
       const bodyDropdown = itemCarouselEl.querySelectorAll(`[data-dropdown-toggle]`);
       bodyDropdown.forEach(btnDropdown=>{
-        let bodyDropdown = document.getElementById(btnDropdown.dataset.dropdownToggle)
+        let bodyDropdown = getEl(btnDropdown.dataset.dropdownToggle)
+        if(!bodyDropdown) return
+        
         let copyBodyDropdown = bodyDropdown.cloneNode(true);
         copyBodyDropdown.id = replaceIdSuffix(copyBodyDropdown.id, oldItemCarId, newItemCarId);
         
@@ -809,7 +841,8 @@ const copyItemCarousel=(idItemCarousel, mode="all")=>{
 
       const dropdownBtn = editItemCarouselEl.querySelector('[data-dropdown-toggle]')
      
-      const bodyEditItemDropdown = document.getElementById(dropdownBtn.dataset.dropdownToggle)
+      const bodyEditItemDropdown = getEl(dropdownBtn.dataset.dropdownToggle)
+      if(!bodyEditItemDropdown)return
 
       const copyEditItemDropdwon = bodyEditItemDropdown.cloneNode(true)
       copyEditItemDropdwon.id = replaceIdSuffix(copyEditItemDropdwon.id, oldItemCarId, newItemCarId);
@@ -829,7 +862,8 @@ const copyItemCarousel=(idItemCarousel, mode="all")=>{
 
       const editBodyDropdown = editItemCarouselCopy.parentElement.querySelectorAll(`[data-dropdown-toggle]`);
       editBodyDropdown.forEach(btnDropdown=>{
-        let bodyDropdown = document.getElementById(btnDropdown.dataset.dropdownToggle)
+        let bodyDropdown = getEl(btnDropdown.dataset.dropdownToggle)
+        if(!bodyDropdown) return
         
         bodyDropdown.setAttribute('class', 'w-25 z-40 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700');
         bodyDropdown.setAttribute('style', 'position: absolute; inset: auto auto 0px 0px; margin: 0px; transform: translate3d(216.8px, -229.6px, 0px);');
@@ -847,7 +881,7 @@ const copyItemCarousel=(idItemCarousel, mode="all")=>{
           })
         }
       }
-      
+      globals.isFormDirty = true
       globals.webpageDb=webpageDb
 
       setListenerSetImage()
@@ -871,7 +905,11 @@ const copyItemCarousel=(idItemCarousel, mode="all")=>{
 // ======= SYLING =======
 function setImageItem(idParts){
   editCarouselItem=globals.editCarouselItem
-  editCarouselItem = document.getElementById(`edit-${idParts.slice(2).join('-')}`)
+
+  editCarouselItem = getEl(`edit-${idParts.slice(2).join('-')}`)
+  if(!editCarouselItem) return
+
+  globals.isFormDirty = true
 
   bodyItem = editCarouselItem.parentElement.parentElement
   globals.bodyItem = editCarouselItem.parentElement.parentElement
@@ -880,8 +918,10 @@ function setImageItem(idParts){
 }
 
 function resetImage(idParts){
-  let carouselItem = document.getElementById(`${idParts.slice(2).join('-')}`)
-  editCarouselItem = document.getElementById(`edit-${idParts.slice(2).join('-')}`) 
+  let carouselItem = getEl(`${idParts.slice(2).join('-')}`)
+  editCarouselItem = getEl(`edit-${idParts.slice(2).join('-')}`) 
+
+  if(!carouselItem || !editCarouselItem) return
 
   bodyItem = editCarouselItem.parentElement.parentElement
   globals.bodyItem = editCarouselItem.parentElement.parentElement
@@ -912,6 +952,8 @@ function resetImage(idParts){
   } else {
     carouselItem.style.backgroundColor = "";
   }
+
+  globals.isFormDirty = true
   globals.editCarouselItem = editCarouselItem
 }
 
@@ -920,90 +962,96 @@ function addTextCarousel(event){
   carouselSelect=globals.carouselSelect
   const btnAddText = event.target
 
-    if(carouselSelect.dataset.text === 'false' ){
-      carouselSelect.querySelectorAll('[id^="item-carousel-"]').forEach(item=>{
-        if(carouselSelect.dataset.textPosition === 'on-image'){
-          item.innerHTML=`
-          <div id="field-${item.id}" class="border border-b-1 border-gray-500 p-1 max-w-[100%] max-h-[100%] scroll-hidden overflow-scroll" style="ol{list-style-type:decimal;}ul{list-style-type:disc;}" contenteditable="true">Text Field</div>
-          `
-        }else{
-          let img = item.querySelector('img').getAttribute('src') 
-          item.setAttribute('style', `background-image:linear-gradient(rgba(0,0,0,0.0)), url("${img}");background-size:cover;background-position:center;`)
-          item.innerHTML =item.querySelector('[id^="field-"]').outerHTML
-        }
-        webpageDb.push({
-          id:`field-${item.id}`,
-          type:'field',
-          action:'new-add',
-          content:'Text Field',
-          style: `ol{list-style-type:decimal;}ul{list-style-type:disc;}`
-        })
-      })
-
-      carouselSelect.dataset.text = "true"
-      
-    }else{
-      carouselSelect.querySelectorAll('[id^="item-carousel-"]').forEach(item=>{
-        let img
-        if(carouselSelect.dataset.textPosition !== 'on-image'){
-          img = item.querySelector('img').getAttribute('src') 
-          item.setAttribute('style', `background-image:linear-gradient(rgba(0,0,0,0.0)), url("${img}");background-size:cover;background-position:center;`)
-        }
-        item.innerHTML =''
-        if(carouselSelect.dataset.textPosition === 'below-image'){
-          webpageDb.forEach(field =>{
-            if(field.id === item.id){
-              // field.file = webpageDb.find(img => img.id === `img-text-on-image-${field.id}`).file,
-              field.action = updateActionProperty(field.action, 'update')
-              field.style= `background-image:linear-gradient(rgba(0,0,0,0.0)), url("${img}");background-size:cover;background-position:center;`
-            }
-          })
-        }
-
-        const findField = webpageDb.findIndex(field=>field.id===`field-${item.id}`)
-        if(findField > 0){
-          const updateAction = updateActionProperty(webpageDb[findField].action, 'delete')
-  
-          if(updateAction.includes('new')){
-            webpageDb.splice(findField,1)
-          }else{
-            webpageDb[findField].action=updateAction
-          }
-        }
-
-        const findImg = webpageDb.findIndex(field=>field.id===`img-text-on-image-${item.id}`)
-        if(findImg > 0){
-         
-          const updateActionImg = updateActionProperty(webpageDb[findImg].action, 'delete')
-  
-          if(updateActionImg.includes('new')){
-            webpageDb.splice(findImg,1)
-          }else{
-            webpageDb[findImg].action=updateActionImg
-          }
-        }
-      })
-      
-      carouselSelect.dataset.textPosition = 'on-image'
-      document.getElementById('btn-text-position').textContent = 'On Image'
-      carouselSelect.dataset.text = "false"
-    }
-
-    btnAddText.dataset.text = btnAddText.dataset.text == "add" ? "remove" : "add"
-    webpageDb.forEach(field=>{
-      if(field.id === carouselSelect.id){
-        let content=parseStyleObj(field.content)
-        content.dataTextPosition = carouselSelect.dataset.textPosition
-        content.dataText=carouselSelect.dataset.text
-        field.content = stringifyStyleObj(content)
-        field.action=updateActionProperty(field.action, 'update')
+  if(carouselSelect.dataset.text === 'false' ){
+    carouselSelect.querySelectorAll('[id^="item-carousel-"]').forEach(item=>{
+      if(carouselSelect.dataset.textPosition === 'on-image'){
+        item.innerHTML=`
+        <div id="field-${item.id}" class="border border-b-1 border-gray-500 p-1 max-w-[100%] max-h-[100%] scroll-hidden overflow-scroll" style="" contenteditable="true">Text Field</div>
+        `
+      }else{
+        let img = item.querySelector('img').getAttribute('src') 
+        item.setAttribute('style', `background-image:linear-gradient(rgba(0,0,0,0.0)), url("${img}");background-size:cover;background-position:center;`)
+        item.innerHTML =item.querySelector('[id^="field-"]').outerHTML
       }
+      webpageDb.push({
+        id:`field-${item.id}`,
+        type:'field',
+        action:'new-add',
+        content:'Text Field',
+        style: ``
+      })
     })
 
-    globals.webpageDb=webpageDb
-    globals.carouselSelect=carouselSelect
+    carouselSelect.dataset.text = "true"
+    
+  }else{
+    carouselSelect.querySelectorAll('[id^="item-carousel-"]').forEach(item=>{
+      let img
+      if(carouselSelect.dataset.textPosition !== 'on-image'){
+        img = item.querySelector('img').getAttribute('src') 
+        item.setAttribute('style', `background-image:linear-gradient(rgba(0,0,0,0.0)), url("${img}");background-size:cover;background-position:center;`)
+      }
+      item.innerHTML =''
+      if(carouselSelect.dataset.textPosition === 'below-image'){
+        webpageDb.forEach(field =>{
+          if(field.id === item.id){
+            // field.file = webpageDb.find(img => img.id === `img-text-on-image-${field.id}`).file,
+            field.action = updateActionProperty(field.action, 'update')
+            field.style= `background-image:linear-gradient(rgba(0,0,0,0.0)), url("${img}");background-size:cover;background-position:center;`
+          }
+        })
+      }
 
-    btnAddText.textContent = btnAddText.textContent == "Add Text" ? "Remove Text" : "Add Text"
+      const findField = webpageDb.findIndex(field=>field.id===`field-${item.id}`)
+      if(findField > 0){
+        const updateAction = updateActionProperty(webpageDb[findField].action, 'delete')
+
+        if(updateAction.includes('new')){
+          webpageDb.splice(findField,1)
+        }else{
+          webpageDb[findField].action=updateAction
+        }
+      }
+
+      const findImg = webpageDb.findIndex(field=>field.id===`img-text-on-image-${item.id}`)
+      if(findImg > 0){
+        
+        const updateActionImg = updateActionProperty(webpageDb[findImg].action, 'delete')
+
+        if(updateActionImg.includes('new')){
+          webpageDb.splice(findImg,1)
+        }else{
+          webpageDb[findImg].action=updateActionImg
+        }
+      }
+    })
+    
+    carouselSelect.dataset.textPosition = 'on-image'
+
+    const btnTextPost = getEl('btn-text-position')
+    if(!btnTextPost)return
+
+    btnTextPost.textContent = 'On Image'
+    carouselSelect.dataset.text = "false"
+  }
+
+  btnAddText.dataset.text = btnAddText.dataset.text == "add" ? "remove" : "add"
+  webpageDb.forEach(field=>{
+    if(field.id === carouselSelect.id){
+      let content=parseStyleObj(field.content)
+      content.dataTextPosition = carouselSelect.dataset.textPosition
+      content.dataText=carouselSelect.dataset.text
+      field.content = stringifyStyleObj(content)
+      field.action=updateActionProperty(field.action, 'update')
+    }
+  })
+
+  globals.webpageDb=webpageDb
+  globals.carouselSelect=carouselSelect
+
+  globals.isFormDirty = true
+
+  btnAddText.textContent = btnAddText.textContent == "Add Text" ? "Remove Text" : "Add Text"
 }
 
 function btnHideNext(event){
@@ -1042,6 +1090,8 @@ function btnHideNext(event){
       field.action=updateActionProperty(field.action, 'update')
     }
   })
+
+  globals.isFormDirty = true
 
   globals.webpageDb=webpageDb
   globals.carouselSelect=carouselSelect
@@ -1172,6 +1222,8 @@ function btnTextPosition(event){
     }
   })
   globals.webpageDb=webpageDb
+
+  globals.isFormDirty = true
 
   const btnPosition = event.target
   btnPosition.textContent = btnPosition.textContent == "On Image" ? "Below Image" : "On Image"

@@ -7,13 +7,14 @@ import { renderSvg } from './utils/svgEdit.js';
 import { updateActionProperty } from './utils/updateContent.js';
 
 import {arraySubsequenceMatch, generateUniqueId, handleElementCount, replaceIdSuffix} from './utils/elementNumberingId.js'
+// ======== Validation get element ==========
+import { getEl } from './utils/validationGetElement.js';
 
 import { Modal } from 'flowbite';
 import { initFlowbite } from 'flowbite';
 
 let webpageDb=  globals.webpageDb
 let editorFieldSelect=globals.editorFieldSelect
-
 
 function modalTypeStyling(){
   document.getElementById('modal-type').addEventListener('change', function(){
@@ -48,22 +49,29 @@ function modalTypeStyling(){
   })
 }
 
-const createBtnModal = (page) =>`
+const createBtnModal = (page,edit) =>`
     <div id="${page.id}" data-element-order="${page.element_order}" class="z-10 flex justify-center items-center flex-col">
       <div id="wrapper-${page.id}" class="relative flex justify-center items-center inline-flex gap-2">
-        <div type="button" class="bg-white rounded-full absolute right-[-1.7rem] top-[0.2rem] z-10 cursor-pointer" data-dropdown-toggle="dropdown-btn-${page.id}" data-dropdown-placement="right-end">
-          ${renderSvg()}                
-        </div>
-
+        ${
+          edit ?
+            `<div type="button" class="bg-white rounded-full absolute right-[-1.7rem] top-[0.2rem] z-10 cursor-pointer" data-dropdown-toggle="dropdown-btn-${page.id}" data-dropdown-placement="right-end">
+              ${renderSvg()}                
+            </div>`
+            :''
+        }
+        
         <button id="btn-${page.id}" style="${page.style}" data-modal-target="element-${page.id}" data-modal-toggle="element-${page.id}" class="flex justify-between items-center hover:bg-blue-700">
-          ${page.content ?? `<div style="width:100%;text-align:center;">Button Modal</div>`}
+          <div class="w-full">
+            ${page.content ?? `<div style="width:100%;text-align:center;">Button Modal</div>`}
+          </div>  
         </button>
       </div>
     </div>
 `
-const createBodyModal=(page, fieldHead)=>`
-  <div id="element-${page.id.split('-').slice(1).join('-')}" data-modal-backdrop="${page.content === 'modal-default' ? '' : 'static'}" tabindex="-1" aria-hidden="true" class="fixed z-[80] top-0 right-0 w-full sm:w-[calc(100%-18rem)] h-full hidden justify-center items-center">
-      <div id="dropdown-body-${page.id.split('-').slice(1).join('-')}" data-accordion="open" class="w-25 z-50 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700">
+const createBodyModal=(page, fieldHead,edit)=>`
+  <div id="element-${page.id.split('-').slice(1).join('-')}" data-modal-backdrop="${page.content === 'modal-default' ? '' : 'static'}" tabindex="-1" aria-hidden="true" class="hidden overflow-y-auto overflow-x-hidden ${edit ? 'sm:ml-64':''} fixed top-0 right-0 left-0 z-[80] justify-center items-center ${edit ? 'w-[calc(100%-16rem)]':'w-full'} md:inset-0 h-[calc(100%-1rem)] max-h-full">
+    ${edit ? 
+      `<div id="dropdown-body-${page.id.split('-').slice(1).join('-')}" data-accordion="open" class="w-25 z-50 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700">
         <ul class="py-2 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownDefaultButton">
           <li>
               <a id="add-field-${page.id.split('-').slice(1).join('-')}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Field</a>
@@ -72,33 +80,37 @@ const createBodyModal=(page, fieldHead)=>`
               <a id="add-video-${page.id.split('-').slice(1).join('-')}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Video</a>
           </li>
         </ul>
-      </div>
-
-        <div id="parent-${page.id.split('-').slice(1).join('-')}" style="${page.style}" class="relative bg-white rounded-md w-full max-w-2xl max-h-[90vh] overflow-hidden">
-          <!-- Modal content -->
-          <div class="shadow-sm">
-            <!-- Modal header -->
-            <div class="flex items-center justify-between p-4 md:p-5 border-b-2 rounded-t border-gray-200">
-                <div id="${fieldHead.id}" style="${fieldHead.style}" class="border border-gray-400 scroll-hidden overflow-scroll p-1" contenteditable="true">
-                    ${fieldHead.content}
-                </div>
+      </div>` : ''
+    }
+    <div id="parent-${page.id.split('-').slice(1).join('-')}" style="${page.style}" class="relative bg-white rounded-md w-full max-w-2xl max-h-[90vh] overflow-hidden">
+      <!-- Modal content -->
+      
+      <div class="shadow-sm">
+        <!-- Modal header -->
+        <div class="flex items-center justify-between p-3 border-b-2 rounded-t border-gray-200">
+            <div id="${fieldHead.id}" style="${fieldHead.style}" class="${edit ? 'border border-gray-400':''} scroll-hidden overflow-scroll p-1" ${edit ? 'contenteditable="true"':''}>
+                ${fieldHead.content}
             </div>
+        </div>
 
-            <!-- Modal body -->
-            <div type="button" class="bg-white rounded-full absolute right-0 top-0 z-10 cursor-pointer" data-dropdown-toggle="dropdown-body-${page.id.split('-').slice(1).join('-')}" data-dropdown-placement="right-end">
+        <!-- Modal body -->
+        ${
+          edit ?
+            `<div type="button" class="bg-white rounded-full absolute right-0 top-0 z-10 cursor-pointer" data-dropdown-toggle="dropdown-body-${page.id.split('-').slice(1).join('-')}" data-dropdown-placement="right-end">
               ${renderSvg()}                  
-            </div>
+            </div>`
+            :''
+        }
 
-            <div id="body-${page.id.split('-').slice(1).join('-')}" class="flex flex-col justify-start items-center relative p-3 overflow-y-auto max-h-[70vh]" data-element-count="${page.element_count}">
+        <div id="body-${page.id.split('-').slice(1).join('-')}" class="flex flex-col justify-start items-center relative p-3 overflow-y-auto max-h-[70vh]" data-element-count="${page.element_count}">
+        </div>
 
-            </div>
-
-            <div class="flex items-center p-2 border-t-2 border-gray-200 rounded-b">
-              <button id="btn-footer-${page.id.split('-').slice(1).join('-')}" data-modal-hide="element-${page.id.split('-').slice(1).join('-')}" type="button" class="w-full py-2.5 px-5 text-gray-200 bg-gray-700 rounded-lg" contenteditable="true">Close</button>
-            </div>
-          </div>
+        <div class="flex items-center p-2 border-t-2 border-gray-200 rounded-b">
+          <button id="btn-footer-${page.id.split('-').slice(1).join('-')}" data-modal-hide="element-${page.id.split('-').slice(1).join('-')}" type="button" class="w-full py-2.5 px-5 text-gray-200 bg-gray-700 rounded-lg" contenteditable="true">Close</button>
         </div>
       </div>
+    </div>
+  </div>
 `
 const createDropdownModal = (idPrefix)=>`
       <div id="dropdown-btn-${idPrefix}" data-accordion="open" class="absolute mt-2 left-0 w-20 z-50 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700">
@@ -125,7 +137,9 @@ const addModal = (event)=>{
         </div>
 
         <button id="btn-${idPrefix}" data-modal-target="element-${idPrefix}" style="position:relative;padding: 10px;border-radius:5px;background-color:rgba(255,255,255,1);" data-modal-toggle="element-${idPrefix}" class="flex justify-between items-center" data-target="#element-${idPrefix}">
-          <div style="width:100%;text-align:center;">Button Modal</div>
+          <div class="w-full">
+            <div style="width:100%;text-align:center;">Button Modal</div>
+          </div>
         </button>
       </div>
     </div>
@@ -180,7 +194,7 @@ const addModal = (event)=>{
                   ${renderSvg()}   
                 </div>
 
-                <div id="field-${idPrefix}-1" class="border border-b-1 border-gray-500 scroll-hidden overflow-scroll p-1" style="ol{list-style-type:decimal;}ul{list-style-type:disc;}" contenteditable="true">
+                <div id="field-${idPrefix}-1" class="border border-b-1 border-gray-500 scroll-hidden overflow-scroll p-1" style="" contenteditable="true">
                   Test
                 </div>
               </div>
@@ -196,7 +210,9 @@ const addModal = (event)=>{
 
   if(idParts[2] === 'accordion'){
     idAppend = `wrapper-section-${idParts.slice(2, idParts.length).join('-')}`;
-    bodyAppend = document.getElementById(idAppend);
+    bodyAppend = getEl(idAppend);
+
+    if(!bodyAppend) return
 
     fieldNumber = handleElementCount(bodyAppend,bodyAppend.getAttribute('data-element-count'));
     bodyAppend.dataset.elementCount = fieldNumber;
@@ -205,7 +221,10 @@ const addModal = (event)=>{
 
   }else{
     idAppend = `editor-container-section-${idParts[4]}`;
-    const section = document.getElementById(idAppend)
+    const section = getEl(idAppend)
+
+    if(!section) return
+    
 
     fieldNumber = handleElementCount(section,section.dataset.elementCount);
     section.dataset.elementCount = fieldNumber
@@ -227,10 +246,17 @@ const addModal = (event)=>{
         </ul>
       </div>
   `
+  const webpageSection =  getEl(`webpage-section-${idParts.find(part => !isNaN(part))}`)
 
-  document.getElementById(`webpage-section-${idParts.find(part => !isNaN(part))}`).insertAdjacentHTML('beforeend', bodyDropdown)
-  document.getElementById(`webpage-section-${idParts.find(part => !isNaN(part))}`).insertAdjacentHTML('beforeend', createBodyModalHTML(idPrefix))
-  document.getElementById(idAppend).insertAdjacentHTML('beforeend',createBtnModalHTML(idPrefix, fieldNumber));
+  if(!webpageSection)return
+
+  webpageSection.insertAdjacentHTML('beforeend', bodyDropdown)
+  webpageSection.insertAdjacentHTML('beforeend', createBodyModalHTML(idPrefix))
+
+  const appendBtnModal = getEl(idAppend)
+  if(!appendBtnModal)return
+  appendBtnModal.insertAdjacentHTML('beforeend',createBtnModalHTML(idPrefix, fieldNumber));
+
   dropdownInitialized('multi',`${idPrefix}`)
 
   webpageDb.push({
@@ -251,7 +277,7 @@ const addModal = (event)=>{
   {
     id: `field-${idPrefix}-1`,
     type: 'field',
-    style: 'ol{list-style-type:decimal;}ul{list-style-type:disc;}',
+    style: '',
     element_order: '1',
     action:'new-add',
     content: 'test'
@@ -259,7 +285,7 @@ const addModal = (event)=>{
   {
     id: `field-head-${idPrefix}`,
     type: 'field',
-    style: 'ol{list-style-type:decimal;}ul{list-style-type:disc;}',
+    style: '',
     element_order: '1',
     action:'new-add',
     content: 'Head Modal'
@@ -274,16 +300,17 @@ const addModal = (event)=>{
       item.action= updateActionProperty(item.action, 'update')
     }
   })
+  globals.isFormDirty = true
   globals.webpageDb=webpageDb
 
   setTimeout(() => {
     try {
-        const modalElement = document.getElementById(idPrefix);
+        const modalElement = getEl(idPrefix);
         if (modalElement) {
             new Modal(modalElement);
-            // console.log('✅ Modal berhasil diinisialisasi:', modalElement.id);
+            //('✅ Modal berhasil diinisialisasi:', modalElement.id);
         } else {
-            console.warn('⚠️ Elemen Modal tidak ditemukan setelah appendChild');
+          console.warn('⚠️ Elemen Modal tidak ditemukan setelah appendChild');
         }
 
         // Panggil initFlowbite setelah inisialisasi accordion spesifik ini
@@ -302,11 +329,8 @@ const copyModal = (idModal, mode = 'full', newId, oldId) => {
     if(mode != 'full'){
       idModal = `btn-${idModal}`
     }
-    const btnModal = document.getElementById(idModal);
-    if (!btnModal) {
-      console.error('❌ Button modal tidak ditemukan:', idModal);
-      return false;
-    }
+    const btnModal = getEl(idModal);
+    if (!btnModal) return
 
     const modalId = btnModal.id.startsWith('btn-')
       ? 'element-' + btnModal.id.slice(4)
@@ -314,13 +338,16 @@ const copyModal = (idModal, mode = 'full', newId, oldId) => {
    
     let modalEl = modalId ? document.getElementById(modalId) : null;
     if (!modalEl) {
-      console.warn('⚠️ Modal body tidak ditemukan otomatis, mencoba fallback...');
       const suffix = btnModal.id.slice(btnModal.id.indexOf('-') + 1);
       const found = document.querySelector(`[id*="${suffix}"][id^="element-"]`);
+      
       if (found) modalEl = found;
       else {
         console.error('❌ Modal body tidak ditemukan untuk btn:', idModal);
-        return false;
+        window.dispatchEvent(new CustomEvent('notif-pesan', { 
+          detail: { pesan: 'modalElement copyModal tidak ditemukan delete head', status:false} 
+        }));
+        return
       }
     }
 
@@ -380,9 +407,11 @@ const copyModal = (idModal, mode = 'full', newId, oldId) => {
       // Append ke section terkait
       const sectionNum = (btnModal.id.split('-').find(part => !isNaN(part)) || null);
       const sectionContainer = sectionNum
-        ? document.getElementById(`webpage-section-${sectionNum}`)
+        ? getEl(`webpage-section-${sectionNum}`)
         : null;
 
+      if (!sectionContainer) return
+      
       if (sectionContainer) sectionContainer.appendChild(modalCopy);
       else document.body.appendChild(modalCopy);
 
@@ -390,6 +419,9 @@ const copyModal = (idModal, mode = 'full', newId, oldId) => {
       const relatedObjects = webpageDb.filter(obj => arraySubsequenceMatch(obj.id.split('-'), oldModalId.split('-')));
       relatedObjects.forEach(originalObj => {
         const clonedObj = deepClone(originalObj);
+        if(clonedObj.action=='delete'){
+          return
+        }
         clonedObj.id = replaceIdSuffix(clonedObj.id, oldModalId, newModalId);
         clonedObj.action = 'new-add'
 
@@ -406,11 +438,13 @@ const copyModal = (idModal, mode = 'full', newId, oldId) => {
       setTimeout(() => {
         try {
             // Ganti 'newModalId' dengan ID elemen modal Anda
-            const modalElement = document.getElementById(newModalId); 
+            const modalElement = getEl(newModalId); 
             
             if (modalElement) {
                 // Inisialisasi objek Modal
                 new Modal(modalElement);
+            }else if(!modalElement){
+              return
             }
             
         } catch (error) {
@@ -465,7 +499,8 @@ const copyModal = (idModal, mode = 'full', newId, oldId) => {
 
       // Duplikat dropdown (jika ada)
       const btnSuffix = oldBtnId.replace(/^btn-/, '');
-      const btnBodyDropdown = document.getElementById(`dropdown-btn-${btnSuffix}`);
+      const btnBodyDropdown = getEl(`dropdown-btn-${btnSuffix}`)
+      if(!btnBodyDropdown)return
       if (btnBodyDropdown) {
         const copyBtnBodyDropdown = btnBodyDropdown.cloneNode(true);
         copyBtnBodyDropdown.id = replaceIdSuffix(copyBtnBodyDropdown.id, oldBtnId, newBtnId)
@@ -479,9 +514,11 @@ const copyModal = (idModal, mode = 'full', newId, oldId) => {
       btnModal.insertAdjacentElement('afterend', btnCopy);
       const sectionNum = (btnModal.id.split('-').find(part => !isNaN(part)) || null);
       const sectionContainer = sectionNum
-        ? document.getElementById(`webpage-section-${sectionNum}`)
+        ? getEl(`webpage-section-${sectionNum}`)
         : null;
 
+      if (!sectionContainer) return
+      
       if (sectionContainer) sectionContainer.appendChild(modalCopy);
       else document.body.appendChild(modalCopy);
 
@@ -497,13 +534,17 @@ const copyModal = (idModal, mode = 'full', newId, oldId) => {
 
       const btnCopyDropdown = btnCopy.querySelectorAll(`[data-dropdown-toggle]`)
       btnCopyDropdown.forEach(dropdown=>{
-        let bodyDropdown = document.getElementById(dropdown.dataset.dropdownToggle)
+        let bodyDropdown = getEl(dropdown.dataset.dropdownToggle)
+        if(!bodyDropdown)return
+
         bodyDropdown.className = 'w-25 z-40 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700';
       })
 
       const btnDropdown = btnModal.querySelectorAll(`[data-dropdown-toggle]`)
       btnDropdown.forEach(dropdown=>{
-        let bodyDropdown = document.getElementById(dropdown.dataset.dropdownToggle)
+        let bodyDropdown = getEl(dropdown.dataset.dropdownToggle)
+        if(!bodyDropdown)return
+
         bodyDropdown.className = 'w-25 z-40 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700';
       })
 
@@ -511,6 +552,9 @@ const copyModal = (idModal, mode = 'full', newId, oldId) => {
       const relatedObjects = webpageDb.filter(obj => arraySubsequenceMatch(obj.id.split('-'), oldBtnId.split('-')));
       relatedObjects.forEach(originalObj => {
         const clonedObj = deepClone(originalObj);
+        if(clonedObj.action=='delete'){
+          return
+        }
         clonedObj.id = replaceIdSuffix(clonedObj.id,oldBtnId, newBtnId);
         clonedObj.action = 'new-add'
 
@@ -528,7 +572,9 @@ const copyModal = (idModal, mode = 'full', newId, oldId) => {
 
     const copyDropdown = modalEl.querySelectorAll(`[data-dropdown-toggle]`)
       copyDropdown.forEach(dropdown=>{
-        let bodyDropdown = document.getElementById(dropdown.dataset.dropdownToggle)
+        let bodyDropdown = getEl(dropdown.dataset.dropdownToggle)
+        if(!bodyDropdown)return
+
         bodyDropdown.className = 'w-25 z-40 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700';
       })
 
@@ -552,7 +598,7 @@ const copyModal = (idModal, mode = 'full', newId, oldId) => {
       updateContainerField(container.id);
     }
     globals.webpageDb=webpageDb
-
+    globals.isFormDirty = true
     return true;
 
   } catch (e) {

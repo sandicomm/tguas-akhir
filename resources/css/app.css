@@ -14,12 +14,69 @@
   }
 }
 
-li::marker {
-  color: var(--marker-color, inherit);
-  font-size: var(--marker-size, inherit);
-  font-family: var(--marker-family, inherit);
-  font-weight: var(--marker-weight, normal);
-  font-style: var(--marker-style, normal);
+/* Menyembunyikan teks "Showing X to Y of Z results" */
+.pagination-sm p {
+    display: none !important;
+}
+/* Mempersempit area pagination agar lebih rapat */
+.pagination-sm div div:last-child {
+    justify-content: center !important;
+    width: 100%;
+}
+
+.media{
+  width: 100%;
+  height: 25vh;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  /* text-align: center; */
+  background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('../assets/img/diabet-paper.jpg');
+  background-size: cover;
+  background-position: center;
+}
+
+[id^="field-"] ol {
+  list-style-type: decimal; 
+  list-style-position: outside;
+}
+
+[id^="field-"] ul {
+  list-style-type: disc; 
+  list-style-position: outside;
+}
+
+/* answer box pre-test post-test */
+  .answer-box {
+        background-color: rgba(0, 0, 0, 0.05); /* Warna abu-abu default */
+        border: 2px solid transparent;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+    /* Efek Hover */
+    .answer-box:hover {
+        background-color: rgba(0, 0, 0, 0.1);
+    }
+
+    /* EFEK KETIKA DIPILIH (Sangat Penting) */
+    /* Jika di dalam .answer-box ada input yang di-check */
+    .answer-box:has(.answer-radio:checked) {
+        background-color: #e7f1ff; /* Warna biru muda (Light primary) */
+        border-color: #0d6efd;     /* Border biru */
+        box-shadow: 0 0 10px rgba(13, 110, 253, 0.2);
+    }
+
+    /* Opsional: Ubah warna huruf jadi biru saat terpilih */
+    .answer-box:has(.answer-radio:checked) h6 {
+        color: #0d6efd;
+    }
+    
+textarea {
+    resize: none; /* Menghilangkan handle tarik di pojok */
+    overflow: hidden; /* Menghilangkan scrollbar */
+    min-height: 40px; /* Ukuran minimum agar tidak terlalu gepeng */
 }
 
 .btn-cta p{
