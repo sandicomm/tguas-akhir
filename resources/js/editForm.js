@@ -1485,7 +1485,7 @@ const generatorOption = (sectionId, question, yellowStats=false)=>{
 
 const generatorSingleAnswerPilgan= (answer,question,section, yellowStats)=>{
     let answerImage = answer.image
-    if(!answer.image?.startsWith('http')){
+    if(!answer.image?.startsWith('https')){
         answerImage = answer.url
     }
     return`

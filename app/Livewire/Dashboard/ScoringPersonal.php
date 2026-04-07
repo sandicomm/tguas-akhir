@@ -18,19 +18,11 @@ class ScoringPersonal extends Component
     public $showAllScoring = false;
     public $scoreAnswer;
 
-    public $selectedFormId = null; 
-    public $forms = [];
+    public $selectedFormPlacement = null; 
+    public $selectedFormName = null; 
 
     public function mount()
     {
-        // 1. Ambil daftar form untuk Dropdown Filter
-        $this->forms = Form::pluck('form_name', 'placement');
-        
-        // Default pilih form pertama jika ada
-        if(count($this->forms) > 0) {
-            $this->selectedFormId = array_key_first($this->forms->toArray());
-        }
-
         // Menghitung Max Score per Form langsung lewat SQL
         $this->scoreAnswer = \DB::table(function ($query) {
                 // Subquery: Mencari nilai tertinggi per pertanyaan
@@ -48,6 +40,19 @@ class ScoringPersonal extends Component
             ->get()
             ->keyBy('form_id')
             ->toArray();
+        
+    }
+
+    #[Computed]
+    public function forms()
+    {
+        return \App\Models\Form::query()
+            // Jika Category dipilih, tampilkan form yang sesuai saja (Dependent Dropdown)
+            ->when($this->selectedFormPlacement, function($query) {
+                $query->where('placement', 'like', '%'.$this->selectedFormPlacement);
+            })
+            ->select('form_name')
+            ->get();
     }
 
     // Gunakan computed property agar data tidak disimpan di state (mencegah payload berat)
@@ -62,18 +67,26 @@ class ScoringPersonal extends Component
                 'forms.form_name',
                 'forms.placement',
             ])
-            // COALESCE untuk handle user anonim vs login
             ->selectRaw("COALESCE(respondens.email, CONCAT('uuid:', responses.uuid)) as user_key")
-            // Casting varchar ke integer untuk kalkulasi SUM
-            ->selectRaw("SUM(answers.value) as total_score")
+            ->selectRaw("SUM(CAST(answers.value AS UNSIGNED)) as total_score") // Pastikan casting benar jika value itu string
             ->leftJoin('answers', 'answers.id', '=', 'responses.answer_id')
             ->leftJoin('respondens', 'respondens.id', '=', 'responses.responden_id')
             ->leftJoin('forms', 'forms.id', '=', 'responses.form_id')
-            ->where('forms.placement', 'like', '%'.$this->selectedFormId)
+            
+            // Gunakan when() agar query hanya aktif jika variabel ada isinya
+            ->when($this->selectedFormPlacement, function ($query) {
+                $query->where('forms.placement', 'like', '%'.$this->selectedFormPlacement);
+            })
+            ->when($this->selectedFormName, function ($query) {
+                $query->where('forms.form_name', $this->selectedFormName);
+            })
+
             ->groupBy('user_key', 'responses.form_id', 'responses.attempt', 'forms.form_name', 'forms.placement')
             ->orderBy('user_key')
             ->paginate(10);
-
+        if ($paginatedData->isEmpty()) {
+            $this->selectedFormName = null;
+        }
         // 2. Transformasi struktur data hanya untuk data yang di-paginate
         // Ini mengubah attempt yang terpisah menjadi satu grup di dalam form
         $transformedItems = collect($paginatedData->items())
@@ -94,6 +107,12 @@ class ScoringPersonal extends Component
 
         // Kembalikan objek paginator agar link pagination muncul di blade
         return $paginatedData->setCollection($transformedItems);
+    }
+
+    public function search()
+    {
+        // Cukup panggil ini untuk mereset paginasi ke halaman 1 saat search diklik
+        $this->resetPage(); 
     }
 
     public $showModal = false;
@@ -158,7 +177,7 @@ class ScoringPersonal extends Component
         $data = Responses::query()
             ->with(['responden', 'answer.question.section.form'])
             ->whereHas('answer.question.section.form', function($q) {
-                $q->where('placement', 'like', '%'.$this->selectedFormId);
+                $q->where('placement', 'like', '%'.$this->selectedFormPlacement);
             }) 
             ->get();
 
@@ -175,12 +194,12 @@ class ScoringPersonal extends Component
         });
         
         
-        $name = $this->selectedFormId ?: 'All';
+        $name = $this->selectedFormPlacement ?: 'All';
         $fileName = 'Rekap-Full-' . $name . '-Form.xlsx';
         
         // Panggil class baru: ScoringAllInOneExport
         return Excel::download(
-            new ScoringAllInOneExport($groupedData, $this->selectedFormId),
+            new ScoringAllInOneExport($groupedData, $this->selectedFormPlacement),
             $fileName
         );
     }
@@ -191,7 +210,7 @@ class ScoringPersonal extends Component
             ->with(['responden', 'answer.question.section.form'])
             ->whereHas('responden', fn ($q) => $q->where('email', $userKey))
             ->whereHas('answer.question.section.form', function($q) {
-                $q->where('placement', 'like', '%'.$this->selectedFormId);
+                $q->where('placement', 'like', '%'.$this->selectedFormPlacement);
             }) 
             ->get();
        ;
