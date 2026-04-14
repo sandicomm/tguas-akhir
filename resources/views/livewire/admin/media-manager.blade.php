@@ -35,8 +35,18 @@
         <h1 class="px-4 text-xl font-bold dark:text-white text-black">Upload</h1>
          <form wire:submit.prevent="store" class="w-full flex p-4 justify-start items-start flex-col gap-2 rounded ">
             <div class="flex flex-col w-1/2">
+                <p class="text-red-500">*</p>
                 <input type="text" wire:model="title" placeholder="Judul File" 
                     class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg 
+                            focus:ring-blue-500 focus:border-blue-500 block w-full dark:bg-gray-700 dark:border-gray-600 
+                            dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                <p class="text-red-500">*</p>            
+                <input type="text" wire:model="sumber" placeholder="Sumber File" 
+                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg 
+                            focus:ring-blue-500 focus:border-blue-500 block w-full dark:bg-gray-700 dark:border-gray-600 
+                            dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                <input type="url" wire:model="link" placeholder="Link Sumber File" 
+                    class="bg-gray-50 border mt-5 border-gray-300 text-gray-900 text-sm rounded-lg 
                             focus:ring-blue-500 focus:border-blue-500 block w-full dark:bg-gray-700 dark:border-gray-600 
                             dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
                 <p class="text-blue-500 mt-3">Max File 20Mb</p>
@@ -76,6 +86,8 @@
                          <video src="{{asset($media->file_path)}}" class="w-full object-cover" controls></video>
                      @endif
                      <span class="dark:text-white text-black">{{ $media->title }} ({{ $media->type }})</span>
+                     <span class="dark:text-white text-black">Sumber: {{ $media->sumber }}</span>
+                     <a href="{{ $media->link }}" target="_blank" class="m-2 rounded py-1 px-2 hover:bg-blue-200 text-blue-500 {{ $media->link ? '':'hidden' }}">Menuju Ke Sumber</a>
                      <button wire:click="setStatsAction({{ $media['id'] }}, 'delete')" class="block text-white bg-red-700 hover:bg-red-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center">Delete</button>
                  </li>
              @endforeach

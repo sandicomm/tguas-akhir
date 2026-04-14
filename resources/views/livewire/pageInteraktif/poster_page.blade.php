@@ -31,6 +31,8 @@
                         <h4 class="text-lg font-semibold text-gray-900 dark:text-white line-clamp-2">
                             {{ $poster->title }}
                         </h4>
+                        <p class="text-sm">Sumber: {{ $poster->sumber }}</p>
+                        <a href="{{ $poster->link }}" target="_blank" class="text-xs mt-2 rounded py-1 px-2 hover:bg-blue-100 text-blue-500 {{ $poster->link ? '':'hidden' }}">Menuju Ke Sumber</a>
                     </div>
                 </div>
             @endforeach

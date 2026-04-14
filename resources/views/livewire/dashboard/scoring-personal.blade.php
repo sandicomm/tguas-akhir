@@ -24,7 +24,7 @@
 
                 <div class="w-full p-3 flex">
                     <div class="w-full">
-                        <div class="flex">
+                        <div class="flex gap-2">
                             <div class="w-full bg-slate-300 p-3 rounded">
                                 <label class="text-slate-800 font-bold">Pilih Category</label>
                                 <select wire:model="selectedFormPlacement" class="w-full bg-white text-black rounded px-3 py-2">
@@ -45,7 +45,7 @@
                                 </select>
                             </div>
                         </div>
-                        <div>
+                        <div class="mt-2">
                             <button type="button" wire:click="search" class="text-white w-full bg-green-500 box-border border border-transparent hover:bg-green-600 focus:ring-4 focus:ring-green-300 shadow-xs font-medium leading-5 rounded text-sm px-4 py-2.5 focus:outline-none">Search</button>
                         </div>
                     </div>

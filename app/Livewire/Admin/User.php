@@ -7,6 +7,8 @@ use App\Models\User as UserModel;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 
+use Mews\Purifier\Facades\Purifier;
+
 class User extends Component
 {
     public $name, $email, $password;
@@ -24,12 +26,15 @@ class User extends Component
             'password' => 'required|string|min:8',
             ]);
 
-            UserModel::create([
-                'name' => $this->name,
-                'email' => $this->email,
-                'password' => Hash::make($this->password)
-            ]);
+            $safeName = Purifier::clean($this->name);
+            $safeEmail = Purifier::clean($this->email);
+            $safePassword = Purifier::clean($this->password);
 
+            UserModel::create([
+                'name' => $safeName,
+                'email' => $safeEmail,
+                'password' => Hash::make($safePassword)
+            ]);
             
             $this->reset();
             $this->resetValidation();
@@ -96,16 +101,20 @@ class User extends Component
 
             $user = UserModel::findOrFail($this->userId);
 
+            $safeName = Purifier::clean($this->name);
+            $safeEmail = Purifier::clean($this->email);
+            $safePassword = Purifier::clean($this->password);
+
             $data = [
-                'name' => $this->name,
-                'email' => $this->email,
+                'name' => $safeName,
+                'email' => $safeEmail,
             ];
 
-            if (!empty($this->password)) {
+            if (!empty($safePassword)) {
                 $this->validate([
                     'password' => 'required|string|min:8'
                 ]);
-                $data['password'] = Hash::make($this->password);
+                $data['password'] = Hash::make($safePassword);
             }
 
             $user->update($data);

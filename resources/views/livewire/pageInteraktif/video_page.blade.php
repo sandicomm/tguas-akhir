@@ -1,7 +1,6 @@
-<div class="w-full">
-    <div class="relative w-full h-[25vh] flex justify-center items-end pb-6 overflow-hidden bg-cover bg-center" 
-         style="background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('{{ Vite::asset("resources/assets/img/diabet-paper.jpg") }}');">
-        <h1 class="text-4xl font-extrabold text-white tracking-tight">VIDEO</h1>
+<div class="w-full h-full">
+    <div class="media">
+        <h1 class="text-4xl font-bold text-white">VIDEO</h1>
     </div>
 
     <div class="flex justify-center items-center mt-10 mb-8">
@@ -27,9 +26,13 @@
                     </div>
 
                     <div class="p-5 text-center">
-                        <h4 class="text-lg font-bold text-gray-900 dark:text-white mb-4 truncate">
-                            {{ $video->title ?? 'Edukasi Video' }}
-                        </h4>
+                        <div class="mb-3">
+                            <h4 class="text-lg font-bold text-gray-900 dark:text-white truncate">
+                                {{ $video->title ?? 'Edukasi Video' }}
+                            </h4>
+                            <p class="text-sm">Sumber: {{ $video->sumber }}</p>
+                            <a href="{{ $video->link }}" target="_blank" class="text-xs mt-2 rounded py-1 px-2 hover:bg-blue-100 text-blue-500 {{ $video->link ? '':'hidden' }}">Menuju Ke Sumber</a>
+                        </div>
 
                         <div class="flex flex-col gap-3">
                             <button onclick="togglePlay(event, {{ $index }})" 

@@ -4,7 +4,8 @@ namespace App\Livewire\Admin;
 
 use Livewire\Component;
 use App\Models\Comments as CommentModel;
-use Dom\Comment;
+
+use Mews\Purifier\Facades\Purifier;
 
 class Comments extends Component
 {
@@ -32,10 +33,11 @@ class Comments extends Component
     {
         $this->validate();
 
+        $safeComment = Purifier::clean($this->comment);
         // Admin selalu memakai nama Admin dan is_admin true
         CommentModel::create([
             'name' => "Admin",
-            'comment' => $this->comment,
+            'comment' => $safeComment,
             'parent_id' => $this->parent_id,
             'is_admin' => true,
         ]);
@@ -49,11 +51,11 @@ class Comments extends Component
         $this->validate();
 
         $comment = CommentModel::findOrFail($this->editingId);
-        
+        $safeComment = Purifier::clean($this->comment);
         // Proteksi tambahan: hanya bisa edit jika itu milik admin
         if ($comment->is_admin) {
             $comment->update([
-                'comment' => $this->comment,
+                'comment' => $safeComment,
             ]);
             session()->flash('success', 'Komentar berhasil diperbarui!');
         }

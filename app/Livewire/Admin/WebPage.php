@@ -108,8 +108,7 @@ class WebPage extends Component
                         if(str_contains($content, 'almond1DefaultImageCarousel.jpg')){
                             $content =  asset('media/' . 'almond1DefaultImageCarousel.jpg');
                         }else{
-                            
-
+                    
                             foreach ($urlMap as $idMedia => $urlMedia) {
                                 if (str_contains($content, $idMedia)) {
                                     $namaFile='uhuy'.$content; 

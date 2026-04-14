@@ -8,11 +8,13 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\File;
 use App\Models\Media;
 
+use Mews\Purifier\Facades\Purifier;
+
 class MediaManager extends Component
 {
     use WithFileUploads;
 
-    public $title, $file;
+    public $title, $file, $sumber, $link;
     public $filter = 'all'; // 'all', 'image', atau 'video'
     public $statsAction;
     public $mediaId;
@@ -38,6 +40,8 @@ class MediaManager extends Component
 
     protected $rules = [
         'title' => 'required|string|max:255',
+        'sumber' => 'required|string|max:255',
+        'link' => 'nullable|url',
         'file' => 'required|mimes:jpg,jpeg,png,mp4,mov,avi|max:20048',
     ];
 
@@ -51,12 +55,16 @@ class MediaManager extends Component
         }
 
         // ambil nama asli
-        $originalName = $this->file->getClientOriginalName();
         $ext = $this->file->getClientOriginalExtension();
 
         // pastikan judul aman dijadikan filename
-        $safeTitle = preg_replace('/[^A-Za-z0-9_\-]/', '_', $this->title);
+       // $safeTitle = preg_replace('/[^A-Za-z0-9_\-]/', '_', $this->title);
+        //$safeSumber = preg_replace('/[^A-Za-z0-9_\-]/', '_', $this->sumber);
 
+        $safeTitle = Purifier::clean($this->title);
+        $safeSumber = Purifier::clean($this->sumber);
+        $safeLink = $this->link;
+     
         // final filename
         $filename = $safeTitle . '_' . time() . '.' . $ext;
 
@@ -70,14 +78,16 @@ class MediaManager extends Component
         $type = $isImage ? 'image' : 'video';
 
         Media::create([
-            'title'     => $this->title,
+            'title'     => $safeTitle,
+            'sumber'     => $safeSumber,
+            'link'     => $safeLink,
             'file_path' => 'media/' . $filename,
             'type'      => $type,
         ]);
 
         // reset
         $this->dispatch('resetForm');
-        $this->reset(['title', 'file']);
+        $this->reset(['title', 'file', 'sumber', 'link']);
         session()->flash('success', 'File berhasil diunggah!');
     }
 

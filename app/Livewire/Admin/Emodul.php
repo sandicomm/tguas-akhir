@@ -5,10 +5,10 @@ namespace App\Livewire\Admin;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use App\Models\Emodul as EmodulModel;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\File;
-use Intervention\Image\Facades\Image;
+
+use Mews\Purifier\Facades\Purifier;
 
 class Emodul extends Component
 {
@@ -33,21 +33,20 @@ class Emodul extends Component
             $ext = $this->file->getClientOriginalExtension();
 
             // pastikan judul aman dijadikan filename
-            $safeTitle = preg_replace('/[^A-Za-z0-9_\-]/', '_', $this->judul);
+            $safeJudul = Purifier::clean($this->judul);
+            $safePenyusun = Purifier::clean($this->penyusun);
 
             // final filename
-            $filename = $safeTitle . '_' . time() . '.' . $ext;
+            $filename = $safeJudul . '_' . time() . '.' . $ext;
 
             // pindahkan dari tmp livewire ke PUBLIC/media
             $this->file->storeAs('/', $filename, [
                 'disk' => 'public_uploads'
             ]);
 
-            
-
             $emodul = new EmodulModel();
-            $emodul->judul = $this->judul;
-            $emodul->penyusun = $this->penyusun;
+            $emodul->judul = $safeJudul;
+            $emodul->penyusun = $safePenyusun;
             $emodul->file_path = 'media/' . $filename;
 
             $emodul->save();
@@ -83,9 +82,12 @@ class Emodul extends Component
 
             $emodul = EmodulModel::findOrFail($this->emodulId);
 
+            $safeJudul = Purifier::clean($this->judul);
+            $safePenyusun = Purifier::clean($this->penyusun);
+
             $updateData = [
-                'judul' => $this->judul,
-                'penyusun' => $this->penyusun,
+                'judul' => $safeJudul,
+                'penyusun' => $safePenyusun,
             ];
 
             if($this->file){
@@ -94,11 +96,8 @@ class Emodul extends Component
                     // ambil nama asli
                     $ext = $this->file->getClientOriginalExtension();
 
-                    // pastikan judul aman dijadikan filename
-                    $safeTitle = preg_replace('/[^A-Za-z0-9_\-]/', '_', $this->judul);
-
                     // final filename
-                    $filename = $safeTitle . '_' . time() . '.' . $ext;
+                    $filename = $safeJudul . '_' . time() . '.' . $ext;
 
                     // pindahkan dari tmp livewire ke PUBLIC/media
                     $this->file->storeAs('/', $filename, [

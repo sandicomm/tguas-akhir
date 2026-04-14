@@ -4,6 +4,7 @@ namespace App\Livewire\Interaktif;
 
 use Livewire\Component;
 use App\Models\Comments;
+use Mews\Purifier\Facades\Purifier;
 
 class CommentSection extends Component
 {
@@ -25,9 +26,12 @@ class CommentSection extends Component
         try {
             $this->validate();
 
+            $safeName = Purifier::clean($this->name);
+            $safeComment = Purifier::clean($this->comment);
+            
             Comments::create([
-                'name' => $this->name,
-                'comment' => $this->comment,
+                'name' => $safeName,
+                'comment' => $safeComment,
                 'parent_id' => $this->parent_id,
             ]);
 

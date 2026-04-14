@@ -10,7 +10,7 @@ class Media extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['title', 'file_path', 'type'];
+    protected $fillable = ['title', 'file_path', 'type', 'sumber','link'];
 
     public function getFileUrlAttribute()
     {
