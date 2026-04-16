@@ -23,7 +23,7 @@ class PageEmodul extends Component
     {
         if($this->emodulAll->count() > 1){
             $url = null;
-            return view('livewire.pageEmodul.emodul-page',compact('url'));
+            return view('livewire.pageEmodul.emodul-page',compact('url'))->layout('layouts.page.listEmodul');
 
         }
         //===== blok ini diganti dengan yg di mount() 
@@ -40,6 +40,6 @@ class PageEmodul extends Component
         // ✅ render HARUS tetap return view
         return view('livewire.pageEmodul.emodul-page', [
             'url' => null
-        ]);
+        ])->layout('layouts.page.listEmodul');
     }
 }

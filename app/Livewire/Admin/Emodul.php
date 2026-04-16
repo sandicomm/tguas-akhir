@@ -77,7 +77,7 @@ class Emodul extends Component
             $this->validate([
                 'judul' => 'required|string|max:255',
                 'penyusun' => 'required|string|max:255',
-                'file' => 'required|mimes:pdf|max:2048',
+                'file' => 'nullable|mimes:pdf|max:2048',
             ]);
 
             $emodul = EmodulModel::findOrFail($this->emodulId);
@@ -186,6 +186,10 @@ class Emodul extends Component
             $this->statsAction = $action;
         }
         $this->isModalOpen = true;
+    }
+
+    public function resetFile(){
+       $this->reset(['file']); 
     }
 
     public function closeModal()

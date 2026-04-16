@@ -20,7 +20,7 @@
     @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/interaktifPage.js'])
     @livewireStyles
 </head>
-<body class="relative">
+<body class="w-full" style="height:100dvh;">
     {{ $slot }}
     @livewireScripts
 </body>

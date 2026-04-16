@@ -20,10 +20,10 @@
     @vite(['resources/css/app.css'])
 </head>
 @livewireStyles
-<body style="height:100dvh;background-color:#2a3f4a;">
+<body style="height:100dvh; background-color:#2a3f4a;">
     <x-loading wire:loading/>
     <div class="m-5">
-        @livewire('pageEmodul.emodul-page')
+        {{ $slot }}
     </div>
    @livewireStyles
 </body>
