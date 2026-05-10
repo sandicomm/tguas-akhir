@@ -21,7 +21,6 @@ import {
 import { createBtnModal, createBodyModal, createDropdownModal } from './page/modal.js';
 
 import { createField, createDropdownField } from './page/field.js';
-import { createVideo, createDropdownVideo } from './page/video.js';
 import { createSection, createSectionFooter, createSectionAccordion} from './page/section.js';
 import { createBtnProlog } from './page/prolog.js';
 
@@ -49,7 +48,7 @@ export function initWebpage(edit) {
   globals.webpageDbParentSection = webpageDbParentSection
 
   const typePage = window.typePage; // Ambil dari variabel global
-  if(typePage == 'image' || typePage == 'video'){
+  if(typePage == 'image'){
 
     loadWebpage(edit, true)
     console.log(typePage)
@@ -573,16 +572,6 @@ export function loadWebpage(edit=false, justFooter=false){
                   webpageHasPrinted.add(field.id)
                 }
                 break;
-              case 'video':
-                if(!field.id.includes('modal') && !webpageHasPrinted.has(field.id)){
-                  html = createVideo(field,edit);
-  
-                  if(edit) dropdown = createDropdownVideo(field.id);
-  
-                  appendTo(`#wrapper-section-${field.id.split('-').slice(1,-1).join('-')}`, html);
-                  webpageHasPrinted.add(field.id)
-                }
-                break;
               case 'field':
                 if(!field.id.includes('modal') && !webpageHasPrinted.has(field.id)){
                   html = createField(field,edit);
@@ -631,26 +620,6 @@ export function loadWebpage(edit=false, justFooter=false){
               element = createField(page,edit);
               if(edit) dropdown = createDropdownField(page.id);
               
-              webpageHasPrinted.add(page.id)
-            }
-            return { element, dropdown };
-          },
-  
-          video(page, sectionAppend) {
-            let element, dropdown;
-            if (page.id.startsWith('video-modal') && !webpageHasPrinted.has(page.id)) {
-              element = createVideo(page,edit);
-              if(edit) dropdown = createDropdownVideo(page.id);
-  
-              appendTo(`#body-${page.id.split('-').slice(1, -1).join('-')}`, element);
-              document.querySelector(`#parent-${page.id.split('-').slice(1,-1).join('-')}`).insertAdjacentHTML('afterbegin', dropdown);
-              webpageHasPrinted.add(page.id)
-  
-              return true
-            } else if(page.id.startsWith('video-element') && !webpageHasPrinted.has(page.id)) {
-              element = createVideo(page,edit);
-              if(edit) dropdown = createDropdownVideo(page.id);
-  
               webpageHasPrinted.add(page.id)
             }
             return { element, dropdown };
@@ -806,21 +775,6 @@ export function loadWebpage(edit=false, justFooter=false){
         !webpageHasPrinted.has(obj.id)
       );
   }
-
-  const allVideos = document.querySelectorAll('video');
-  allVideos.forEach(v => {
-    v.addEventListener('error', e => {
-      console.warn('⚠️ Gagal load video', v.src, e);
-      // fallback
-      v.poster = '/images/video-error.png';
-    });
-
-    // tunda load kedua jika sudah ada yang sama
-    const duplicates = Array.from(allVideos).filter(o => o !== v && o.src === v.src);
-    if (duplicates.length) {
-      v.preload = 'metadata';
-    }
-  });
 
   setTimeout(() => {
       try {

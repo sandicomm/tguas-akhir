@@ -15,14 +15,19 @@ use Livewire\WithPagination;
 class ScoringPersonal extends Component
 {
     use WithPagination;
+    public $formName;
     public $showAllScoring = false;
     public $scoreAnswer;
 
     public $selectedFormPlacement = null; 
-    public $selectedFormName = null; 
+    public $selectedForm = null; 
 
+    public $searchByEmail = '';
+    
     public function mount()
     {
+
+        $this->formName = Form::select('id', 'form_name', 'placement')->get();
         // Menghitung Max Score per Form langsung lewat SQL
         $this->scoreAnswer = \DB::table(function ($query) {
                 // Subquery: Mencari nilai tertinggi per pertanyaan
@@ -43,22 +48,21 @@ class ScoringPersonal extends Component
         
     }
 
-    #[Computed]
-    public function forms()
-    {
-        return \App\Models\Form::query()
-            // Jika Category dipilih, tampilkan form yang sesuai saja (Dependent Dropdown)
-            ->when($this->selectedFormPlacement, function($query) {
-                $query->where('placement', 'like', '%'.$this->selectedFormPlacement);
-            })
-            ->select('form_name')
-            ->get();
-    }
-
     // Gunakan computed property agar data tidak disimpan di state (mencegah payload berat)
     #[Computed]
     public function groupedAllResponsesScoring()
     {
+
+        $match = $this->formName->filter(function ($data) {
+
+                    return $data->id == $this->selectedForm 
+                        && str_contains($data->placement, $this->selectedFormPlacement);
+                })->first();
+
+        if (!$match) {
+            $this->selectedForm = null;
+        }
+
         // 1. Ambil data ringkasan skor dari Database (Sangat Ringan)
         $paginatedData = Responses::query()
             ->select([
@@ -72,20 +76,25 @@ class ScoringPersonal extends Component
             ->leftJoin('answers', 'answers.id', '=', 'responses.answer_id')
             ->leftJoin('respondens', 'respondens.id', '=', 'responses.responden_id')
             ->leftJoin('forms', 'forms.id', '=', 'responses.form_id')
+            //->whereIn('forms.id', $this->selectedForm)
             
+            ->when($this->searchByEmail, function ($query) {
+                $query->where('respondens.email', 'like', '%' . $this->searchByEmail . '%');
+            })
+
             // Gunakan when() agar query hanya aktif jika variabel ada isinya
             ->when($this->selectedFormPlacement, function ($query) {
                 $query->where('forms.placement', 'like', '%'.$this->selectedFormPlacement);
             })
-            ->when($this->selectedFormName, function ($query) {
-                $query->where('forms.form_name', $this->selectedFormName);
+            ->when($this->selectedForm, function ($query) {
+                $query->where('forms.id', $this->selectedForm);
             })
-
+            
             ->groupBy('user_key', 'responses.form_id', 'responses.attempt', 'forms.form_name', 'forms.placement')
             ->orderBy('user_key')
             ->paginate(10);
         if ($paginatedData->isEmpty()) {
-            $this->selectedFormName = null;
+            $this->selectedForm = null;
         }
         // 2. Transformasi struktur data hanya untuk data yang di-paginate
         // Ini mengubah attempt yang terpisah menjadi satu grup di dalam form

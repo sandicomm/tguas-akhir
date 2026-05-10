@@ -14,10 +14,9 @@ return new class extends Migration
         Schema::create('questions', function (Blueprint $table) {  
             $table->id();
             $table->string('question');
-            $table->integer('input_type')->constrained('input_types')->onDelete('cascade');
-            $table->integer('rules')->nullable();
             $table->foreignId('section_id')->constrained('sections')->onDelete('cascade');
             $table->integer('order')->nullable();
+            $table->string('image')->nullable();
             $table->timestamps();
         });
     }

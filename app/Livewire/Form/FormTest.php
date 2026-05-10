@@ -14,7 +14,7 @@ class FormTest extends Component
     public function mount($placement)
     {
         $this->form = Form::with([ 'sections.questions' => function ($q) {
-                        $q->with(['answers', 'inputType']);
+                        $q->with(['answers']);
                     }
                 ]) // Eager load sections, questions, and answers
             ->where('placement', $placement) // Filter berdasarkan form_type
@@ -31,12 +31,7 @@ class FormTest extends Component
             }
 
         } else if($this->form->sections->isNotEmpty()) {
-            foreach ($this->form->sections as $section) {
-                foreach ($section->questions as $question) {
-                    $question->input_type = $question->inputType->input_type ?? null;
-                    unset($question->inputType); // opsional: biar nggak ikut ke JSON
-                }
-            }
+            
             $this->sections = $this->form->sections->sortBy('order');
 
         }

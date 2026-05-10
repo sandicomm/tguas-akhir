@@ -27,7 +27,6 @@ import {
 import { modalTypeStyling, addModal, copyModal } from './page/modal.js';
 
 import { addField,copyField } from './page/field.js';
-import { addVideo,copyVideo } from './page/video.js';
 import { addSection,copySection } from './page/section.js';
 
 // ======== COPY HANDLERS =========
@@ -120,71 +119,6 @@ function showToast(message) {
     setTimeout(() => {
         toast.style.opacity = '0.4';
     }, 5000);
-}
-
-function setListener(){
-  document.querySelectorAll('input[type="file"][accept^="video"]').forEach(input => {
-    if (input.dataset.listenerAdded === "true") return;
-    input.dataset.listenerAdded = "true";
-    
-    input.addEventListener('change', function (e) {
-      const file = e.target.files[0];
-      if (!file) {
-        window.dispatchEvent(new CustomEvent('notif-pesan', { 
-            detail: { pesan: 'Video terlalu besar! Maksimal 20MB.', status: false } 
-        }));
-        //console.error('file tidak valid')
-        return
-      }
-
-      // 1. Validasi Ukuran File (Misal Maksimal 20MB)
-      const maxSizeBytes = 20 * 1024 * 1024; 
-      if (file.size > maxSizeBytes) {
-          window.dispatchEvent(new CustomEvent('notif-pesan', { 
-              detail: { pesan: 'Video terlalu besar! Maksimal 20MB.', status: false } 
-          }));
-          e.target.value = ''; // Reset input
-          return;
-      }
-
-      webpageDb=globals.webpageDb
-      fileDb=globals.file
-      if (file && file.type.startsWith('video/')) {
-        const labelId = `label-${e.target.id}`; // contoh: input-video-1-2 → label-input-video-1-2
-        const label = getEl(labelId)
-        if(!label) return
-
-        // Buat elemen video
-        const video = document.createElement('video');
-        video.controls = true;
-        video.src = URL.createObjectURL(file);
-
-        // Hapus isi label lama (misal SVG)
-        label.innerHTML = '';
-        label.appendChild(video);
-
-        const randomKey = Math.random().toString(36).substring(2, 8);
-        const safeName = file.name.replace(/\s+/g, '_'); // hindari spasi
-        const uniqueKey = `__temp_media_${randomKey}_${safeName}__`;
-
-        webpageDb.map(page=>{
-          if(page.id === e.target.id.split('-').slice(1).join('-')){
-            page.content = uniqueKey,
-            page.action = updateActionProperty(page.action,'update')
-          }
-        })
-
-        fileDb.push({
-          id:uniqueKey,
-          type:'file',
-          filetype:'video',
-          file:file
-        })
-
-        globals.webpageDb=webpageDb
-      }
-    });
-  });
 }
 
 // ======================== INITIALIZED =======================
@@ -418,21 +352,6 @@ webpage.addEventListener('click', function (event) {
     updateStylingControls(editorFieldSelect ,element);
   }
 
-  else if(event.target.closest("[id^='video-']")){
-
-    let element = event.target.closest("[id^='video-']")
-
-    editorFieldSelect = element
-    globals.editorFieldSelect = editorFieldSelect
-
-    accordionSelect = null
-    globals.accordionSelect = null
-
-    carouselSelect = null
-    globals.carouselSelect = null
-    updateStylingControls(element, "video")
-  }
-
   else if(event.target.closest('[id^="btn-modal-"]')){
 
     let element = event.target.closest('[id^="btn-modal-"]')
@@ -529,11 +448,6 @@ webpage.addEventListener('click', function (event) {
     addField(event)
 
   }
-
-  if (id.startsWith('add-video-')) {
-    addVideo(event)
-   
-  }
   
     // ======================== MODAL =========================
   if(id.startsWith('add-modal-')) {
@@ -558,9 +472,6 @@ webpage.addEventListener('click', function (event) {
     
     if(idParts[1] == "field"){
       copyField(idParts)
-
-    }else if(idParts[1] == "video"){
-      copyVideo(idParts)
       
     }else if(idParts[1] == "modal"){
       copyModal(idParts.slice(1).join('-'))
@@ -859,6 +770,5 @@ bs.paddingMarginField()
 bs.colorBackgroundField()
 bs.flexPosition()
 bs.setListenerSetImage()
-setListener()
 accordionStyling()
 modalTypeStyling()

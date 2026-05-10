@@ -10,7 +10,6 @@ class Questions extends Model
     use HasFactory;
     protected $fillable = [
         'question',
-        'input_type',
         'rules',
         'image',
         'section_id',
@@ -18,10 +17,6 @@ class Questions extends Model
         ];
     public function answers(){
        return $this->hasMany(Answers::class, 'question_id');
-    }
-
-    public function inputType(){
-       return $this->belongsTo(input_type::class, 'input_type')->select(['id', 'input_type']);
     }
 
     public function section() {

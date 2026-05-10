@@ -19,6 +19,11 @@ let editorFieldSelect=globals.editorFieldSelect
 function modalTypeStyling(){
   document.getElementById('modal-type').addEventListener('change', function(){
     editorFieldSelect=globals.editorFieldSelect
+    
+    if(editorFieldSelect.id.startsWith('btn-modal')){
+      editorFieldSelect = getEl(`parent-${editorFieldSelect.id.split('-').slice(1).join('-')}`)
+    }
+
     webpageDb=globals.webpageDb
     let id = `body-${editorFieldSelect.parentElement.id.split('-').slice(1).join('-')}`
     if(this.value === 'default'){
@@ -75,9 +80,6 @@ const createBodyModal=(page, fieldHead,edit)=>`
         <ul class="py-2 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownDefaultButton">
           <li>
               <a id="add-field-${page.id.split('-').slice(1).join('-')}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Field</a>
-          </li>
-          <li>
-              <a id="add-video-${page.id.split('-').slice(1).join('-')}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Video</a>
           </li>
         </ul>
       </div>` : ''
@@ -150,9 +152,6 @@ const addModal = (event)=>{
         <ul class="py-2 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownDefaultButton">
           <li>
               <a id="add-field-${idPrefix}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Field</a>
-          </li>
-          <li>
-              <a id="add-video-${idPrefix}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Video</a>
           </li>
         </ul>
       </div>

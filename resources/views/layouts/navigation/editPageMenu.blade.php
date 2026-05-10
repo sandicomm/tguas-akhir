@@ -31,7 +31,7 @@
                     </svg>
                 </button>
             </div>
-            <div id="btn-page-swap" class="mb-3 bg-white rounded-md border border-gray-600 flex overflow-hidden text-center"
+            <div id="btn-page-swap" class="mb-3 bg-white rounded-md border border-gray-600 flex overflow-hidden text-center hover:bg-blue-200"
             data-prolog="{{ route('admin.webpage','prolog') }}"
             data-webpage="{{ route('admin.webpage','web') }}"
             >
@@ -40,17 +40,17 @@
             <ul class="space-y-2 font-medium">
                 <!-- ================================ MEDIA LAYOUT ================================ -->
                 <div id="media-layout" class="flex justify-center items-center gap-3 w-full">
-                    <div data-tooltip-target="tooltip-media-layout-phone" id="media-layout-phone" class="cursor-pointer bg-white p-2 rounded-md text-black hover:bg-gray-200">
+                    <div data-tooltip-target="tooltip-media-layout-phone" id="media-layout-phone" class="cursor-pointer bg-white p-2 rounded-md text-black hover:bg-gray-200 border-2 border-gray-500">
                         <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 1.5H8.25A2.25 2.25 0 0 0 6 3.75v16.5a2.25 2.25 0 0 0 2.25 2.25h7.5A2.25 2.25 0 0 0 18 20.25V3.75a2.25 2.25 0 0 0-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 18.75h3" />
                         </svg>
                     </div>
-                    <div data-tooltip-target="tooltip-media-layout-tablet" id="media-layout-tablet" class="cursor-pointer bg-white p-2 rounded-md text-black hover:bg-gray-200">
+                    <div data-tooltip-target="tooltip-media-layout-tablet" id="media-layout-tablet" class="cursor-pointer bg-white p-2 rounded-md text-black hover:bg-gray-200 border-2 border-gray-500">
                         <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5h3m-6.75 2.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-15a2.25 2.25 0 0 0-2.25-2.25H6.75A2.25 2.25 0 0 0 4.5 4.5v15a2.25 2.25 0 0 0 2.25 2.25Z" />
                         </svg>
                     </div>
-                    <div data-tooltip-target="tooltip-media-layout-desktop" id="media-layout-desktop" class="cursor-pointer bg-blue-400 p-2 rounded-md text-black">
+                    <div data-tooltip-target="tooltip-media-layout-desktop" id="media-layout-desktop" class="cursor-pointer bg-blue-400 p-2 rounded-md text-black border-2 border-gray-500">
                         <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M9 17.25v1.007a3 3 0 0 1-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0 1 15 18.257V17.25m6-12V15a2.25 2.25 0 0 1-2.25 2.25H5.25A2.25 2.25 0 0 1 3 15V5.25m18 0A2.25 2.25 0 0 0 18.75 3H5.25A2.25 2.25 0 0 0 3 5.25m18 0V12a2.25 2.25 0 0 1-2.25 2.25H5.25A2.25 2.25 0 0 1 3 12V5.25" />
                         </svg>
@@ -71,14 +71,14 @@
                     </div>
                 </div>
 
-                <li class="flex justify-between">
-                    <x-nav-link href="{{ route('admin.dashboard') }}">
-                    <svg class="w-5 h-5 text-black transition duration-75 dark:text-white dark:group-hover:text-white" aria-hidden="true"  fill="currentColor" viewBox="0 0 22 21">
-                        <path d="M16.975 11H10V4.025a1 1 0 0 0-1.066-.998 8.5 8.5 0 1 0 9.039 9.039.999.999 0 0 0-1-1.066h.002Z"/>
-                        <path d="M12.5 0c-.157 0-.311.01-.565.027A1 1 0 0 0 11 1.02V10h8.975a1 1 0 0 0 1-.935c.013-.188.028-.374.028-.565A8.51 8.51 0 0 0 12.5 0Z"/>
-                    </svg>
-                    <span class="ms-3 dark:text-white text-black">Dashboard</span>
-                    </x-nav-link>
+                <li class="flex justify-center items-center rounded text-black dark:text-white bg-blue-300 dark:bg-blue-500 hover:bg-blue-400 hover:text-white dark:hover:bg-blue-400 dark:hover:text-black cursor-pointer">
+                    <a href="{{ route('admin.dashboard') }}" class="flex items-center p-2">
+                        <svg class="w-5 h-5 transition duration-75" aria-hidden="true"  fill="currentColor" viewBox="0 0 22 21">
+                            <path d="M16.975 11H10V4.025a1 1 0 0 0-1.066-.998 8.5 8.5 0 1 0 9.039 9.039.999.999 0 0 0-1-1.066h.002Z"/>
+                            <path d="M12.5 0c-.157 0-.311.01-.565.027A1 1 0 0 0 11 1.02V10h8.975a1 1 0 0 0 1-.935c.013-.188.028-.374.028-.565A8.51 8.51 0 0 0 12.5 0Z"/>
+                        </svg>
+                        <span class="ms-3">Dashboard</span>
+                    </a>
                 </li>
 
                 <div id="accordion-collapse-section" data-accordion="collapse" class="">

@@ -16,6 +16,8 @@ return new class extends Migration
             $table->string('title');
             $table->string('file_path'); // Lokasi penyimpanan file
             $table->string('type'); // 'image' atau 'video'
+            $table->string('sumber'); // 'image' atau 'video'
+            $table->string('link')->nullable(); // 'image' atau 'video'
             $table->timestamps();
         });
     }

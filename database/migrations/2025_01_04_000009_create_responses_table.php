@@ -13,11 +13,11 @@ return new class extends Migration
     {
         Schema::create('responses', function (Blueprint $table) {
             $table->id();
+            $table->uuid('uuid')->nullable();
             $table->integer('attempt');
             $table->integer('form_id');
-            $table->foreignId('responden_id')->constrained('respondens')->onDelete('cascade');
+            $table->foreignId('responden_id')->nullable()->constrained('respondens')->onDelete('cascade');
             $table->foreignId('answer_id')->nullable()->constrained('answers')->onDelete('cascade');
-            $table->foreignId('input_type')->constrained('input_types')->onDelete('cascade');
             $table->timestamps();
         });
     }

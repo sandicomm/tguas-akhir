@@ -13,9 +13,11 @@ return new class extends Migration
     {
         Schema::create('comments', function (Blueprint $table) {
             $table->id();
-            $table->timestamps();
+            $table->foreignId('parent_id')->nullable()->constrained('comments')->onDelete('cascade');
             $table->string('name');
             $table->string('comment');
+            $table->boolean('is_admin')->default(0);
+            $table->timestamps();
         });
     }
 

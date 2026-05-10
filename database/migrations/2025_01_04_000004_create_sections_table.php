@@ -16,11 +16,8 @@ return new class extends Migration
             $table->string('name'); // Nama section (contoh: "Section 1")
             $table->text('description')->nullable(); // Deskripsi section
             $table->integer('order')->default(0);
+            $table->foreignId('form_id')->constrained('forms')->onDelete('cascade');  // Hapus response jika responden dihapus
             $table->timestamps();
-
-            $table->foreignId('form_id')
-                ->constrained('forms')
-                ->onDelete('cascade');  // Hapus response jika responden dihapus
         });
     }
 

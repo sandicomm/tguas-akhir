@@ -20,8 +20,9 @@ class Responses extends Component
 
     public $forms;
     public $responseData;
-    public $selectedPlacement = 'pre-test-interaktif';
+    public $selectedPlacement = 'interaktif';
     public $selectedForm = null;
+    public $searchByEmail='';
 
     // State untuk Modal Hapus Satuan
     public $isDeleteModalOpen = false;
@@ -34,7 +35,7 @@ class Responses extends Component
 
     public function mount()
     {
-        $this->forms = Form::select('id', 'form_name')->get();
+        $this->forms = Form::select('id', 'form_name', 'placement')->get();
     }
 
     public function export($formId)
@@ -183,9 +184,18 @@ class Responses extends Component
 
     public function loadData()
     {
+        $match = $this->forms->filter(function ($data) {
+                    return $data->id == $this->selectedForm
+                        && str_contains($data->placement, $this->selectedPlacement);
+                })->first();
+
+        if (!$match) {
+            $this->selectedForm = null;
+        }
+        
         // Cek form selection
         if (!$this->selectedForm) {
-            $this->selectedForm = Form::where('placement', $this->selectedPlacement)->value('id');
+            $this->selectedForm = Form::where('placement', 'like', "%".$this->selectedPlacement)->value('id');
         }
 
         if (!$this->selectedForm) return [
@@ -199,7 +209,8 @@ class Responses extends Component
         $formDetail = Form::find($this->selectedForm);
         $this->responseData = (object) [
             'form_id' => $formDetail->id,
-            'form_name' => $formDetail->form_name
+            'form_name' => $formDetail->form_name,
+            'placement' => $formDetail->placement
         ];
 
         // 1. Ambil Pertanyaan
@@ -216,7 +227,13 @@ class Responses extends Component
             // TAMBAHKAN form_id di select
             ->select('form_id', 'responden_id', 'uuid', 'attempt', 'created_at')
             ->where('form_id', $this->selectedForm)
-            
+
+            ->when($this->searchByEmail, function ($query) {
+                $query->whereHas('responden', function ($q) {
+                    $q->where('email', 'like', '%' . $this->searchByEmail . '%');
+                });
+            })
+
             ->addSelect(['first_sub' => Response::selectRaw('MIN(created_at)')
                 ->from('responses as r2')
                 ->whereColumn('r2.form_id', 'responses.form_id')
@@ -292,7 +309,7 @@ class Responses extends Component
                 return $generateKey($item); // Panggil helper key yang SAMA
             });
         });
-
+        
         return [
             'userAttempts' => $paginatedUsers, // Object paginator (untuk link halaman)
             'columns'      => $columns,        // Array data header (untuk loop th)
@@ -305,8 +322,6 @@ class Responses extends Component
     {
         // Ambil semua data dari loadData()
         $data = $this->loadData();
-
-        $this->forms = Form::select('id', 'form_name')->get();
 
         // Kirim semuanya ke view
         return view('livewire.admin.responses', $data);

@@ -155,6 +155,7 @@ function validateBeforeSubmit(fullData) {
         window.dispatchEvent(new CustomEvent('notif-pesan', { 
             detail: { pesan: `Section "${section.name}" wajib memiliki question`, status:false} 
         }));
+        console.log(section, sectionsCopy)
         return false;
     }
 
@@ -162,7 +163,7 @@ function validateBeforeSubmit(fullData) {
       const isQuestionDeleted = question.changeContent == 'delete';
 
       // ✅ Jika aktif & pilgan, answer wajib ada
-      if (!isQuestionDeleted && question.input_type == 'pilgan') {
+      if (!isQuestionDeleted) {
         const answers = Object.values(question.answer || {}).filter(
             a => a.changeContent != 'delete'
         );
@@ -171,6 +172,7 @@ function validateBeforeSubmit(fullData) {
             window.dispatchEvent(new CustomEvent('notif-pesan', { 
                 detail: { pesan: `Question "${question.question}" wajib memiliki jawaban`, status:false} 
             }));
+            console.log(section,question, sectionsCopy)
             return false;
         }
       }
@@ -236,7 +238,6 @@ function normalizeSectionsToKeyedObject(formCopy, sectionsCopy) {
           id: qid,
           question: q.question,
           order: String(q.order),
-          input_type: q.input_type,
           image: q.image,
           rule: q.rules,
           status: '',
@@ -491,6 +492,22 @@ function updateFormSetting (event) {
     }else if('email' == el.id.split('-')[2]){
         formCopy.collect_email = el.value
 
+         if(parseInt(el.value) == 0 && parseInt(formCopy.one_attempt) == 1){
+            
+            window.dispatchEvent(new CustomEvent('redirect-modal', { 
+                detail: { 
+                    pesan: 'Jika <b class="text-blue-600">Responden Tidak Harus Sertakan Email</b>, Maka Pengaturan <b class="text-blue-600">Pengisian Cuman Boleh Satu Kali</b> Otomatis Menjadi <b class="text-red-600">"TIDAK"</b>.', 
+                    url: 'gk redirect', status:false } 
+            }));
+
+            formCopy.changeSettingAttempt = true
+            formCopy.one_attempt = 0
+            const oneAttempt = document.getElementById('form-setting-attempt')
+            oneAttempt.value = 0
+            oneAttempt.style.borderColor='rgba(255, 141, 62, 1)'
+            oneAttempt.style.borderWidth= '4px'
+        }
+
         el.style.borderColor='rgba(255, 141, 62, 1)'
         el.style.borderWidth= '4px'
 
@@ -502,11 +519,27 @@ function updateFormSetting (event) {
     }else if('attempt' == el.id.split('-')[2]){
         formCopy.one_attempt = el.value
 
+        if(parseInt(el.value) == 1 && parseInt(formCopy.collect_email) == 0){
+            
+            window.dispatchEvent(new CustomEvent('redirect-modal', { 
+                detail: { 
+                    pesan: 'Jika <b class="text-blue-600">Pengisian Cuman Boleh Satu Kali</b>, Maka Pengaturan <b class="text-blue-600">Responden Harus Sertakan Email</b> Otomatis Menjadi <b class="text-red-600">"IYA"</b>.', 
+                    url: 'gk redirect', status:false } 
+            }));
+
+            formCopy.changeSettingEmail = true
+            formCopy.collect_email = 1
+            const collectEmail = document.getElementById('form-setting-email')
+            collectEmail.value = 1
+            collectEmail.style.borderColor='rgba(255, 141, 62, 1)'
+            collectEmail.style.borderWidth= '4px'
+        }
+
         el.style.borderColor='rgba(255, 141, 62, 1)'
         el.style.borderWidth= '4px'
 
         formCopy.changeSettingAttempt= true
-        
+        console.log(formCopy)
         formCopy.changeContent='update'
         loadBtnSubmit()
 
@@ -581,7 +614,7 @@ function formOrderUpSection(event){
     console.log(section, sectionEl)
     if (!section) return;
     
-    const nextSection = sectionsCopy.find(nextSec =>  nextSec.order ==  parseInt(section.order) - 1);
+    const nextSection = sectionsCopy.find(nextSec =>  (nextSec.order ==  parseInt(section.order) - 1) && (nextSec.order !=0));
     console.log(nextSection)
     
     if (nextSection &&  parseInt(section.order) > 1) {
@@ -623,7 +656,6 @@ function formBtnAddSection(event){
     const sectionId = parseInt(event.id.split('-')[4])
     const sectionTarget = sectionsCopy.find(sec => sec.id == sectionId)
 
-
     sectionsCopy.forEach(section => {
 
         if (parseInt(section.order) > sectionTarget.order) {
@@ -644,6 +676,8 @@ function formBtnAddSection(event){
         order: parseInt(sectionTarget.order) + 1,
         questions: []
     }
+
+    console.log('add new section:', dataNewSection, sectionTarget.order, sectionsCopy)
 
     sectionsCopy.push(dataNewSection);
 
@@ -670,7 +704,7 @@ function formBtnCopySection(event){
     })
 
     const maxId = getMax(sectionsCopy)
-
+    console.log(maxId)
     copySection.id = parseInt(maxId.sectionId) + 1
     copySection.name = copySection.name + ' (copy)'
     copySection.changeContent = 'add'
@@ -714,8 +748,9 @@ function formBtnCopySection(event){
         
         return newQuestion
     })
-    
+    console.log('before push',copySection)
     sectionsCopy.push(copySection)
+    console.log('after push', copySection)
 
     const containerSection = getEl(`container-section-${sectionId}`)
     if(!containerSection) return
@@ -840,78 +875,6 @@ function questionFieldChange(event) {
     }
 }
 
-function formAnswerTypeChange(event) {
-    const el = event.target
-    let maxAnswerId = parseInt(getMax(sectionsCopy).answerId) + 1;
-    const questionId = parseInt(el.id.split('-')[3])
-    const sectionId = parseInt(el.id.split('-')[4])
-
-    el.style.borderColor='rgba(255, 141, 62, 1)'
-    el.style.borderWidth='4px'
-
-    const section = sectionsCopy.find(s=>s.id == sectionId)
-    if(!section) return;
-
-    let question=section.questions.find(q => q.id == questionId)
-
-    if(question){
-        question.changeContent='update'
-        if(question.input_type == 'pilgan'){
-
-            question.answers = question.answers.filter(answer => {
-                if (answer.status === 'new') {
-                    return false; 
-                } else {
-                    answer.changeContent = 'delete';
-                    return true;
-                }
-            });
-        }else{
-
-            if(question.answers.length == 0){
-                const answerData={
-                    id: maxAnswerId,
-                    answer: 'type here',
-                    value: 0,
-                    status: 'new',
-                    changeContent: 'add',
-                    changeAnswer: true
-                }
-
-                question.answers.push(answerData);
-            }else{
-                question.answers.forEach(answer=>{
-                    if(answer.status == 'new'){
-                        answer.changeContent = 'update'
-                    }else if(!answer.hasDeleted){
-                        answer.changeContent = ''
-                    } 
-                })
-            }
-        }
-
-        section.changeContent='update'
-        question.input_type = el.value
-        question.changeContent = 'update'
-        
-        question.changeTypeAnswer = true
-
-        loadBtnSubmit()
-        if(el.value == 'pilgan'){
-            const formBtnAddAnswer = getEl(`form-btn-add-answer-${questionId}`)
-            if(!formBtnAddAnswer) return
-            formBtnAddAnswer.classList.remove('hidden')
-        }else{
-            const formBtnAddAnswer = getEl(`form-btn-add-answer-${questionId}`)
-            if(!formBtnAddAnswer) return
-            formBtnAddAnswer.classList.add('hidden')
-        }
-        const answerListQuestionEl = getEl(`answer-wrapper-${questionId}`)
-        if(!answerListQuestionEl) return
-        answerListQuestionEl.innerHTML=generatorAnswer(section,question) 
-    }
-}
-
 function formBtnAddQuestion(event) {
 
     let maxAnswerId = parseInt(getMax(sectionsCopy).answerId) + 1;
@@ -937,7 +900,6 @@ function formBtnAddQuestion(event) {
         const questionData = {
             id: parseInt(getMax(sectionsCopy).questionId) + 1,
             question: 'type here',
-            input_type: 'pilgan',
             rules: 1,
             status:'new',
             changeContent: 'add',
@@ -957,9 +919,11 @@ function formBtnAddQuestion(event) {
             }]
         }
 
+        console.log('add new question:', section.questions, questionData, question,thisQuestionOrder)
+
         section.questions.push(questionData);
         loadBtnSubmit()
-
+        console.log('add quesiton:',sectionsCopy)
         if(thisQuestionId == 0){
             const containerSection=getEl(`container-section-${sectionId}`)
             if(!containerSection) return
@@ -1040,11 +1004,17 @@ function formBtnDeleteQuestion (event) {
     const sectionId = parseInt(event.id.split('-')[8]);
     const questionId = parseInt(event.id.split('-')[4]);
 
-    const section = sectionsCopy.find(sec=>sec.id=sectionId)
+    sectionsCopy.forEach(s=>console.log(s.id))
+
+    const section = sectionsCopy.find(sec=>sec.id==sectionId)
     if(!section) return
 
+    sectionsCopy.forEach(s=>console.log(s.id))
+    
     const questionActive = section.questions.filter(q => q.changeContent !== 'delete');
 
+    console.log(sectionId,sectionsCopy,section,section.questions)
+   
     if (questionActive.length === 1) {
         window.dispatchEvent(new CustomEvent('notif-pesan', { 
             detail: { pesan: 'Question Tidak Boleh Kosong (Minimal sisa 1)', status: false } 
@@ -1096,18 +1066,21 @@ function formOrderUpQuestion (event) {
 
     // Cari section yang sesuai
     const section = sectionsCopy.find(sec =>  sec.id == sectionId);
-
+    console.log(section)
     if (!section) return;
     
     // Cari pertanyaan yang sesuai
     const question = section.questions.find(q =>  q.id == questionId);
+    console.log(question)
 
     if (!question) return;
 
     const questionOrder = question.order
 
-    const previousQuestion = section.questions.find(q =>  q.order == questionOrder - 1);
+    const previousQuestion = section.questions.find(q =>  (q.order == questionOrder - 1) && (q.order !=0));
 
+    console.log('before up question:', question, previousQuestion)
+    
     if (previousQuestion && questionOrder > 1) {
      
         // **CASE 1: Swap dengan question sebelumnya dalam section yang sama**
@@ -1133,6 +1106,8 @@ function formOrderUpQuestion (event) {
         const target = questionEl.previousElementSibling;
         if (!target) return;
 
+        console.log("up question in" )
+
         // Tukar dataset dan posisi DOM
         target.insertAdjacentElement('beforebegin', questionEl);
         const wrapperQuestion = questionEl.querySelector('[id^="wrapper-question-"]')
@@ -1141,8 +1116,7 @@ function formOrderUpQuestion (event) {
 
     } else {
         // **CASE 2: Pindahkan ke section sebelumnya jika di posisi pertama**
-        const previousSection = sectionsCopy.find(sec => sec.order == parseInt(section.order) - 1);
-        
+        const previousSection = sectionsCopy.find(sec => sec.order == parseInt(section.order) - 1 && parseInt(sec.order) != 0);
       
         if (previousSection) {
             question.section_id = previousSection.id;
@@ -1156,9 +1130,13 @@ function formOrderUpQuestion (event) {
             
             // Perbarui order di section baru
             section.questions.forEach(q=> {
-                q.order = Math.max(1,q.order - 1)
-                q.changeContent = 'update';
+                if(q.order != 0){  
+                    q.order = Math.max(1,q.order - 1)
+                    q.changeContent = 'update';
+                }
             });
+
+            console.log("up question out",section)
 
             section.changeOrder = true;
             section.changeContent='update'
@@ -1176,7 +1154,7 @@ function formOrderUpQuestion (event) {
             target.insertAdjacentHTML('beforeend', generatorQuestion(previousSection,question, true));
         }
     }
-
+    
     loadBtnSubmit();
 }
 
@@ -1234,8 +1212,10 @@ function formOrderDownQuestion (event) {
 
             // Perbarui order di section baru
             nextSection.questions.forEach(q => {
-                q.order = q.order+1;
-                q.changeContent = 'update';
+                if(q.order != 0){
+                    q.order = q.order+1;
+                    q.changeContent = 'update';
+                }
             });
 
             // Tambahkan ke section baru di awal
@@ -1466,23 +1446,6 @@ const generateSingleSection = (section, questionSection, yellowStats)=>{
     `
 }
 
-const generatorOption = (sectionId, question, yellowStats=false)=>{
-    return `
-        <div class="flex justify-between items-center gap-2 p-2">
-            <div id="form-type" class="flex justify-start items-start flex-col w-full">
-                <h3 class="text-white py-1 px-3 text-lg font-bold bg-blue-700 rounded-md w-full">Answer</h3>
-                <select 
-                  class="dark:bg-slate-800 bg-gray-100 dark:text-white text-black border-0 rounded mt-2" 
-                  id="form-answer-type-${question.id}-${sectionId}"
-                  style="${yellowStats ? 'border-color:rgba(255, 141, 62, 1);border-width:4px;':''}">
-                    <option value="text" ${question.input_type == 'text' ? 'selected':''}>Text</option>
-                    <option value="pilgan" ${question.input_type == 'pilgan' ? 'selected':''}>Pilihan Ganda</option>
-                </select>
-            </div>
-        </div>
-    `
-}
-
 const generatorSingleAnswerPilgan= (answer,question,section, yellowStats)=>{
     let answerImage = answer.image
     if(!answer.image?.startsWith('https')){
@@ -1584,28 +1547,15 @@ const generatorSingleAnswerPilgan= (answer,question,section, yellowStats)=>{
 const generatorAnswer=(section,question, yellowStats)=>{
     let answerElement=''
     let btnAddAnswer=''
-
+    console.log(question,section)
     // ------------------------------- ANSWER PILGAN -------------------------------
-    if(question.input_type == 'pilgan'){
-        if(question.answers.length != 0){
-            question.answers.forEach((answer,index) =>{
-                if(answer.changeContent != 'delete'){
-                    answerElement += generatorSingleAnswerPilgan(answer,question,section)
-                }
-            })
-        }
-    // ------------------------------- ANSWER TEXT -------------------------------
-    }else if(question.input_type == 'text'){
-        answerElement =`
-            <div
-                class="border dark:text-gray-900 text-sm rounded-lg w-full p-2.5 bg-gray-800 dark:bg-white text-white" 
-                style="${yellowStats ? 'border-color:rgba(255, 141, 62, 1);border-width:4px;':''}"
-                id="answer-${question.id}-text" 
-                aria-label="Text input for following question">Text Input
-            </div>
-        `
+    if(question.answers.length != 0){
+        question.answers.forEach((answer,index) =>{
+            if(answer.changeContent != 'delete'){
+                answerElement += generatorSingleAnswerPilgan(answer,question,section)
+            }
+        })
     }
-
     return answerElement
 }
 
@@ -1714,12 +1664,11 @@ const generatorQuestion=(section,question, yellowStats)=>{
                     </div>
                 </div>
                 <div class="dark:bg-slate-400/50 bg-slate-200/60 rounded-md p-2 w-full">
-                    ${generatorOption(section.id,question)}
                     <div id="answer-wrapper-${question.id}" class="answer-list flex flex-col w-full">
                         ${generatorAnswer(section,question)}
                     </div>
                 </div>
-                <div id="form-btn-add-answer-${question.id}" data-question-id="${question.id}" class="${question.input_type == 'pilgan' ? '':'hidden'} flex justify-center items-center">
+                <div id="form-btn-add-answer-${question.id}" data-question-id="${question.id}" class="flex justify-center items-center">
                     <div class="bg-green-400 rounded py-2 mt-1 w-full pointer-events-auto cursor-pointer hover:bg-green-600 flex justify-center items-center">
                         <p class="text-white">Add</p>
                     </div>
@@ -1850,19 +1799,6 @@ const generatorSection =(section, yellowStats)=>{
         let answerSection = ``
 
         if(question.changeContent != 'delete'){
-            // ------------------------------- ANSWER PILGAN -------------------------------
-            if(question.input_type == 'pilgan'){
-                answerSection += generatorOption(section.id,question)
-                if(question.answers.length != 0){
-                   
-                    question.answers.forEach((answer,index) =>{
-                        answerSection += generatorAnswer('pilgan',section.id,question.id,index,answer,yellowStats)
-                    })
-                }
-            // ------------------------------- ANSWER TEXT -------------------------------
-            }else if(question.input_type == 'text'){
-                answerSection += generatorAnswer('text','',question.id,yellowStats)
-            }
             // ------------------------------- GENERATE QUESTION -------------------------------
             questionSection += generatorQuestion(section,question,yellowStats)
         }
@@ -2097,6 +2033,9 @@ async function handleFieldBgUpload(file, el) {
     preview.src = blob;
     preview.classList.remove('hidden');
 
+    preview.style.borderColor='rgba(255, 141, 62, 1)'
+    preview.style.borderWidth= '4px'
+
     const randomKey = Math.random().toString(36).substring(2, 8);
     const safeName = shortenName(webp.name.replace(/\s+/g, '_')); // hindari spasi
     const uniqueKey = `__temp_media_${randomKey}_${safeName}__`;
@@ -2197,13 +2136,11 @@ function deleteImage (el){
 function loadForm(parameter){
     
     if(formJs){
-        
-        
         const formField = getEl('form-name-field','form-name-field')
         formField.value = formCopy.form_name
         // Urutkan berdasarkan properti 'order'
         sectionsCopy.sort((a, b) => a.order - b.order);
-
+        console.log(sectionsCopy)
         let sectionSession = ``
         sectionsCopy.forEach(section => {
             if(section.changeContent !='delete'){

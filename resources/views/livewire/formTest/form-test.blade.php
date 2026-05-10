@@ -67,15 +67,15 @@
                         </div>
                         @php
                             $index=0;
+                            $questions = $section->questions->sortBy('order');
                         @endphp
-                        @foreach ($section->questions as $question)
+                        @foreach ($questions as $question)
                             @php
                                 $index++;
                             @endphp
                             <div class="bg-white p-4 rounded-3 w-full flex justify-center items-start rounded">
                                 <input type="hidden" name="sections[{{ $section->id }}][questions][{{ $question->id }}][question]" value="{{ $question->id }}">
                                 <input type="hidden" name="sections[{{ $section->id }}][questions][{{ $question->id }}][question_id]" value="{{ $question->id }}">
-                                <input type="hidden" name="sections[{{ $section->id }}][questions][{{ $question->id }}][input_type]" value="{{ $question->input_type }}">
                                 <h4 class="numbering">{{ $index }}.</h4>
                                 <div class="flex justify-start items-center w-full flex-col ms-2">
                                     <div class="flex flex-col w-full p-2 rounded mb-2" style="background-color:rgba(0, 0, 0, 0.10);">
@@ -88,51 +88,41 @@
                                     </div>
                                     
                                     <div class="flex flex-col w-full">
-                                        @if ($question->input_type == 'pilgan')
-                                            @php
-                                                $pilgan='a';
-                                            @endphp
+                                        @php
+                                            $pilgan='a';
+                                        @endphp
 
-                                            @foreach ($question->answers as $answer)
-                                                <div class="mb-2">
-                                                    {{-- Kita bungkus seluruh kotak dengan <label> agar klik di mana saja memicu radio --}}
-                                                    <label class="answer-box flex justify-start items-start rounded p-2 w-full cursor-pointer" 
-                                                        for="answer-{{ $question->id }}-{{ $loop->index }}">
-                                                        
-                                                        {{-- Input Radio disembunyikan --}}
-                                                        <input class="hidden answer-radio" 
-                                                            type="radio" 
-                                                            id="answer-{{ $question->id }}-{{ $loop->index }}"
-                                                            name="sections[{{ $section->id }}][questions][{{ $question->id }}][answer]"  
-                                                            value="{{ $answer->id }}"
-                                                            required>
+                                        @foreach ($question->answers as $answer)
+                                            <div class="mb-2">
+                                                {{-- Kita bungkus seluruh kotak dengan <label> agar klik di mana saja memicu radio --}}
+                                                <label class="answer-box flex justify-start items-start rounded p-2 w-full cursor-pointer" 
+                                                    for="answer-{{ $question->id }}-{{ $loop->index }}">
+                                                    
+                                                    {{-- Input Radio disembunyikan --}}
+                                                    <input class="hidden answer-radio" 
+                                                        type="radio" 
+                                                        id="answer-{{ $question->id }}-{{ $loop->index }}"
+                                                        name="sections[{{ $section->id }}][questions][{{ $question->id }}][answer]"  
+                                                        value="{{ $answer->id }}"
+                                                        required>
 
-                                                        {{-- Indikator Huruf (a, b, c) --}}
-                                                        <h6 class="me-2 mb-0"><b>{{ $pilgan++ }}.</b></h6>
+                                                    {{-- Indikator Huruf (a, b, c) --}}
+                                                    <h6 class="me-2 mb-0"><b>{{ $pilgan++ }}.</b></h6>
 
-                                                        <div class="flex flex-col w-full">
-                                                            @if($answer->image)
-                                                                <img src="{{ $answer->image }}" alt="" class="rounded mb-2" style="width:150px; height:auto;" loading="lazy">
-                                                            @endif
-                                                            <span>{{ $answer->answer }}</span>
-                                                        </div>
-                                                    </label>
-                                                </div>
-                                                
-                                            @endforeach
-                                            @error("sections.{$section->id}.questions.{$question->id}.answer")
-                                                <div class="text-red-800">{{ $message }}</div>
-                                            @enderror
+                                                    <div class="flex flex-col w-full">
+                                                        @if($answer->image)
+                                                            <img src="{{ $answer->image }}" alt="" class="rounded mb-2" style="width:150px; height:auto;" loading="lazy">
+                                                        @endif
+                                                        <span>{{ $answer->answer }}</span>
+                                                    </div>
+                                                </label>
+                                            </div>
                                             
-                                        @elseif($question->input_type == 'text') 
-                                            {{-- Input Text --}}
-                                            <input type="text" 
-                                                class="form-control" 
-                                                id="answer-{{ $question->id }}-text" 
-                                                name="sections[{{ $section->id }}][questions][{{ $question->id }}][answer]" 
-                                                placeholder="Tuliskan jawaban Anda" 
-                                                aria-label="Text input for following question" required>
-                                        @endif
+                                        @endforeach
+                                        @error("sections.{$section->id}.questions.{$question->id}.answer")
+                                            <div class="text-red-800">{{ $message }}</div>
+                                        @enderror
+                                            
                                     </div>
                                 </div>
                             </div>

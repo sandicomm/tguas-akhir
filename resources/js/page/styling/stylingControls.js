@@ -257,16 +257,7 @@ export function updateStylingControls(data, field) {
         }
 
         // //console.log('field')
-
-      }else if(data.id.startsWith('video')){
-        // //console.log('video')
-        let stylingWebpage=[
-          'accordion-box-field','box-width-field','accordion-margin','wrapper-btn-save'
-        ]
-
-        stylingWebpage.forEach(id=>{
-          document.getElementById(id).classList.remove('hidden')
-        })
+        
       }else if(data.id.startsWith('btn-modal') || data.id.startsWith('btn-heading-accordion')){
         let headingText = document.getElementById("heading-text")
         headingText.innerHTML = ''

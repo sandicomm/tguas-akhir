@@ -12,7 +12,6 @@ class Responses extends Model
         'form_id',
         'answer_id',
         'attempt',
-        'input_type',
     ];
 
     public function form()
@@ -28,10 +27,5 @@ class Responses extends Model
     public function answer()
     {
         return $this->belongsTo(Answers::class, 'answer_id');
-    }
-
-    public function inputType()
-    {
-        return $this->belongsTo(input_type::class, 'input_type');
     }
 }

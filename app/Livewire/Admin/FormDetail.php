@@ -25,6 +25,7 @@ class FormDetail extends Component
 
     public $form;
     public $formPlacement;
+    public $formEmail;
     public $sectionMaxID;
     public $questionMaxID;
     public $answerMaxID;
@@ -44,16 +45,10 @@ class FormDetail extends Component
             if (ctype_digit($id)) {
                 $this->form = Form::with([
                     'sections.questions' => function ($q) {
-                        $q->with(['answers', 'inputType']);
+                        $q->with(['answers']);
                     }
                 ])->findOrFail($id);
 
-                foreach ($this->form->sections as $section) {
-                    foreach ($section->questions as $question) {
-                        $question->input_type = $question->inputType->input_type ?? null;
-                        unset($question->inputType); // opsional: biar nggak ikut ke JSON
-                    }
-                }
                 //dd($this->form);
             }else{
                 $formId = Form::max('id');
@@ -77,7 +72,6 @@ class FormDetail extends Component
                             'questions' => collect([
                                     (object)[
                                             'changeContent'=>"add",
-                                            'input_type'=>"pilgan",
                                             'order'=>1,
                                             'question'=>"type here",
                                             'id'=>$this->questionMaxID+1,
@@ -180,7 +174,6 @@ class FormDetail extends Component
 
                         'sections.*.questions.*.question_id' => 'required',
                         'sections.*.questions.*.question' => 'required|string',
-                        'sections.*.questions.*.input_type' => 'required|string',
                         'sections.*.questions.*.rule' => 'required|integer',
                         'sections.*.questions.*.changeContent' => 'required|in:add,update,delete',
 
@@ -256,11 +249,6 @@ class FormDetail extends Component
                                     $questionDelete[] = $q['id'];
                                     continue;
                                 }
-    
-                                $inputType = match ($q['input_type']) {
-                                    'text' => 1,
-                                    'pilgan' => 3,
-                                };
 
                                 // Jika ada URL lama yg sudah diubah di map, ganti dgn URL baru
                                 foreach ($urlMap as $idMedia => $urlMedia) {
@@ -277,7 +265,6 @@ class FormDetail extends Component
                                     'image' => $q['image'],
                                     'question' => $q['question'],
                                     'order' => $q['order'],
-                                    'input_type' => $inputType,
                                     'updated_at' => now(),
                                     'created_at' => now(),
                                 ];
@@ -332,7 +319,7 @@ class FormDetail extends Component
                         Sections::whereIn('id', $sectionDelete)->delete();
     
                     if ($questionUpdate)
-                        Questions::upsert($questionUpdate, ['id'], ['question','order','input_type','image','section_id','updated_at']);
+                        Questions::upsert($questionUpdate, ['id'], ['question','order','image','section_id','updated_at']);
     
                     if ($questionDelete)
                         Questions::whereIn('id', $questionDelete)->delete();

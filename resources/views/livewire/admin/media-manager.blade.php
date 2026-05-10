@@ -1,4 +1,4 @@
-<div class="p-4 sm:ml-64 flex justify-center items-center flex-col" x-data="{ open: @entangle('isModalOpen') }">
+<div class="p-4 sm:ml-64 flex justify-center items-center flex-col gap-2" x-data="{ open: @entangle('isModalOpen') }">
         <div class="hidden" id='jsLoader'>
             <x-loading />
         </div>
@@ -7,8 +7,7 @@
             setTimeout(()=>{
                 document.getElementById('jsLoader').classList.add('hidden');
             },2750)
-        </script>
-    <h2 class="text-4xl font-bold dark:text-white text-black">Poster & Video</h2>  
+        </script> 
         @if(session('success'))
             <div class="fixed top-5 left-1/2 transform -translate-x-1/2 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded shadow-lg z-50">
                 <div class="flex items-center justify-between gap-4">
@@ -31,67 +30,80 @@
             </div>
         @endif
 
-     <div class="w-full flex justify-center flex-col bg-white dark:bg-slate-800 shadow-sm rounded p-3 items-start mt-6">
-        <h1 class="px-4 text-xl font-bold dark:text-white text-black">Upload</h1>
-         <form wire:submit.prevent="store" class="w-full flex p-4 justify-start items-start flex-col gap-2 rounded ">
-            <div class="flex flex-col w-1/2">
-                <p class="text-red-500">*</p>
-                <input type="text" wire:model="title" placeholder="Judul File" 
-                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg 
-                            focus:ring-blue-500 focus:border-blue-500 block w-full dark:bg-gray-700 dark:border-gray-600 
-                            dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                <p class="text-red-500">*</p>            
-                <input type="text" wire:model="sumber" placeholder="Sumber File" 
-                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg 
-                            focus:ring-blue-500 focus:border-blue-500 block w-full dark:bg-gray-700 dark:border-gray-600 
-                            dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                <input type="url" wire:model="link" placeholder="Link Sumber File" 
-                    class="bg-gray-50 border mt-5 border-gray-300 text-gray-900 text-sm rounded-lg 
-                            focus:ring-blue-500 focus:border-blue-500 block w-full dark:bg-gray-700 dark:border-gray-600 
-                            dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                <p class="text-blue-500 mt-3">Max File 20Mb</p>
-                <input type="file" wire:model="file" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg 
-                                                            focus:ring-blue-500 focus:border-blue-500 block w-full dark:bg-gray-700 dark:border-gray-600 
-                                                            dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+
+    <h1 class="w-full text-3xl font-bold bg-cyan-600 rounded p-3 mb-1 text-center text-white">Poster Dan Video</h1>
+    <div class="relative overflow-hidden sm:rounded-lg w-full lg:w-1/2 shadow-md dark:bg-slate-800 bg-white mb-3">
+        <form wire:submit.prevent="store" class="w-full flex p-4 justify-start items-start flex-col gap-2 rounded ">
+                <div class="mb-3 w-full">
+                    <label class="text-slate-800 dark:text-white font-bold">Nama Poster<span class="text-red-500">*</span></label>
+                    <input type="text" wire:model="title" placeholder="Judul File" 
+                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg 
+                                focus:ring-blue-500 focus:border-blue-500 block w-full dark:bg-gray-700 dark:border-gray-600 
+                                dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                </div>
+
+                <div class="mb-3 w-full">
+                    <label class="text-slate-800 dark:text-white font-bold">Sumber Poster<span class="text-red-500">*</span></label>           
+                    <input type="text" wire:model="sumber" placeholder="Sumber File" 
+                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg 
+                                focus:ring-blue-500 focus:border-blue-500 block w-full dark:bg-gray-700 dark:border-gray-600 
+                                dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                </div>
+
+                <div class="mb-3 w-full">
+                    <label class="text-slate-800 dark:text-white font-bold">Link Sumber Poster</label>
+                    <input type="url" wire:model="link" placeholder="Link Sumber File" 
+                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg 
+                                focus:ring-blue-500 focus:border-blue-500 block w-full dark:bg-gray-700 dark:border-gray-600 
+                                dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                </div>
+                <div class="mb-3 w-full">
+                    <p class="text-blue-500">Max File 20Mb</p>
+                    <input type="file" wire:model="file" 
+                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg 
+                                focus:ring-blue-500 focus:border-blue-500 block w-full dark:bg-gray-700 dark:border-gray-600 
+                                dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                </div>
                 <div wire:loading.delay wire:target="file,store">
                     <x-loading />
                 </div>
                 @error('file') <span class="text-red-500">{{ $message }}</span> @enderror
-            </div>
+            
             <button type="submit" 
                 wire:loading.attr="disabled" 
                 wire:loading.class="bg-blue-200" 
                 wire:target="file"
-                class="w-auto text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
+                class="w-full text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
                 Upload
             </button>
-         </form>
-     </div>
+        </form>
+    </div>
 
-     <div class=" bg-white dark:bg-slate-800 mt-6 px-4 rounded w-full">
-         <h2 class="text-xl font-bold mt-5 dark:text-white text-black">Daftar Media</h2>
-         <div class="flex my-3 bg-gray-300 rounded overflow-hidden w-fit">
-             <button wire:click="$set('filter', 'all')" class="p-2 {{ $filter === 'all' ? 'bg-blue-500 text-white' : 'bg-gray-300' }}">Semua</button>
-             <button wire:click="$set('filter', 'image')" class="p-2 {{ $filter === 'image' ? 'bg-blue-500 text-white' : 'bg-gray-300' }}">Gambar</button>
-             <button wire:click="$set('filter', 'video')" class="p-2 {{ $filter === 'video' ? 'bg-blue-500 text-white' : 'bg-gray-300' }}">Video</button>
-         </div>
-     
-     
-         <ul class="flex justify-center gap-2 items-center flex-wrap">
-             @foreach ($mediaList as $media)
-                 <li wire:key="media-{{ $media->id }}" class="flex justify-between items-center border rounded-md dark:border-slate-500 border-slate-800 p-2 mt-2 w-1/4 flex-col">
-                     @if ($media->type === 'image')
-                         <img src="{{asset($media->file_path)}}" alt="{{ $media->title }}" class="w-full object-cover">
-                     @else
-                         <video src="{{asset($media->file_path)}}" class="w-full object-cover" controls></video>
-                     @endif
-                     <span class="dark:text-white text-black">{{ $media->title }} ({{ $media->type }})</span>
-                     <span class="dark:text-white text-black">Sumber: {{ $media->sumber }}</span>
-                     <a href="{{ $media->link }}" target="_blank" class="m-2 rounded py-1 px-2 hover:bg-blue-200 text-blue-500 {{ $media->link ? '':'hidden' }}">Menuju Ke Sumber</a>
-                     <button wire:click="setStatsAction({{ $media['id'] }}, 'delete')" class="block text-white bg-red-700 hover:bg-red-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center">Delete</button>
-                 </li>
-             @endforeach
-         </ul>
+    <div class="relative overflow-hidden sm:rounded-lg w-full shadow-md dark:bg-slate-800 bg-white">
+        <h2 class="text-2xl font-bold bg-cyan-600 rounded p-3 mb-1 text-center text-white">Daftar Media</h2>
+        <div class="m-3">
+            <div class="flex my-3 bg-gray-300 rounded overflow-hidden w-fit">
+                <button wire:click="$set('filter', 'all')" class="p-2 {{ $filter === 'all' ? 'bg-blue-500 text-white' : 'bg-gray-300' }}">Semua</button>
+                <button wire:click="$set('filter', 'image')" class="p-2 {{ $filter === 'image' ? 'bg-blue-500 text-white' : 'bg-gray-300' }}">Gambar</button>
+                <button wire:click="$set('filter', 'video')" class="p-2 {{ $filter === 'video' ? 'bg-blue-500 text-white' : 'bg-gray-300' }}">Video</button>
+            </div>
+         
+             <ul class="flex justify-center gap-2 items-center flex-wrap">
+                 @foreach ($mediaList as $media)
+                     <li wire:key="media-{{ $media->id }}" class="flex justify-between items-center border rounded-md dark:border-slate-500 border-slate-800 p-2 mt-2 w-1/4 flex-col">
+                         @if ($media->type === 'image')
+                             <img src="{{asset($media->file_path)}}" alt="{{ $media->title }}" class="w-full object-cover">
+                         @else
+                             <video src="{{asset($media->file_path)}}" class="w-full object-cover" controls></video>
+                         @endif
+                         <span class="dark:text-white text-black">{{ $media->title }} ({{ $media->type }})</span>
+                         <span class="dark:text-white text-black">Sumber: {{ $media->sumber }}</span>
+                         <a href="{{ $media->link }}" target="_blank" class="m-2 rounded py-1 px-2 hover:bg-blue-200 text-blue-500 {{ $media->link ? '':'hidden' }}">Menuju Ke Sumber</a>
+                         <button wire:click="setStatsAction({{ $media['id'] }}, 'delete')" class="block text-white bg-red-700 hover:bg-red-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center">Delete</button>
+                     </li>
+                 @endforeach
+             </ul>
+        </div>
      </div>
 
      <!-- MODAL -->

@@ -67,7 +67,11 @@ function accordionStyling(){
         })
       }else{
         let indicator=''
-  
+        
+        if(editorFieldSelect.id.startsWith('parent-modal')){
+          editorFieldSelect = getEl(`btn-${editorFieldSelect.id.split('-').slice(1).join('-')}`)
+        }
+
         if (editorFieldSelect.children.length > 1) {
           editorFieldSelect.children[1].remove()
         }
@@ -240,9 +244,6 @@ const createDropdownSectionAccordion = (idPrefix,idParts)=>{
           <a id="add-field-${idPrefix.split('-').slice(1).join('-')}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Field</a>
         </li>
         <li>
-          <a id="add-video-${idPrefix.split('-').slice(1).join('-')}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Video</a>
-        </li>
-        <li>
           <a id="add-carousel-${idPrefix.split('-').slice(1).join('-')}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Carousel</a>
         </li>
       </ul>
@@ -270,9 +271,6 @@ const createDropdownSectionAccordion = (idPrefix,idParts)=>{
         <hr>
         <li>
             <a id="add-field-${idPrefix.split('-').slice(1).join('-')}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Field</a>
-        </li>
-        <li>
-            <a id="add-video-${idPrefix.split('-').slice(1).join('-')}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Video</a>
         </li>
         <li>
             <a id="add-modal-${idPrefix.split('-').slice(1).join('-')}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Modal</a>
@@ -496,9 +494,6 @@ const addAccordion=(event)=>{
             <a id="add-field-${idPrefix}-${i}-1" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Field</a>
           </li>
           <li>
-            <a id="add-video-${idPrefix}-${i}-1" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Video</a>
-          </li>
-          <li>
             <a id="add-carousel-${idPrefix}-${i}-1" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Carousel</a>
           </li>
         </ul>
@@ -526,9 +521,6 @@ const addAccordion=(event)=>{
           <hr>
           <li>
               <a id="add-field-${idPrefix}-${i}-1" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Field</a>
-          </li>
-          <li>
-              <a id="add-video-${idPrefix}-${i}-1" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Video</a>
           </li>
           <li>
               <a id="add-modal-${idPrefix}-${i}-1" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Modal</a>

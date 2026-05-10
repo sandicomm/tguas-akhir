@@ -8,7 +8,7 @@ export const globals = {
   editCarouselItem: null,
   carouselSelect: null,
   itemCarouselId:null,
-  url:'http://127.0.0.1:8000',
+  url:'https://smartdiabetes.my.id/',
   
   accordionPartSelect: null,
   accordionSelect: null,

@@ -20,7 +20,7 @@ const createSection = (idPrefix,borderWave,order,count,style,edit)=>{
     let section=``
     let dropdownSection=''
     let dropdownElement=''
-
+     console.log('status edit:',edit)
     if(edit){
       dropdownSection = `
               <ul class="py-2 text-sm text-gray-700 dark:text-gray-200 border-0 border-b-1 border-gray-500 " aria-labelledby="dropdownDefaultButton">
@@ -44,9 +44,6 @@ const createSection = (idPrefix,borderWave,order,count,style,edit)=>{
       dropdownElement=`
                <li>
                     <a id="add-field-element-${idPrefix}" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Field</a>
-                </li>
-                <li>
-                    <a id="add-video-element-${idPrefix}" class=" block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Video</a>
                 </li>
                 <li>
                     <a id="add-modal-element-${idPrefix}" class=" block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Modal</a>
@@ -94,11 +91,11 @@ const createSection = (idPrefix,borderWave,order,count,style,edit)=>{
       `
       dropdown=`
         <div id="dropdown-${idPrefix}" data-accordion="open" class="z-50 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700">
-            ${dropdownSection}
-            <ul class="py-2 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownDefaultButton">
-                ${dropdownElement}
-            </ul>
-          </div>
+          ${dropdownSection}
+          <ul class="py-2 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownDefaultButton">
+              ${dropdownElement}
+          </ul>
+        </div>
       `
     }
     let btnNextProlog=''
@@ -134,7 +131,7 @@ const createSection = (idPrefix,borderWave,order,count,style,edit)=>{
     section=`
       <div id="webpage-${idPrefix}" data-element-order="${order}" class="bg-gray-200 flex flex-col ${idPrefix.includes('prolog') ? 'min-h-[100dvh]' : ''} justify-center items-center border border-gray-700" style="${styleWebpage}">
         ${dropdown}
-    
+        ${svg}
         <div id="editor-container-${idPrefix}" data-element-count="${count}" class="md:px-3 md:py-5 md:pt-0 px-4 py-5 pt-10 w-full flex flex-col" style="${styleEditor}"></div>
         ${btnNextProlog}
       </div>   
@@ -346,9 +343,6 @@ const addSection = (event)=>{
             <ul class="py-2 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownDefaultButton">
                 <li>
                     <a id="add-field-element-section-${newCount}" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Field</a>
-                </li>
-                <li>
-                    <a id="add-video-element-section-${newCount}" class=" block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Video</a>
                 </li>
                 <li>
                     <a id="add-modal-element-section-${newCount}" class=" block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Modal</a>

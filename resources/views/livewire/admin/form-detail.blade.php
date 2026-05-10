@@ -76,7 +76,7 @@
                             
                         </div>
                         <h3 class="text-xl font-bold text-gray-800" x-text="status ? 'Berhasil!' : 'Peringatan!'"></h3>
-                        <p class="text-gray-600 mt-2" x-text="pesan"></p>
+                        <p class="text-gray-600 mt-2" x-html="pesan"></p>
                         
                         <div class="mt-6">
                             <button @click="redirectUrl !== 'gk redirect' ? window.location.href = redirectUrl : openModal = false"

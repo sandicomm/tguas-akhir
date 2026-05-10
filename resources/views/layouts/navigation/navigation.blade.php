@@ -27,7 +27,7 @@
          </li>
          <li>
             <x-nav-link href="{{ route('admin.dashboard') }}" class="{{ request()->routeIs('admin.dashboard') ? 'dark:bg-blue-400/30 text-white bg-indigo-500/50' : '' }}">
-               <svg class="w-5 h-5 text-white transition duration-75 group-hover:text-indigo-600" aria-hidden="true"  fill="currentColor" viewBox="0 0 22 21">
+               <svg class="w-5 h-5 text-white transition duration-75 " aria-hidden="true"  fill="currentColor" viewBox="0 0 22 21">
                   <path d="M16.975 11H10V4.025a1 1 0 0 0-1.066-.998 8.5 8.5 0 1 0 9.039 9.039.999.999 0 0 0-1-1.066h.002Z"/>
                   <path d="M12.5 0c-.157 0-.311.01-.565.027A1 1 0 0 0 11 1.02V10h8.975a1 1 0 0 0 1-.935c.013-.188.028-.374.028-.565A8.51 8.51 0 0 0 12.5 0Z"/>
                </svg>
@@ -36,7 +36,7 @@
          </li>
          <li>
             <x-nav-link href="{{ route('admin.forms') }}" class="{{ request()->routeIs('admin.forms') ? 'dark:bg-blue-400/30 text-white bg-indigo-500/50' : '' }}">
-                <svg class="w-6 h-6 text-white transition duration-75 group-hover:text-indigo-600" aria-hidden="true"  width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+                <svg class="w-6 h-6 text-white transition duration-75 " aria-hidden="true"  width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
                     <path fill-rule="evenodd" d="M8 3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1h2a2 2 0 0 1 2 2v15a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h2Zm6 1h-4v2H9a1 1 0 0 0 0 2h6a1 1 0 1 0 0-2h-1V4Zm-3 8a1 1 0 0 1 1-1h3a1 1 0 1 1 0 2h-3a1 1 0 0 1-1-1Zm-2-1a1 1 0 1 0 0 2h.01a1 1 0 1 0 0-2H9Zm2 5a1 1 0 0 1 1-1h3a1 1 0 1 1 0 2h-3a1 1 0 0 1-1-1Zm-2-1a1 1 0 1 0 0 2h.01a1 1 0 1 0 0-2H9Z" clip-rule="evenodd"/>
                   </svg>                  
                <span class="flex-1 ms-3 whitespace-nowrap text-white">Form</span>
@@ -44,7 +44,7 @@
         </li>
          <li>
             <x-nav-link href="{{ route('admin.emodul') }}" class="{{ request()->routeIs('admin.emodul') ? 'dark:bg-blue-400/30 text-white bg-indigo-500/50' : '' }}">
-                <svg class="w-6 h-6 text-white group-hover:text-indigo-600" aria-hidden="true"  width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+                <svg class="w-6 h-6 text-white " aria-hidden="true"  width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
                     <path fill-rule="evenodd" d="M6 2a2 2 0 0 0-2 2v15a3 3 0 0 0 3 3h12a1 1 0 1 0 0-2h-2v-2h2a1 1 0 0 0 1-1V4a2 2 0 0 0-2-2h-8v16h5v2H7a1 1 0 1 1 0-2h1V2H6Z" clip-rule="evenodd"/>
                 </svg>
                <span class="flex-1 ms-3 whitespace-nowrap text-white">Emodul</span>
@@ -52,7 +52,7 @@
         </li>
         <li>
             <x-nav-link href="{{ route('admin.webpage', 'web') }}">
-                <svg class="w-6 h-6 text-white group-hover:text-indigo-600" aria-hidden="true"  width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+                <svg class="w-6 h-6 text-white" aria-hidden="true"  width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
                     <path fill-rule="evenodd" d="M12 8a1 1 0 0 0-1 1v10H9a1 1 0 1 0 0 2h11a1 1 0 0 0 1-1V9a1 1 0 0 0-1-1h-8Zm4 10a2 2 0 1 1 0-4 2 2 0 0 1 0 4Z" clip-rule="evenodd"/>
                     <path fill-rule="evenodd" d="M5 3a2 2 0 0 0-2 2v6h6V9a3 3 0 0 1 3-3h8c.35 0 .687.06 1 .17V5a2 2 0 0 0-2-2H5Zm4 10H3v2a2 2 0 0 0 2 2h4v-4Z" clip-rule="evenodd"/>
                 </svg>
@@ -61,7 +61,7 @@
         </li>
          <li>
             <x-nav-link href="{{ route('admin.responden') }}" class="{{ request()->routeIs('admin.responden') ? 'dark:bg-blue-400/30 text-white bg-indigo-500/50' : '' }}">
-                <svg class="w-6 h-6 text-white group-hover:text-indigo-600" aria-hidden="true"  width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+                <svg class="w-6 h-6 text-white" aria-hidden="true"  width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M6 2c-1.10457 0-2 .89543-2 2v4c0 .55228.44772 1 1 1s1-.44772 1-1V4h12v7h-2c-.5523 0-1 .4477-1 1v2h-1c-.5523 0-1 .4477-1 1s.4477 1 1 1h5c.5523 0 1-.4477 1-1V3.85714C20 2.98529 19.3667 2 18.268 2H6Z"/>
                     <path d="M6 11.5C6 9.567 7.567 8 9.5 8S13 9.567 13 11.5 11.433 15 9.5 15 6 13.433 6 11.5ZM4 20c0-2.2091 1.79086-4 4-4h3c2.2091 0 4 1.7909 4 4 0 1.1046-.8954 2-2 2H6c-1.10457 0-2-.8954-2-2Z"/>
                 </svg>
@@ -70,7 +70,7 @@
          </li>
          <li>
             <x-nav-link href="{{ route('admin.responses') }}" class="{{ request()->routeIs('admin.responses') ? 'dark:bg-blue-400/30 text-white bg-indigo-500/50' : '' }}">
-               <svg class="w-6 h-6 text-white group-hover:text-indigo-600" aria-hidden="true" width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+               <svg class="w-6 h-6 text-white" aria-hidden="true" width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
                   <path fill-rule="evenodd" d="M9 2.221V7H4.221a2 2 0 0 1 .365-.5L8.5 2.586A2 2 0 0 1 9 2.22ZM11 2v5a2 2 0 0 1-2 2H4v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2h-7ZM8 16a1 1 0 0 1 1-1h6a1 1 0 1 1 0 2H9a1 1 0 0 1-1-1Zm1-5a1 1 0 1 0 0 2h6a1 1 0 1 0 0-2H9Z" clip-rule="evenodd"/>
                </svg>
                <span class="flex-1 ms-3 whitespace-nowrap text-white">Responses</span>
@@ -78,7 +78,7 @@
          </li>
          <li>
             <x-nav-link href="{{ route('admin.users') }}" class="{{ request()->routeIs('admin.users') ? 'dark:bg-blue-400/30 text-white bg-indigo-500/50' : '' }}">
-                <svg class="w-6 h-6 text-white transition duration-75 group-hover:text-indigo-600" aria-hidden="true"  width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+                <svg class="w-6 h-6 text-white transition duration-75 " aria-hidden="true"  width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M14 2a3.963 3.963 0 0 0-1.4.267 6.439 6.439 0 0 1-1.331 6.638A4 4 0 1 0 14 2Zm1 9h-1.264A6.957 6.957 0 0 1 15 15v2a2.97 2.97 0 0 1-.184 1H19a1 1 0 0 0 1-1v-1a5.006 5.006 0 0 0-5-5ZM6.5 9a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9ZM8 10H5a5.006 5.006 0 0 0-5 5v2a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-2a5.006 5.006 0 0 0-5-5Z"/>
                </svg>
                <span class="flex-1 ms-3 whitespace-nowrap text-white">Users</span>
@@ -86,7 +86,7 @@
          </li>
          <li>
             <x-nav-link href="{{ route('admin.media') }}" class="{{ request()->routeIs('admin.media') ? 'dark:bg-blue-400/30 text-white bg-indigo-500/50' : '' }}">
-                <svg class="w-6 h-6 text-white group-hover:text-indigo-600" aria-hidden="true"  width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+                <svg class="w-6 h-6 text-white" aria-hidden="true"  width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
                     <path fill-rule="evenodd" d="M13 10a1 1 0 0 1 1-1h.01a1 1 0 1 1 0 2H14a1 1 0 0 1-1-1Z" clip-rule="evenodd"/>
                     <path fill-rule="evenodd" d="M2 6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v12c0 .556-.227 1.06-.593 1.422A.999.999 0 0 1 20.5 20H4a2.002 2.002 0 0 1-2-2V6Zm6.892 12 3.833-5.356-3.99-4.322a1 1 0 0 0-1.549.097L4 12.879V6h16v9.95l-3.257-3.619a1 1 0 0 0-1.557.088L11.2 18H8.892Z" clip-rule="evenodd"/>
                 </svg>  
@@ -95,7 +95,7 @@
          </li>
          <li>
             <x-nav-link href="{{ route('admin.comments') }}" class="{{ request()->routeIs('admin.comments') ? 'dark:bg-blue-400/30 text-white bg-indigo-500/50' : '' }}">
-                <svg class="w-6 h-6 text-white group-hover:text-indigo-600" aria-hidden="true"  width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+                <svg class="w-6 h-6 text-white" aria-hidden="true"  width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
                     <path fill-rule="evenodd" d="M4 3a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h1v2a1 1 0 0 0 1.707.707L9.414 13H15a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1H4Z" clip-rule="evenodd"/>
                     <path fill-rule="evenodd" d="M8.023 17.215c.033-.03.066-.062.098-.094L10.243 15H15a3 3 0 0 0 3-3V8h2a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1h-1v2a1 1 0 0 1-1.707.707L14.586 18H9a1 1 0 0 1-.977-.785Z" clip-rule="evenodd"/>
                 </svg>

@@ -994,10 +994,7 @@ function widthHeightField(){
     carouselSelect = globals.carouselSelect
     // //console.log('width')
     if(editorFieldSelect){
-      if(editorFieldSelect.id.split('-')[0] === "video"){
-        editorFieldSelect.style.maxWidth=`${this.value}px`
-        // //console.log('video')
-      }else if(accordionSelect){
+      if(accordionSelect){
         accordionSelect.style.width=`${this.value}px`
       
         updateStyle(accordionSelect)

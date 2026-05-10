@@ -59,19 +59,13 @@ function getTargetElement(idParts) {
 
     bodyElement = fieldElement.parentElement;
 
-  }else if (idParts[1] === 'video') {
-    fieldElement = getEl(idParts.slice(1).join('-'));
-    if(!fieldElement) return
-
-    bodyElement = fieldElement.parentElement;
-
-  }  else if (idParts[1] === 'section' && idParts[2] !== 'accordion') {
+  } else if (idParts[1] === 'section' && idParts[2] !== 'accordion') {
     fieldElement = getEl(`webpage-${idParts.slice(1).join('-')}`);
     if(!fieldElement) return
 
     bodyElement = fieldElement.parentElement;
 
-  } else if(idParts[1] === 'section' && idParts[2] === 'accordion'){
+  } else if (idParts[1] === 'section' && idParts[2] === 'accordion'){
     fieldElement = getEl(idParts.slice(1).join('-'));
     if(!fieldElement) return
     

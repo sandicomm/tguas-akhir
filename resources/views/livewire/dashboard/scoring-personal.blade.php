@@ -24,11 +24,11 @@
 
                 <div class="w-full p-3 flex">
                     <div class="w-full">
-                        <div class="flex gap-2">
+                        <div class="flex gap-2 mb-2">
                             <div class="w-full bg-slate-300 p-3 rounded">
-                                <label class="text-slate-800 font-bold">Pilih Category</label>
-                                <select wire:model="selectedFormPlacement" class="w-full bg-white text-black rounded px-3 py-2">
-                                    <option value="">all</option>
+                                <label class="text-slate-800 font-bold">Pilih Placement</label>
+                                <select id="response-placement" wire:model="selectedFormPlacement" class="w-full bg-white text-black rounded px-3 py-2">
+                                    <option value="">All</option>
                                     <option value="interaktif">interaktif</option>
                                     <option value="emodul">emodul</option>
                                     <option value="disable">disable</option>
@@ -37,16 +37,17 @@
                             <div class="w-full bg-slate-300 p-3 rounded">
                                 
                                 <label class="text-slate-800 font-bold">Pilih Form</label>
-                                <select wire:model="selectedFormName" class="w-full bg-white text-black rounded px-3 py-2">
-                                    <option value="">pilih</option>
-                                    @foreach($this->forms as $form)
-                                        <option value="{{ $form->form_name }}">{{ $form->form_name }}</option>
-                                    @endforeach
-                                </select>
+                                <div wire:ignore>
+                                    <select id="form-name" wire:model="selectedForm" class="w-full bg-white text-black rounded px-3 py-2">
+                                    </select>
+                                </div>
                             </div>
                         </div>
+                        <div class="p-3 bg-slate-300 mb-2 rounded">
+                            <input type="text" wire:model="searchByEmail" placeholder="cari email disini..." class="w-full bg-white text-black rounded px-3 py-2">
+                        </div>
                         <div class="mt-2">
-                            <button type="button" wire:click="search" class="text-white w-full bg-green-500 box-border border border-transparent hover:bg-green-600 focus:ring-4 focus:ring-green-300 shadow-xs font-medium leading-5 rounded text-sm px-4 py-2.5 focus:outline-none">Search</button>
+                            <button type="button" id="btn-search-scoring" wire:click="search" class="text-white w-full bg-green-500 box-border border border-transparent hover:bg-green-600 focus:ring-4 focus:ring-green-300 shadow-xs font-medium leading-5 rounded text-sm px-4 py-2.5 focus:outline-none">Search</button>
                         </div>
                     </div>
                 </div>
@@ -207,6 +208,58 @@
     </div>
 </div>
 <script>
+    let formName = @js($formName);
+    let formsData = JSON.parse(JSON.stringify(formName))
+    console.log(formName)
+    const dropdownPlacement = document.getElementById("response-placement")
+
+    let dropdownNamaForm = document.getElementById('form-name')
+    let formId = dropdownNamaForm.value
+
+    function generateDropdownFormName(){
+        dropdownNamaForm = document.getElementById('form-name')
+
+        console.log('generator dd: ',dropdownPlacement.value)
+        let option = `<option class='text-gray-300' value='' default>-- Pilih Nama Form --</option>`
+
+        if(formsData.length == 0){
+            option += `<option value='0' disabled>-- no form available --</option>`
+        }else{
+            formsData.forEach(element => {
+                if(element.placement.includes(dropdownPlacement.value)){
+                    option += `<option value="${element.id}">${element.form_name}</option>`
+
+                }else if(dropdownPlacement.value == null || dropdownPlacement.value == 'all'){
+                    option +=`<option value="${element.id}">${element.form_name}</option>`
+                }
+            });
+
+        }
+        dropdownNamaForm.innerHTML=option
+        dropdownNamaForm.value = ''; 
+
+        for (let opt of dropdownNamaForm.options) {
+            console.log('opt val:', opt.value);
+            console.log('form val:', formId);
+
+            if (opt.value == formId) {
+                dropdownNamaForm.value = formId;
+                console.log('match');
+                break; 
+            }
+        }  
+    }
+    generateDropdownFormName()
+    dropdownPlacement.addEventListener('change', generateDropdownFormName)
+
+    document.getElementById('form-name').addEventListener('click', ()=>{
+        formId = dropdownNamaForm.value
+    })
+
+    document.getElementById('btn-search-scoring').addEventListener('click', ()=>{
+        formId = dropdownNamaForm.value
+    })
+
     document.addEventListener('livewire:navigated', () => { 
         initToggleButtons();
     });

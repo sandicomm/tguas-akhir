@@ -29,7 +29,7 @@ class ResponsesController extends \App\Http\Controllers\Controller
         ->distinct()
         ->pluck('form_id'); // Ambil hanya kolom form_id
         
-        //dd($request);
+        //dd($responden_email);
         $one_attempt = false;
         //dd($formNames);
         if ($form->one_attempt == 1 && collect($formIds)->contains($request['form_id'])) {
@@ -45,7 +45,6 @@ class ResponsesController extends \App\Http\Controllers\Controller
             'sections.*.section' => 'required',
             'sections.*.questions.*.question' => 'required',
             'sections.*.questions.*.question_id' => 'required',
-            'sections.*.questions.*.input_type' => 'required|in:text,pilgan',
             'sections.*.questions.*.answer' => 'required',
         ];
 
@@ -60,8 +59,6 @@ class ResponsesController extends \App\Http\Controllers\Controller
             'form_name.required' => 'Nama Form Harus Diisi',
             'sections.*.section.required' => 'Nama Section Harus Diisi',
             'sections.*.questions.*.question.required' => 'Pertanyaan wajib diisi.',
-            'sections.*.questions.*.input_type.required' => 'Input type wajib disertakan.',
-            'sections.*.questions.*.input_type.in' => 'Input type tidak sesuai.',
             'sections.*.questions.*.answer.required' => 'Jawaban untuk setiap pertanyaan wajib diisi.',
         ]);
 
@@ -72,7 +69,7 @@ class ResponsesController extends \App\Http\Controllers\Controller
                     'email' => $responden_email, 
                 ]
             );
-            
+      
             $formId = $request['form_id'];
 
             $max_attempt = Responses::where('responden_id', $responden->id)
@@ -97,25 +94,13 @@ class ResponsesController extends \App\Http\Controllers\Controller
                         if (!$one_attempt && $hasResponded) {
                             $attempt = $max_attempt ? $max_attempt + 1 : 1; // Tambahkan 1 atau gunakan 1 jika belum ada data
                         }
-         
-                        if($question['input_type'] == 'text'){
-                            $inputType = 1;
-                            $answer=Answers::create([
-                                'question_id' => $question['question_id'],
-                                'answer' => $question['answer']    
-                            ]);
-                            $answerId = $answer->id;
-                        }else if($question['input_type'] == 'pilgan'){
-                            $inputType = 3;
-                            $answerId = $question['answer'];
-                        }
+          
+                        $answerId = $question['answer'];
     
                         // Simpan jawaban ke database
-                   
                         Responses::create([
                             'attempt' => $attempt,
                             'form_id' => $formId,
-                            'input_type' => $inputType,
                             'answer_id' => $answerId,
                             'responden_id' => $responden->id,
                         ]);
@@ -154,23 +139,11 @@ class ResponsesController extends \App\Http\Controllers\Controller
 
             foreach ($response['sections'] as $section) {
                 foreach ($section['questions'] as $question) {
-
-                    if($question['input_type'] == 'text'){
-                        $inputType = 1;
-                        $answer=Answers::create([
-                            'question_id' => $question['question_id'],
-                            'answer' => $question['answer']    
-                        ]);
-                        $answerId = $answer->id;
-                    }else if($question['input_type'] == 'pilgan'){
-                        $inputType = 3;
-                        $answerId = $question['answer'];
-                    }
-
+                    
+                    $answerId = $question['answer'];
                     Responses::create([
                         'uuid' => $uuid, // Simpan UUID unik ini
                         'attempt' => 0,
-                        'input_type' => $inputType,
                         'form_id' => $request['form_id'],
                         'answer_id' => $answerId,
 

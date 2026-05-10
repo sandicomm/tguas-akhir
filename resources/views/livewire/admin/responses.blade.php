@@ -5,6 +5,9 @@
             <x-loading />
         </div>
         <script>
+            let forms = @js($forms);
+            let formsData = JSON.parse(JSON.stringify(forms))
+
             document.getElementById('jsLoader').classList.remove('hidden');
             setTimeout(()=>{
                 document.getElementById('jsLoader').classList.add('hidden');
@@ -14,33 +17,30 @@
             <div class="relative overflow-hidden sm:rounded-lg w-full shadow-md dark:bg-slate-800 bg-white">
                 <h1 class="text-3xl font-bold bg-cyan-600 rounded p-3 mb-1 text-center text-white">Response Terekam</h1>
                 <div class="m-4">
-                    <div class="m-4 flex flex-wrap justify-center gap-2">
-                        <div class="flex-[1_1_calc(50%-0.5rem)] min-w-fit bg-slate-200 rounded p-3 border-2 border-gray-400 border-dashed">
+                    <div class="flex flex-wrap justify-center gap-2 mb-2">
+                        <div class="flex-[1_1_calc(50%-0.5rem)] bg-slate-200 rounded p-3 border-2 border-gray-400 border-dashed">
                             <label for="countries" class="block mb-2 text-sm font-medium text-gray-900">Pilih Placement</label>
-                            <select wire:model="selectedPlacement" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
-                                <option value=''>Pilih Placement</option>
-                                <option value="pre-test-interaktif">Pre-Test Interaktif Page</option>
-                                <option value="post-test-interaktif">Post-Test Interaktif Page</option>
-                                <option value="pre-test-emodul">Pre-Test Emodul Page</option>
-                                <option value="post-test-emodul">Post-Test Emodul Page</option>
+                            <select id="response-placement" wire:model="selectedPlacement" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                                <option disabled class="text-gray-400">Pilih Placement</option>
+                                <option value="">All</option>
+                                <option value="interaktif">Interaktif</option>
+                                <option value="emodul">Emodul</option>
+                                <option value="disable">Disable</option>
                             </select>
                         </div>
                         <div class="flex-[1_1_calc(50%-0.5rem)] bg-slate-200 rounded p-3 border-2 border-gray-400 border-dashed">
                             <label for="countries" class="block mb-2 text-sm font-medium text-gray-900">Pilih Judul Form</label>
-                            <select wire:model="selectedForm" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
-                                <option class="text-gray-300" value=''>-- Pilih Judul Form --</option>
-                                @if ($forms)
-                                    @foreach ($forms as $form => $value)
-                                
-                                        <option value="{{ $value->id }}">{{ $value->form_name }}</option>
-                                    @endforeach
-                                @else
-                                    <option value="0" disabled>-- no form available --</option>
-                                @endif
-                            </select>
+                            <div wire:ignore>
+                                <select id="form-name" wire:model="selectedForm" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                                    
+                                </select>
+                            </div>
                         </div>
                     </div>
-                    <button type="button" wire:click="loadData" class="text-white w-full bg-green-500 box-border border border-transparent hover:bg-green-600 focus:ring-4 focus:ring-green-300 shadow-xs font-medium leading-5 rounded text-sm px-4 py-2.5 focus:outline-none">Search</button>
+                    <div class="p-3 bg-slate-200 mb-2 rounded">
+                        <input type="text" wire:model="searchByEmail" placeholder="cari email disini..." class="w-full bg-white text-black rounded px-3 py-2">
+                    </div>
+                    <button type="button" id="btn-search-response" wire:click="loadData" class="text-white w-full bg-green-500 box-border border border-transparent hover:bg-green-600 focus:ring-4 focus:ring-green-300 shadow-xs font-medium leading-5 rounded text-sm px-4 py-2.5 focus:outline-none">Search</button>
                 </div>
                 
                 @if($responseData == null)
@@ -51,7 +51,7 @@
                 @else
                     <div class=" rounded my-2 mx-3 p-1 text-center overflow-hidden flex flex-col justify-center items-center">
                         <div class="w-full rounded bg-cyan-500 flex flex-col justify-center items-center relative">
-                            <p class="text-sm text-gray-400 px-4 py-1 bg-slate-200 w-fit rounded-b-2xl">Nama Form</p>
+                            <p class="text-sm text-blue-500 px-4 py-1 bg-slate-200 w-fit rounded-b-2xl">{{ $responseData->placement }}</p>
                             <h1 class="text-2xl pt-1 pb-2 font-bold text-white">{{ $responseData->form_name }}</h1>
                             
                             <div class="absolute top-0 right-0 p-2 flex justify-end items-end">
@@ -234,6 +234,60 @@
                 @endif
             </div>
         </div>
+        <script>
+            const dropdownPlacement = document.getElementById("response-placement")
+
+            let dropdownNamaForm = document.getElementById('form-name')
+            let formId = dropdownNamaForm.value
+
+            function generateDropdownFormName(){
+                dropdownNamaForm = document.getElementById('form-name')
+
+                console.log('generator dd: ',dropdownPlacement.value)
+                let option = `<option class='text-gray-300' value='' default>-- Pilih Nama Form --</option>`
+
+                if(formsData.length == 0){
+                    option += `<option value='0' disabled>-- no form available --</option>`
+                }else{
+                    formsData.forEach(element => {
+                        if(element.placement.includes(dropdownPlacement.value)){
+                            option += `<option value="${element.id}">${element.form_name}</option>`
+
+                        }else if(dropdownPlacement.value == null || dropdownPlacement.value == 'all'){
+                            option +=`<option value="${element.id}">${element.form_name}</option>`
+                        }
+                    });
+
+                }
+                dropdownNamaForm.innerHTML=option
+                dropdownNamaForm.value = ''; 
+
+                for (let opt of dropdownNamaForm.options) {
+                    console.log('opt val:', opt.value);
+                    console.log('form val:', formId);
+
+                    if (opt.value == formId) {
+                        dropdownNamaForm.value = formId;
+                        console.log('match');
+                        break; 
+                    }
+                }  
+            }
+
+            setTimeout(()=>{
+                generateDropdownFormName()
+            },2750)
+
+            dropdownPlacement.addEventListener('change', generateDropdownFormName)
+
+            document.getElementById('form-name').addEventListener('click', ()=>{
+                formId = dropdownNamaForm.value
+            })
+
+            document.getElementById('btn-search-response').addEventListener('click', ()=>{
+                formId = dropdownNamaForm.value
+            })
+        </script>
     </div>
 </div>
 
