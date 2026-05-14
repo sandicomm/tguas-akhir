@@ -162,479 +162,491 @@
                     
                     <div id="accordion-tools" data-accordion="open" class="mt-3 w-full"> 
                         <!-- ================================ FONT STYLING =============================== -->
-                        <h2 id="accordion-font-styling" class="hidden">
-                            <button type="button" class="font-bold w-full flex items-center justify-between text-sm rtl:text-right rounded-md p-3 gap-3 
-                                    !bg-gray-300 !text-black hover:!bg-gray-100 border border-black 
-                                    dark:border-white" data-accordion-target="#accordion-font-styling-body-1" aria-expanded="false" aria-controls="accordion-font-styling-body-1">
-                                <span>Font Styling</span>
-                                <svg data-accordion-icon class="w-3 h-3 rotate-180 shrink-0" aria-hidden="true"  fill="none" viewBox="0 0 10 6">
-                                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5 5 1 1 5"/>
-                                </svg>
-                            </button>
-                        </h2>
-                        <div id="accordion-font-styling-body-1" 
-                                class="p-2 border bg-gray-300 rounded-md border-black dark:border-white hidden" 
-                                aria-labelledby="accordion-font-styling">
-                            <div class="text-white w-full pb-2">
-                                <div id="styling-select-group" class="flex flex-wrap justify-start gap-1">
-                                    <select id="font-family" class="appearance-none p-1 rounded m-1 bg-white text-black">
-                                        <option value="default" class="text-black" selected>Font Style</option>
-                                        <option value="Arial" class="text-black">Arial</option>
-                                        <option value="Courier New" class="text-black">Courier New</option>
-                                        <option value="Times New Roman" class="text-black">Times New Roman</option>
-                                        <option value="Georgia" class="text-black">Georgia</option>
-                                        <option value="Verdana" class="text-black">Verdana</option>
-                                        <option value="Tahoma" class="text-black">Tahoma</option>
-                                        <option value="Trebuchet MS" class="text-black">Trebuchet MS</option>
-                                        <option value="Comic Sans MS" class="text-black">Comic Sans MS</option>
-                                        <option value="Impact" class="text-black">Impact</option>
-                                        <option value="Lucida Console" class="text-black">Lucida Console</option>
-                                        <option value="Palatino Linotype" class="text-black">Palatino Linotype</option>
-                                    </select>
-
-                                    <select id="font-size" class="p-1 rounded bg-white text-black m-1">
-                                        <option value="default" class="text-black" selected>Font Size</option>
-                                        <option value="1" class="text-black">Very Small</option>
-                                        <option value="2" class="text-black">Small</option>
-                                        <option value="3" class="text-black">Normal</option>
-                                        <option value="4" class="text-black">Large</option>
-                                        <option value="5" class="text-black">Very Large</option>
-                                        <option value="6" class="text-black">Huge</option>
-                                        <option value="7" class="text-black">Massive</option>
-                                    </select>
-
-                                    <div class="my-3 flex gap-2 text-white">
-                                        <label for="font-color-input" class="block mb-2 font-medium text-black">Color</label>
-                                        <input type="color" id="font-color-input">
+                        <div id="accordion-font-styling-wrapper" class="hidden">
+                            <h2 id="accordion-font-styling">
+                                <button type="button" class="font-bold w-full flex items-center justify-between text-sm rtl:text-right rounded-md p-3 gap-3 
+                                        !bg-gray-300 !text-black hover:!bg-gray-100 border border-black 
+                                        dark:border-white" data-accordion-target="#accordion-font-styling-body" aria-expanded="false" aria-controls="accordion-font-styling-body">
+                                    <span>Font Styling</span>
+                                    <svg data-accordion-icon class="w-3 h-3 rotate-180 shrink-0" aria-hidden="true"  fill="none" viewBox="0 0 10 6">
+                                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5 5 1 1 5"/>
+                                    </svg>
+                                </button>
+                            </h2>
+                            <div id="accordion-font-styling-body" 
+                                    class="p-2 border bg-gray-300 rounded-md border-black dark:border-white hidden" 
+                                    aria-labelledby="accordion-font-styling">
+                                <div class="text-white w-full pb-2">
+                                    <div id="styling-select-group" class="flex flex-wrap justify-start gap-1">
+                                        <select id="font-family" class="appearance-none p-1 rounded m-1 bg-white text-black">
+                                            <option value="default" class="text-black" selected>Font Style</option>
+                                            <option value="Arial" class="text-black">Arial</option>
+                                            <option value="Courier New" class="text-black">Courier New</option>
+                                            <option value="Times New Roman" class="text-black">Times New Roman</option>
+                                            <option value="Georgia" class="text-black">Georgia</option>
+                                            <option value="Verdana" class="text-black">Verdana</option>
+                                            <option value="Tahoma" class="text-black">Tahoma</option>
+                                            <option value="Trebuchet MS" class="text-black">Trebuchet MS</option>
+                                            <option value="Comic Sans MS" class="text-black">Comic Sans MS</option>
+                                            <option value="Impact" class="text-black">Impact</option>
+                                            <option value="Lucida Console" class="text-black">Lucida Console</option>
+                                            <option value="Palatino Linotype" class="text-black">Palatino Linotype</option>
+                                        </select>
+    
+                                        <select id="font-size" class="p-1 rounded bg-white text-black m-1">
+                                            <option value="default" class="text-black" selected>Font Size</option>
+                                            <option value="1" class="text-black">Very Small</option>
+                                            <option value="2" class="text-black">Small</option>
+                                            <option value="3" class="text-black">Normal</option>
+                                            <option value="4" class="text-black">Large</option>
+                                            <option value="5" class="text-black">Very Large</option>
+                                            <option value="6" class="text-black">Huge</option>
+                                            <option value="7" class="text-black">Massive</option>
+                                        </select>
+    
+                                        <div class="my-3 flex gap-2 text-white">
+                                            <label for="font-color-input" class="block mb-2 font-medium text-black">Color</label>
+                                            <input type="color" id="font-color-input">
+                                        </div>
+    
                                     </div>
-
-                                </div>
-
-                                <div class="styling-button flex flex-wrap justify-start items-center gap-2 mb-3">
-                                    <button id="font-bold" class="text-black dark:text-white p-1 px-2 rounded-md bg-gray-100 hover:bg-gray-300 dark:bg-gray-700"><b>B</b></button>
-                                    <button id="font-italic" class="text-black dark:text-white p-1 px-2 rounded-md bg-gray-100 hover:bg-gray-300 dark:bg-gray-700"><i>I</i></button>
-                                    <button id="font-underline" class="text-black dark:text-white p-1 px-2 rounded-md bg-gray-100 hover:bg-gray-300 dark:bg-gray-700"><u>U</u></button>
-
-                                    <button id="font-left" value="left" class="text-black p-1 rounded-md bg-gray-100 hover:bg-gray-300 dark:bg-gray-700">
-                                        <svg class="w-6 h-6  dark:text-white" aria-hidden="true"  width="24" height="24" fill="none" viewBox="0 0 24 24">
-                                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 6h8m-8 4h12M6 14h8m-8 4h12"/>
-                                        </svg>
-                                    </button>
-                                    <button id="font-right" value="right" class="text-black p-1 rounded-md bg-gray-100 hover:bg-gray-300 dark:bg-gray-700">
-                                        <svg class="w-6 h-6  dark:text-white" aria-hidden="true"  width="24" height="24" fill="none" viewBox="0 0 24 24">
-                                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 6h-8m8 4H6m12 4h-8m8 4H6"/>
-                                        </svg>
-                                    </button>
-                                    <button id="font-center" value="center" class="text-black p-1 rounded-md bg-gray-100 hover:bg-gray-300 dark:bg-gray-700">
-                                        <svg class="w-6 h-6 dark:text-white" aria-hidden="true"  width="24" height="24" fill="none" viewBox="0 0 24 24">
-                                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 6h8M6 10h12M8 14h8M6 18h12"/>
-                                        </svg>
-                                    </button>
-                                    <button id="font-justify" value="justify" class="text-black p-1 rounded-md bg-gray-100 hover:bg-gray-300 dark:bg-gray-700">
-                                        <svg class="w-6 h-6 dark:text-white" aria-hidden="true"  width="24" height="24" fill="none" viewBox="0 0 24 24">
-                                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 6H6m12 4H6m12 4H6m12 4H6"/>
-                                        </svg>
-                                    </button>                
-
-                                    <button onclick="document.execCommand('insertOrderedList')" id="font-order-list" class=" text-black p-1 rounded-md bg-gray-100 hover:bg-gray-300 dark:bg-gray-700">
-                                        <svg class="w-6 h-6 dark:text-white" aria-hidden="true"  width="24" height="24" fill="none" viewBox="0 0 24 24">
-                                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6h8m-8 6h8m-8 6h8M4 16a2 2 0 1 1 3.321 1.5L4 20h5M4 5l2-1v6m-2 0h4"/>
-                                        </svg>
-                                    </button>
-
-                                    <button onclick="document.execCommand('insertUnorderedList')" id="font-unorder-list" class=" text-black p-1 rounded-md bg-gray-100 hover:bg-gray-300 dark:bg-gray-700">
-                                        <svg class="w-6 h-6 dark:text-white" aria-hidden="true"  width="24" height="24" fill="none" viewBox="0 0 24 24">
-                                        <path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M9 8h10M9 12h10M9 16h10M4.99 8H5m-.02 4h.01m0 4H5"/>
-                                        </svg>
-                                    </button>
+    
+                                    <div class="styling-button flex flex-wrap justify-start items-center gap-2 mb-3">
+                                        <button id="font-bold" class="text-black dark:text-white p-1 px-2 rounded-md bg-gray-100 hover:bg-gray-300 dark:bg-gray-700"><b>B</b></button>
+                                        <button id="font-italic" class="text-black dark:text-white p-1 px-2 rounded-md bg-gray-100 hover:bg-gray-300 dark:bg-gray-700"><i>I</i></button>
+                                        <button id="font-underline" class="text-black dark:text-white p-1 px-2 rounded-md bg-gray-100 hover:bg-gray-300 dark:bg-gray-700"><u>U</u></button>
+    
+                                        <button id="font-left" value="left" class="text-black p-1 rounded-md bg-gray-100 hover:bg-gray-300 dark:bg-gray-700">
+                                            <svg class="w-6 h-6  dark:text-white" aria-hidden="true"  width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 6h8m-8 4h12M6 14h8m-8 4h12"/>
+                                            </svg>
+                                        </button>
+                                        <button id="font-right" value="right" class="text-black p-1 rounded-md bg-gray-100 hover:bg-gray-300 dark:bg-gray-700">
+                                            <svg class="w-6 h-6  dark:text-white" aria-hidden="true"  width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 6h-8m8 4H6m12 4h-8m8 4H6"/>
+                                            </svg>
+                                        </button>
+                                        <button id="font-center" value="center" class="text-black p-1 rounded-md bg-gray-100 hover:bg-gray-300 dark:bg-gray-700">
+                                            <svg class="w-6 h-6 dark:text-white" aria-hidden="true"  width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 6h8M6 10h12M8 14h8M6 18h12"/>
+                                            </svg>
+                                        </button>
+                                        <button id="font-justify" value="justify" class="text-black p-1 rounded-md bg-gray-100 hover:bg-gray-300 dark:bg-gray-700">
+                                            <svg class="w-6 h-6 dark:text-white" aria-hidden="true"  width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 6H6m12 4H6m12 4H6m12 4H6"/>
+                                            </svg>
+                                        </button>                
+    
+                                        <button onclick="document.execCommand('insertOrderedList')" id="font-order-list" class=" text-black p-1 rounded-md bg-gray-100 hover:bg-gray-300 dark:bg-gray-700">
+                                            <svg class="w-6 h-6 dark:text-white" aria-hidden="true"  width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6h8m-8 6h8m-8 6h8M4 16a2 2 0 1 1 3.321 1.5L4 20h5M4 5l2-1v6m-2 0h4"/>
+                                            </svg>
+                                        </button>
+    
+                                        <button onclick="document.execCommand('insertUnorderedList')" id="font-unorder-list" class=" text-black p-1 rounded-md bg-gray-100 hover:bg-gray-300 dark:bg-gray-700">
+                                            <svg class="w-6 h-6 dark:text-white" aria-hidden="true"  width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                            <path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M9 8h10M9 12h10M9 16h10M4.99 8H5m-.02 4h.01m0 4H5"/>
+                                            </svg>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
                         <!-- ================================ BOX =============================== -->
-                        <h2 id="accordion-box-field" class="mt-3 hidden">
-                            <button type="button" class="w-full flex items-center justify-between text-sm rtl:text-right rounded-md p-3 gap-3 
-                                    !bg-gray-400 !text-black hover:!bg-gray-300 font-bold border border-black dark:border-white" 
-                                    data-accordion-target="#accordion-box-field-body-1" 
-                                    aria-expanded="false" aria-controls="accordion-box-field-body-1">
-                                <span>Box</span>
-                                <svg data-accordion-icon class="w-3 h-3 rotate-180 shrink-0" aria-hidden="true"  fill="none" viewBox="0 0 10 6">
-                                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5 5 1 1 5"/>
-                                </svg>
-                            </button>
-                        </h2>
-                        <div id="accordion-box-field-body-1" 
-                            class="p-2 rounded bg-gray-400 font-bold border border-black dark:border-white hidden" 
-                            aria-labelledby="accordion-box-field"
-                            aria-expanded="false">
-                            
-                            <div class="w-full pb-2">
-                                <table class="w-full">
-                                    <tr id="box-width-field" class="">
-                                        <td>Width</td><td>:</td>
-                                        <td>
-                                            <input type="number" id="width-field" class="text-sm rounded focus:ring-blue-500 focus:border-blue-500 w-[80%] p-1"/>
-                                        </td>
-                                    </tr>
-                                    <tr id="box-height-field" class="">
-                                        <td>Height</td><td>:</td>
-                                        <td>
-                                            <input type="number" id="height-field" class="text-sm rounded focus:ring-blue-500 focus:border-blue-500 w-[80%] p-1"/>
-                                        </td>
-                                    </tr>       
-                                </table>
-                                <div id="flex-position" class="w-full mt-3 ">
-                                    <h2 class="text-black">Flex Position</h2>
-                                    <div class="flex justify-center items-center w-full">
-                                        <select id="flex-position-section" class="p-1 bg-white rounded m-1 w-full">
-                                            <option value="" class="text-black">-- Pilih Position --</option>
-                                            <option value="top" class="text-black">Top</option>
-                                            <option value="center" class="text-black">Center</option>
-                                            <option value="end" class="text-black">Bottom</option>
-                                        </select>
+                        <div id="accordion-box-field-wrapper" class="hidden">
+                            <h2 id="accordion-box-field" class="mt-3">
+                                <button type="button" class="w-full flex items-center justify-between text-sm rtl:text-right rounded-md p-3 gap-3 
+                                        !bg-gray-400 !text-black hover:!bg-gray-300 font-bold border border-black dark:border-white" 
+                                        data-accordion-target="#accordion-box-field-body" 
+                                        aria-expanded="false" aria-controls="accordion-box-field-body">
+                                    <span>Box</span>
+                                    <svg data-accordion-icon class="w-3 h-3 rotate-180 shrink-0" aria-hidden="true"  fill="none" viewBox="0 0 10 6">
+                                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5 5 1 1 5"/>
+                                    </svg>
+                                </button>
+                            </h2>
+                            <div id="accordion-box-field-body" 
+                                class="p-2 rounded bg-gray-400 font-bold border border-black dark:border-white hidden" 
+                                aria-labelledby="accordion-box-field"
+                                aria-expanded="false">
+                                
+                                <div class="w-full pb-2">
+                                    <table class="w-full">
+                                        <tr id="box-width-field" class="">
+                                            <td>Width</td><td>:</td>
+                                            <td>
+                                                <input type="number" id="width-field" class="text-sm rounded focus:ring-blue-500 focus:border-blue-500 w-[80%] p-1"/>
+                                            </td>
+                                        </tr>
+                                        <tr id="box-height-field" class="">
+                                            <td>Height</td><td>:</td>
+                                            <td>
+                                                <input type="number" id="height-field" class="text-sm rounded focus:ring-blue-500 focus:border-blue-500 w-[80%] p-1"/>
+                                            </td>
+                                        </tr>       
+                                    </table>
+                                    <div id="flex-position" class="w-full mt-3 ">
+                                        <h2 class="text-black">Flex Position</h2>
+                                        <div class="flex justify-center items-center w-full">
+                                            <select id="flex-position-section" class="p-1 bg-white rounded m-1 w-full">
+                                                <option value="" class="text-black">-- Pilih Position --</option>
+                                                <option value="top" class="text-black">Top</option>
+                                                <option value="center" class="text-black">Center</option>
+                                                <option value="end" class="text-black">Bottom</option>
+                                            </select>
+                                        </div>
                                     </div>
-                                </div>
-                                <div id="reset-box" class="w-full mt-3">
-                                    <button id="btn-reset-box" class=" w-full bg-blue-500 p-1 rounded hover:bg-green-500 text-white">Reset Box</button>
+                                    <div id="reset-box" class="w-full mt-3">
+                                        <button id="btn-reset-box" class=" w-full bg-blue-500 p-1 rounded hover:bg-green-500 text-white">Reset Box</button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
                         <!-- ================================ BORDER =============================== -->
-                        <h2 id="accordion-border-field" class="mt-3 hidden">
-                            <button type="button" 
-                                class="w-full flex items-center justify-between text-sm rtl:text-right rounded-md p-3 gap-3 
-                                    !bg-gray-500 hover:!bg-gray-300 !text-white font-bold border border-black 
-                                    dark:border-white" 
-
-                                data-accordion-target="#accordion-border-field-body-1" aria-expanded="false" aria-controls="accordion-border-field-body-1">
-                                <span>Border</span>
-                                <svg data-accordion-icon class="w-3 h-3 rotate-180 shrink-0" aria-hidden="true"  fill="none" viewBox="0 0 10 6">
-                                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5 5 1 1 5"/>
-                                </svg>
-                            </button>
-                        </h2>     
-                        <div id="accordion-border-field-body-1" 
-                            class="p-2 pb-2 bg-gray-500 rounded text-white font-bold border 
-                                border-black dark:border-white hidden" 
-
-                            aria-labelledby="accordion-border-field">
-                            <!-- -------------- BORDER ---------------- -->
-                            <div id="border-basic">
-                                <table>
-                                    <tr class="text-white">
-                                        <td>Color</td><td>:</td>
-                                        <td><input type="color" id="border-color-field" ></td>
-                                    </tr>
-                                    <tr class="text-white">
-                                        <td>Border</td><td>:</td>
-                                        <td>
-                                            <input type="number" id="border-field" class="text-sm text-black rounded focus:ring-blue-500 focus:border-blue-500 w-14 p-1"/>
-                                        </td>
-                                    </tr>
-                                </table>
-    
-                                <div id="accordion-advance-border" data-accordion="collapse" class="mt-2 mb-4 px-1"> 
-                                    <h2 id="accordion-advance-border-heading-1" class="mt-3">
-                                        <button type="button" 
-                                                class="flex items-center justify-between text-sm rtl:text-right 
-                                                    !text-white rounded-md p-2 hover:ring-2 hover:!ring-gray-200
-                                                      gap-3 dark:!bg-gray-400/50 !bg-gray-400/50" 
-                                                data-accordion-target="#accordion-advance-border-1" aria-expanded="true" aria-controls="accordion-advance-border-body-1">
-                                            <span >Advance</span>
-                                            <svg data-accordion-icon class="w-3 h-3 rotate-180 shrink-0" aria-hidden="true"  fill="none" viewBox="0 0 10 6">
-                                                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5 5 1 1 5"/>
-                                            </svg>
-                                        </button>
-                                    </h2>
-                                    <div id="accordion-advance-border-1" class="" aria-labelledby="accordion-advance-border-heading-1">
-                                        <div class="flex justify-start items-start gap-2 flex-wrap p-2 bg-gray-300/30 inset-shadow-md rounded text-white">
-                                            <table class="w-full flex">
-                                                <tbody class="w-full">
-                                                    <tr class="w-full flex gap-3 items-center">
-                                                        <td class="flex justify-center items-center flex-col">
-                                                            <label for="border-field-top">Top</label>
-                                                            <input type="number" id="border-field-top" class="text-black text-sm rounded focus:ring-blue-500 focus:border-blue-500 block w-full p-1"/>
-                                                        </td>
-                                                
-                                                        <td class="flex justify-center items-center flex-col">
-                                                            <label for="border-field-right">Right</label>
-                                                            <input type="number" id="border-field-right" class="text-black text-sm rounded focus:ring-blue-500 focus:border-blue-500 block w-full p-1"/>
-                                                        </td>
-                                                    </tr>
-                                                    <tr class="w-full flex gap-3 items-center">
-                                                        <td class="flex justify-center items-center flex-col">
-                                                            <label for="border-field-left">Left</label>
-                                                            <input type="number" id="border-field-left" class="text-black text-sm rounded focus:ring-blue-500 focus:border-blue-500 block w-full p-1"/>
-                                                        </td>
-                                                    
-                                                        <td class="flex justify-center items-center flex-col">
-                                                            <label for="border-field-bottom">Bottom</label>
-                                                            <input type="number" id="border-field-bottom" class="text-black text-sm rounded focus:ring-blue-500 focus:border-blue-500 block w-full p-1"/>
-                                                        </td>
-                                                    </tr>
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- ------------- ROUNDED ------------ -->
-                            <div id="border-rounded">
-                                <table>
-                                    <tr class="text-white">
-                                        <td>Rounded</td><td>:</td>
-                                        <td>
-                                            <input type="number" id="border-field-rounded" class="text-black text-sm rounded focus:ring-blue-500 focus:border-blue-500 w-14 p-1"/>
-                                        </td>
-                                    </tr>
-                                </table>
-                                
-                                <div id="accordion-advance-border-rounded" data-accordion="collapse" class="mt-2 px-1"> 
-                                    <h2 id="accordion-advance-border-rounded-heading-1" class="mt-3">
-                                        <button type="button" 
-                                                class="flex items-center justify-between text-sm rtl:text-right 
-                                                        !text-white rounded-md p-2 hover:ring-2 hover:!ring-gray-200
-                                                        gap-3 dark:!bg-gray-400/50 !bg-gray-400/50" 
-                                                data-accordion-target="#accordion-advance-border-rounded-1" aria-expanded="true" aria-controls="accordion-advance-border-rounded-body-1">
-                                            <span >Advance</span>
-                                            <svg data-accordion-icon class="w-3 h-3 rotate-180 shrink-0" aria-hidden="true"  fill="none" viewBox="0 0 10 6">
-                                                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5 5 1 1 5"/>
-                                            </svg>
-                                        </button>
-                                    </h2>
-                                    <div id="accordion-advance-border-rounded-1" class="" aria-labelledby="accordion-advance-border-rounded-heading-1">
-                                        <div class="flex justify-start items-start gap-2 flex-wrap p-2 bg-gray-300/30 rounded text-white">
-                                            <table class="w-full flex">
-                                                <tbody class="w-full">
-                                                    <tr class="w-full flex gap-3 items-center">
-                                                        <td class="flex justify-center items-center flex-col">
-                                                            <label for="border-field-rounded-top-left" class="text-sm">Top Left</label>
-                                                            <input type="number" id="border-field-rounded-top-left" class="text-black text-sm rounded focus:ring-blue-500 focus:border-blue-500 block w-full p-1"/>
-                                                        </td>
-                                                        <td class="flex justify-center items-center flex-col">
-                                                            <label for="border-field-rounded-top-right" class="text-sm">Top Right</label>
-                                                            <input type="number" id="border-field-rounded-top-right" class="text-black text-sm rounded focus:ring-blue-500 focus:border-blue-500 block w-full p-1"/>
-                                                        </td>
-                                                    </tr>
-    
-                                                    <tr class="w-full flex gap-3 items-center">
-                                                        <td class="flex justify-center items-center flex-col">
-                                                            <label for="border-field-rounded-bottom-left"  class="text-sm">Bottom Left</label>
-                                                            <input type="number" id="border-field-rounded-bottom-left" class="text-black text-sm rounded focus:ring-blue-500 focus:border-blue-500 block w-full p-1"/>
-                                                        </td>
-                                                        <td class="flex justify-center items-center flex-col">
-                                                            <label for="border-field-rounded-bottom-right" class="text-sm">Bottom Right</label>
-                                                            <input type="number" id="border-field-rounded-bottom-right" class="text-black text-sm rounded focus:ring-blue-500 focus:border-blue-500 block w-full p-1"/>
-                                                        </td>
-                                                    </tr>
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                         <div id="accordion-border-field-wrapper" class="hidden">
+                             <h2 id="accordion-border-field" class="mt-3">
+                                 <button type="button" 
+                                     class="w-full flex items-center justify-between text-sm rtl:text-right rounded-md p-3 gap-3 
+                                         !bg-gray-500 hover:!bg-gray-300 !text-white font-bold border border-black 
+                                         dark:border-white" 
+     
+                                     data-accordion-target="#accordion-border-field-body" aria-expanded="false" aria-controls="accordion-border-field-body">
+                                     <span>Border</span>
+                                     <svg data-accordion-icon class="w-3 h-3 rotate-180 shrink-0" aria-hidden="true"  fill="none" viewBox="0 0 10 6">
+                                         <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5 5 1 1 5"/>
+                                     </svg>
+                                 </button>
+                             </h2>     
+                             <div id="accordion-border-field-body" 
+                                 class="p-2 pb-2 bg-gray-500 rounded text-white font-bold border 
+                                     border-black dark:border-white hidden" 
+     
+                                 aria-labelledby="accordion-border-field">
+                                 <!-- -------------- BORDER ---------------- -->
+                                 <div id="border-basic">
+                                     <table>
+                                         <tr class="text-white">
+                                             <td>Color</td><td>:</td>
+                                             <td><input type="color" id="border-color-field" ></td>
+                                         </tr>
+                                         <tr class="text-white">
+                                             <td>Border</td><td>:</td>
+                                             <td>
+                                                 <input type="number" id="border-field" class="text-sm text-black rounded focus:ring-blue-500 focus:border-blue-500 w-14 p-1"/>
+                                             </td>
+                                         </tr>
+                                     </table>
+         
+                                     <div id="accordion-advance-border" data-accordion="collapse" class="mt-2 mb-4 px-1"> 
+                                         <h2 id="accordion-advance-border-heading-1" class="mt-3">
+                                             <button type="button" 
+                                                     class="flex items-center justify-between text-sm rtl:text-right 
+                                                         !text-white rounded-md p-2 hover:ring-2 hover:!ring-gray-200
+                                                           gap-3 dark:!bg-gray-400/50 !bg-gray-400/50" 
+                                                     data-accordion-target="#accordion-advance-border-1" aria-expanded="true" aria-controls="accordion-advance-border-body">
+                                                 <span >Advance</span>
+                                                 <svg data-accordion-icon class="w-3 h-3 rotate-180 shrink-0" aria-hidden="true"  fill="none" viewBox="0 0 10 6">
+                                                     <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5 5 1 1 5"/>
+                                                 </svg>
+                                             </button>
+                                         </h2>
+                                         <div id="accordion-advance-border-1" class="" aria-labelledby="accordion-advance-border-heading-1">
+                                             <div class="flex justify-start items-start gap-2 flex-wrap p-2 bg-gray-300/30 inset-shadow-md rounded text-white">
+                                                 <table class="w-full flex">
+                                                     <tbody class="w-full">
+                                                         <tr class="w-full flex gap-3 items-center">
+                                                             <td class="flex justify-center items-center flex-col">
+                                                                 <label for="border-field-top">Top</label>
+                                                                 <input type="number" id="border-field-top" class="text-black text-sm rounded focus:ring-blue-500 focus:border-blue-500 block w-full p-1"/>
+                                                             </td>
+                                                     
+                                                             <td class="flex justify-center items-center flex-col">
+                                                                 <label for="border-field-right">Right</label>
+                                                                 <input type="number" id="border-field-right" class="text-black text-sm rounded focus:ring-blue-500 focus:border-blue-500 block w-full p-1"/>
+                                                             </td>
+                                                         </tr>
+                                                         <tr class="w-full flex gap-3 items-center">
+                                                             <td class="flex justify-center items-center flex-col">
+                                                                 <label for="border-field-left">Left</label>
+                                                                 <input type="number" id="border-field-left" class="text-black text-sm rounded focus:ring-blue-500 focus:border-blue-500 block w-full p-1"/>
+                                                             </td>
+                                                         
+                                                             <td class="flex justify-center items-center flex-col">
+                                                                 <label for="border-field-bottom">Bottom</label>
+                                                                 <input type="number" id="border-field-bottom" class="text-black text-sm rounded focus:ring-blue-500 focus:border-blue-500 block w-full p-1"/>
+                                                             </td>
+                                                         </tr>
+                                                     </tbody>
+                                                 </table>
+                                             </div>
+                                         </div>
+                                     </div>
+                                 </div>
+     
+                                 <!-- ------------- ROUNDED ------------ -->
+                                 <div id="border-rounded">
+                                     <table>
+                                         <tr class="text-white">
+                                             <td>Rounded</td><td>:</td>
+                                             <td>
+                                                 <input type="number" id="border-field-rounded" class="text-black text-sm rounded focus:ring-blue-500 focus:border-blue-500 w-14 p-1"/>
+                                             </td>
+                                         </tr>
+                                     </table>
+                                     
+                                     <div id="accordion-advance-border-rounded" data-accordion="collapse" class="mt-2 px-1"> 
+                                         <h2 id="accordion-advance-border-rounded-heading-1" class="mt-3">
+                                             <button type="button" 
+                                                     class="flex items-center justify-between text-sm rtl:text-right 
+                                                             !text-white rounded-md p-2 hover:ring-2 hover:!ring-gray-200
+                                                             gap-3 dark:!bg-gray-400/50 !bg-gray-400/50" 
+                                                     data-accordion-target="#accordion-advance-border-rounded-1" aria-expanded="true" aria-controls="accordion-advance-border-rounded-body">
+                                                 <span >Advance</span>
+                                                 <svg data-accordion-icon class="w-3 h-3 rotate-180 shrink-0" aria-hidden="true"  fill="none" viewBox="0 0 10 6">
+                                                     <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5 5 1 1 5"/>
+                                                 </svg>
+                                             </button>
+                                         </h2>
+                                         <div id="accordion-advance-border-rounded-1" class="" aria-labelledby="accordion-advance-border-rounded-heading-1">
+                                             <div class="flex justify-start items-start gap-2 flex-wrap p-2 bg-gray-300/30 rounded text-white">
+                                                 <table class="w-full flex">
+                                                     <tbody class="w-full">
+                                                         <tr class="w-full flex gap-3 items-center">
+                                                             <td class="flex justify-center items-center flex-col">
+                                                                 <label for="border-field-rounded-top-left" class="text-sm">Top Left</label>
+                                                                 <input type="number" id="border-field-rounded-top-left" class="text-black text-sm rounded focus:ring-blue-500 focus:border-blue-500 block w-full p-1"/>
+                                                             </td>
+                                                             <td class="flex justify-center items-center flex-col">
+                                                                 <label for="border-field-rounded-top-right" class="text-sm">Top Right</label>
+                                                                 <input type="number" id="border-field-rounded-top-right" class="text-black text-sm rounded focus:ring-blue-500 focus:border-blue-500 block w-full p-1"/>
+                                                             </td>
+                                                         </tr>
+         
+                                                         <tr class="w-full flex gap-3 items-center">
+                                                             <td class="flex justify-center items-center flex-col">
+                                                                 <label for="border-field-rounded-bottom-left"  class="text-sm">Bottom Left</label>
+                                                                 <input type="number" id="border-field-rounded-bottom-left" class="text-black text-sm rounded focus:ring-blue-500 focus:border-blue-500 block w-full p-1"/>
+                                                             </td>
+                                                             <td class="flex justify-center items-center flex-col">
+                                                                 <label for="border-field-rounded-bottom-right" class="text-sm">Bottom Right</label>
+                                                                 <input type="number" id="border-field-rounded-bottom-right" class="text-black text-sm rounded focus:ring-blue-500 focus:border-blue-500 block w-full p-1"/>
+                                                             </td>
+                                                         </tr>
+                                                     </tbody>
+                                                 </table>
+                                             </div>
+                                         </div>
+                                     </div>
+                                 </div>
+                             </div>
+                         </div>
 
                         <!-- ================================ BACKGROUND =============================== -->
-                        <h2 id="accordion-background" class="mt-3 hidden">
-                            <button type="button" 
-                                    class="w-full flex items-center justify-between text-sm rtl:text-right rounded-md p-3 gap-3 
-                                      !bg-gray-600 hover:!bg-gray-300 !text-white font-bold border border-black 
-                                        dark:border-white"
-
-                                data-accordion-target="#accordion-background-body-1" aria-expanded="false" aria-controls="accordion-background-body-1">
-                                <span>Background</span>
-                                <svg data-accordion-icon class="w-3 h-3 rotate-180 shrink-0" aria-hidden="true"  fill="none" viewBox="0 0 10 6">
-                                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5 5 1 1 5"/>
-                                </svg>
-                            </button>
-                        </h2>
-                        <div id="accordion-background-body-1" 
-                                class="p-2 rounded-md bg-gray-600 text-white 
-                                    font-bold border border-black dark:border-white hidden" 
-                        
-                                aria-labelledby="accordion-background">
-                            <div class="text-white flex flex-col justify-center items-center w-full p-3">
-                                <div class="mb-5 flex justify-center items-center flex-col text-white w-full bg-gray-500 p-1 rounded-md">
-                                    <label for="color-field-input" class="block mb-2 font-medium">Background Color</label>
-                                    <input type="color" class="rounded w-[50%] h-[30px]" id="color-field-input">
-                                </div>
-                                <div class="mb-5 flex justify-center items-center flex-col text-white w-full bg-gray-500 p-1 rounded-md">
-                                    <label for="bg-color-opacity" class="block mb-1 font-medium">Color Opacity</label>
-                                    <input type="range" id="bg-color-opacity" class="w-full" min="0" max="1" step="0.01" value="1">
-                                </div>
-
-                                <div id="bg-image-styling" class="">
-                                    <div class="flex justify-center items-center flex-col gap-2 text-white w-full bg-gray-500 p-1 rounded-md">
-                                        <input type="file" id="bg-image-input" accept="image/*" class="hidden">
-                                        <label for="bg-image-input" class="bg-blue-500 text-white px-4 py-2 rounded cursor-pointer w-full text-center">Choose From File</label>
-                                        <label id="set-image-from-recent" data-modal-target="recent-image-modal" data-modal-toggle="recent-image-modal" class="bg-blue-500 text-white px-4 py-2 rounded cursor-pointer w-full text-center">Choose From Recent</label>
-                                        <span id="file-name-display" class="ml-2 text-sm text-white break-all">No image selected</span>
-                                        <div id="preview-container" class="mt-3 flex justify-center">
-                                            <img id="preview-image" src="" alt="Preview" class="w-1/2 h-auto rounded-lg hidden" />
-                                        </div>
-                                    </div>
-    
-                                </div>
-                                <div id="wrapper-btn-reset-bg-image" class="mb-2 mt-3 text-white w-full">
-                                    <button type="button" id="btn-reset-bg-image" class="bg-blue-500 rounded p-3 w-full text-sm ">Reset Background Image</button>
-                                </div>
-                            </div>
-                        </div>
+                         <div id="accordion-background-wrapper" class="hidden">
+                             <h2 id="accordion-background" class="mt-3">
+                                 <button type="button" 
+                                         class="w-full flex items-center justify-between text-sm rtl:text-right rounded-md p-3 gap-3 
+                                           !bg-gray-600 hover:!bg-gray-300 !text-white font-bold border border-black 
+                                             dark:border-white"
+     
+                                     data-accordion-target="#accordion-background-body" aria-expanded="false" aria-controls="accordion-background-body">
+                                     <span>Background</span>
+                                     <svg data-accordion-icon class="w-3 h-3 rotate-180 shrink-0" aria-hidden="true"  fill="none" viewBox="0 0 10 6">
+                                         <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5 5 1 1 5"/>
+                                     </svg>
+                                 </button>
+                             </h2>
+                             <div id="accordion-background-body" 
+                                     class="p-2 rounded-md bg-gray-600 text-white 
+                                         font-bold border border-black dark:border-white hidden" 
+                             
+                                     aria-labelledby="accordion-background">
+                                 <div class="text-white flex flex-col justify-center items-center w-full p-3">
+                                     <div class="mb-5 flex justify-center items-center flex-col text-white w-full bg-gray-500 p-1 rounded-md">
+                                         <label for="color-field-input" class="block mb-2 font-medium">Background Color</label>
+                                         <input type="color" class="rounded w-[50%] h-[30px]" id="color-field-input">
+                                     </div>
+                                     <div class="mb-5 flex justify-center items-center flex-col text-white w-full bg-gray-500 p-1 rounded-md">
+                                         <label for="bg-color-opacity" class="block mb-1 font-medium">Color Opacity</label>
+                                         <input type="range" id="bg-color-opacity" class="w-full" min="0" max="1" step="0.01" value="1">
+                                     </div>
+     
+                                     <div id="bg-image-styling" class="">
+                                         <div class="flex justify-center items-center flex-col gap-2 text-white w-full bg-gray-500 p-1 rounded-md">
+                                             <input type="file" id="bg-image-input" accept="image/*" class="hidden">
+                                             <label for="bg-image-input" class="bg-blue-500 text-white px-4 py-2 rounded cursor-pointer w-full text-center">Choose From File</label>
+                                             <label id="set-image-from-recent" data-modal-target="recent-image-modal" data-modal-toggle="recent-image-modal" class="bg-blue-500 text-white px-4 py-2 rounded cursor-pointer w-full text-center">Choose From Recent</label>
+                                             <span id="file-name-display" class="ml-2 text-sm text-white break-all">No image selected</span>
+                                             <div id="preview-container" class="mt-3 flex justify-center">
+                                                 <img id="preview-image" src="" alt="Preview" class="w-1/2 h-auto rounded-lg hidden" />
+                                             </div>
+                                         </div>
+         
+                                     </div>
+                                     <div id="wrapper-btn-reset-bg-image" class="mb-2 mt-3 text-white w-full">
+                                         <button type="button" id="btn-reset-bg-image" class="bg-blue-500 rounded p-3 w-full text-sm ">Reset Background Image</button>
+                                     </div>
+                                 </div>
+                             </div>
+                         </div>
 
                         <!-- ============================== PADDING ================================== -->
-                        <h2 id="accordion-padding" class="mt-3 hidden">
-                            <button type="button" 
-                                    class="w-full flex items-center justify-between font-bold text-sm rtl:text-right gap-3 !text-white
-                                        rounded-md dark:border-white p-3 !bg-gray-800 hover:!bg-gray-600 border border-black" 
-
-                                    data-accordion-target="#accordion-padding-body-1" aria-expanded="false" aria-controls="accordion-padding-body-1">
-                                <span class="">Padding</span>
-                                <svg data-accordion-icon class="w-3 h-3 rotate-180 shrink-0" aria-hidden="true"  fill="none" viewBox="0 0 10 6">
-                                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5 5 1 1 5"/>
-                                </svg>
-                            </button>
-                        </h2>
-                        <div id="accordion-padding-body-1" 
-                            class="p-2 rounded-md dark:border-white hidden
-                                    bg-gray-800 border border-black"
-
-                            aria-labelledby="accordion-padding">
-                            <div class="text-white w-full">
-                                <table>
-                                    <tbody>
-                                        <tr>
-                                            <td>Padding</td><td>:</td>
-                                            <td>
-                                                <input type="number" id="padding-field" class="text-sm text-black rounded focus:ring-blue-500 focus:border-blue-500 w-14 p-1"/>
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table> 
-                                
-                                <div id="accordion-advance-padding" data-accordion="collapse" class="mt-2 px-1"> 
-                                    <h2 id="accordion-advance-padding-heading-1">
-                                        <button type="button" 
-                                                class="flex items-center justify-between text-sm rtl:text-right 
-                                                    !text-white rounded-md p-2 dark:!bg-gray-500/50 !bg-gray-500/50 hover:ring-2 hover:!ring-gray-200" 
-                                                
-                                                data-accordion-target="#accordion-advance-padding-1" aria-expanded="true" aria-controls="accordion-advance-padding-body-1">
-
-                                            <span>Advance</span>
-                                            <svg data-accordion-icon class="w-3 h-3 rotate-180 shrink-0" aria-hidden="true"  fill="none" viewBox="0 0 10 6">
-                                                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5 5 1 1 5"/>
-                                            </svg>
-                                        </button>
-                                    </h2>
-                                    <div id="accordion-advance-padding-1" class="bg-gray-600 rounded-md" aria-labelledby="accordion-advance-padding-heading-1">
-                                        <div class="flex justify-start items-center gap-2 flex-wrap p-2">
-                                            <table class="w-full flex">
-                                                <tbody class="w-full">
-                                                    <tr class="w-full flex gap-3 items-center">
-                                                        <td class="flex justify-center items-center flex-col">
-                                                            <label for="padding-field-left">Left</label>
-                                                            <input type="number" id="padding-field-left" class="text-black text-sm rounded-md p-1 focus:ring-blue-500 focus:border-blue-500 block w-full"/>
-                                                        </td>
-                                                        <td class="flex justify-center items-center flex-col">
-                                                            <label for="padding-field-right">Right</label>
-                                                            <input type="number" id="padding-field-right" class="text-black text-sm rounded-md p-1 focus:ring-blue-500 focus:border-blue-500 block w-full"/>
-                                                        </td>
-                                                    </tr>
-
-                                                    <tr class="w-full flex gap-3 items-center">
-                                                        <td class="flex justify-center items-center flex-col">
-                                                            <label for="padding-field-top">Top</label>
-                                                            <input type="number" id="padding-field-top" class="text-black text-sm rounded-md p-1 focus:ring-blue-500 focus:border-blue-500 block w-full"/>
-                                                        </td>
-                                                        <td class="flex justify-center items-center flex-col">
-                                                            <label for="padding-field-bottom">Bottom</label>
-                                                            <input type="number" id="padding-field-bottom" class="text-black text-sm rounded-md p-1 focus:ring-blue-500 focus:border-blue-500 block w-full"/>
-                                                        </td>
-                                                    </tr>
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                         <div id="accordion-padding-wrapper">
+                             <h2 id="accordion-padding" class="mt-3">
+                                 <button type="button" 
+                                         class="w-full flex items-center justify-between font-bold text-sm rtl:text-right gap-3 !text-white
+                                             rounded-md dark:border-white p-3 !bg-gray-800 hover:!bg-gray-600 border border-black" 
+     
+                                         data-accordion-target="#accordion-padding-body" aria-expanded="false" aria-controls="accordion-padding-body">
+                                     <span class="">Padding</span>
+                                     <svg data-accordion-icon class="w-3 h-3 rotate-180 shrink-0" aria-hidden="true"  fill="none" viewBox="0 0 10 6">
+                                         <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5 5 1 1 5"/>
+                                     </svg>
+                                 </button>
+                             </h2>
+                             <div id="accordion-padding-body" 
+                                 class="p-2 rounded-md dark:border-white hidden
+                                         bg-gray-800 border border-black"
+     
+                                 aria-labelledby="accordion-padding">
+                                 <div class="text-white w-full">
+                                     <table>
+                                         <tbody>
+                                             <tr>
+                                                 <td>Padding</td><td>:</td>
+                                                 <td>
+                                                     <input type="number" id="padding-field" class="text-sm text-black rounded focus:ring-blue-500 focus:border-blue-500 w-14 p-1"/>
+                                                 </td>
+                                             </tr>
+                                         </tbody>
+                                     </table> 
+                                     
+                                     <div id="accordion-advance-padding" data-accordion="collapse" class="mt-2 px-1"> 
+                                         <h2 id="accordion-advance-padding-heading-1">
+                                             <button type="button" 
+                                                     class="flex items-center justify-between text-sm rtl:text-right 
+                                                         !text-white rounded-md p-2 dark:!bg-gray-500/50 !bg-gray-500/50 hover:ring-2 hover:!ring-gray-200" 
+                                                     
+                                                     data-accordion-target="#accordion-advance-padding-1" aria-expanded="true" aria-controls="accordion-advance-padding-body">
+     
+                                                 <span>Advance</span>
+                                                 <svg data-accordion-icon class="w-3 h-3 rotate-180 shrink-0" aria-hidden="true"  fill="none" viewBox="0 0 10 6">
+                                                     <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5 5 1 1 5"/>
+                                                 </svg>
+                                             </button>
+                                         </h2>
+                                         <div id="accordion-advance-padding-1" class="bg-gray-600 rounded-md" aria-labelledby="accordion-advance-padding-heading-1">
+                                             <div class="flex justify-start items-center gap-2 flex-wrap p-2">
+                                                 <table class="w-full flex">
+                                                     <tbody class="w-full">
+                                                         <tr class="w-full flex gap-3 items-center">
+                                                             <td class="flex justify-center items-center flex-col">
+                                                                 <label for="padding-field-left">Left</label>
+                                                                 <input type="number" id="padding-field-left" class="text-black text-sm rounded-md p-1 focus:ring-blue-500 focus:border-blue-500 block w-full"/>
+                                                             </td>
+                                                             <td class="flex justify-center items-center flex-col">
+                                                                 <label for="padding-field-right">Right</label>
+                                                                 <input type="number" id="padding-field-right" class="text-black text-sm rounded-md p-1 focus:ring-blue-500 focus:border-blue-500 block w-full"/>
+                                                             </td>
+                                                         </tr>
+     
+                                                         <tr class="w-full flex gap-3 items-center">
+                                                             <td class="flex justify-center items-center flex-col">
+                                                                 <label for="padding-field-top">Top</label>
+                                                                 <input type="number" id="padding-field-top" class="text-black text-sm rounded-md p-1 focus:ring-blue-500 focus:border-blue-500 block w-full"/>
+                                                             </td>
+                                                             <td class="flex justify-center items-center flex-col">
+                                                                 <label for="padding-field-bottom">Bottom</label>
+                                                                 <input type="number" id="padding-field-bottom" class="text-black text-sm rounded-md p-1 focus:ring-blue-500 focus:border-blue-500 block w-full"/>
+                                                             </td>
+                                                         </tr>
+                                                     </tbody>
+                                                 </table>
+                                             </div>
+                                         </div>
+                                     </div>
+                                 </div>
+                             </div>
+                         </div>
 
                         <!-- ============================== MARGIN ================================== -->
-                        <h2 id="accordion-margin" class="mt-3 hidden">
-                            <button type="button" 
-                                    class="w-full flex items-center justify-between font-bold 
-                                        text-sm rtl:text-right !text-white gap-3 !bg-indigo-900 p-3 rounded-md 
-                                        hover:!bg-indigo-700 dark:border-white border border-black" 
-                                    
-                                    data-accordion-target="#accordion-margin-body-1" aria-expanded="false" aria-controls="accordion-margin-body-1">
-                                <span>Margin</span>
-                                <svg data-accordion-icon class="w-3 h-3 rotate-180 shrink-0" aria-hidden="true"  fill="none" viewBox="0 0 10 6">
-                                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5 5 1 1 5"/>
-                                </svg>
-                            </button>
-                        </h2>
-                        <div id="accordion-margin-body-1" 
-                            class="p-2 bg-indigo-900 rounded-md text-white gap-3
-                                     dark:border-white border border-black hidden"
-
-                            aria-labelledby="accordion-margin">
-                            <div class="text-white w-full pb-2">
-                                <table>
-                                    <tbody>
-                                        <tr>
-                                            <td>Margin</td><td>:</td>
-                                            <td>
-                                                <input type="number" id="margin-field" class="text-black text-sm rounded focus:ring-blue-500 focus:border-blue-500 w-14 p-1"/>
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table> 
-                                
-                                <div id="accordion-advance-margin" data-accordion="collapse" class="mt-2 px-1"> 
-                                    <h2 id="accordion-advance-margin-heading-1">
-                                        <button type="button" 
-                                            class="flex items-center justify-between text-sm rtl:text-right !text-white rounded-md 
-                                            !bg-gray-300/25 dark:!bg-gray-300/25 p-2 hover:ring-2 hover:!ring-gray-200 gap-3" data-accordion-target="#accordion-advance-margin-1" aria-expanded="true" aria-controls="accordion-advance-margin-body-1">
-                                            <span >Advance</span>
-                                            <svg data-accordion-icon class="w-3 h-3 rotate-180 shrink-0" aria-hidden="true"  fill="none" viewBox="0 0 10 6">
-                                                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5 5 1 1 5"/>
-                                            </svg>
-                                        </button>
-                                    </h2>
-                                    <div id="accordion-advance-margin-1" class="hidden" aria-labelledby="accordion-advance-margin-heading-1">
-                                        <div class="flex justify-start items-center gap-2 flex-wrap py-1 px-2 bg-gray-300/25 rounded">
-                                            <table class="w-full flex">
-                                                <tbody class="w-full">
-                                                    <tr class="w-full flex gap-3 items-center">
-                                                        <td class="flex justify-center items-center flex-col">
-                                                            <label for="margin-field-left">Left</label>
-                                                            <input type="number" id="margin-field-left" class="text-black text-sm rounded-md focus:ring-blue-500 focus:border-blue-500 block w-full p-1"/>
-                                                        </td>
-                                                        <td class="flex justify-center items-center flex-col">
-                                                            <label for="margin-field-right">Right</label>
-                                                            <input type="number" id="margin-field-right" class="text-black text-sm rounded-md focus:ring-blue-500 focus:border-blue-500 block w-full p-1"/>
-                                                        </td>
-                                                    </tr>
-
-                                                    <tr class="w-full flex gap-3 items-center">
-                                                        <td class="flex justify-center items-center flex-col">
-                                                            <label for="margin-field-top">Top</label>
-                                                            <input type="number" id="margin-field-top" class="text-black text-sm rounded-md focus:ring-blue-500 focus:border-blue-500 block w-full p-1"/>
-                                                        </td>
-                                                        <td class="flex justify-center items-center flex-col">
-                                                            <label for="margin-field-bottom">Bottom</label>
-                                                            <input type="number" id="margin-field-bottom" class="text-black text-sm rounded-md focus:ring-blue-500 focus:border-blue-500 block w-full p-1"/>
-                                                        </td>
-                                                    </tr>
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                         <div id="accordion-margin-wrapper" class="hidden">
+                             <h2 id="accordion-margin" class="mt-3">
+                                 <button type="button" 
+                                         class="w-full flex items-center justify-between font-bold 
+                                             text-sm rtl:text-right !text-white gap-3 !bg-indigo-900 p-3 rounded-md 
+                                             hover:!bg-indigo-700 dark:border-white border border-black" 
+                                         
+                                         data-accordion-target="#accordion-margin-body" aria-expanded="false" aria-controls="accordion-margin-body">
+                                     <span>Margin</span>
+                                     <svg data-accordion-icon class="w-3 h-3 rotate-180 shrink-0" aria-hidden="true"  fill="none" viewBox="0 0 10 6">
+                                         <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5 5 1 1 5"/>
+                                     </svg>
+                                 </button>
+                             </h2>
+                             <div id="accordion-margin-body" 
+                                 class="p-2 bg-indigo-900 rounded-md text-white gap-3
+                                          dark:border-white border border-black hidden"
+     
+                                 aria-labelledby="accordion-margin">
+                                 <div class="text-white w-full pb-2">
+                                     <table>
+                                         <tbody>
+                                             <tr>
+                                                 <td>Margin</td><td>:</td>
+                                                 <td>
+                                                     <input type="number" id="margin-field" class="text-black text-sm rounded focus:ring-blue-500 focus:border-blue-500 w-14 p-1"/>
+                                                 </td>
+                                             </tr>
+                                         </tbody>
+                                     </table> 
+                                     
+                                     <div id="accordion-advance-margin" data-accordion="collapse" class="mt-2 px-1"> 
+                                         <h2 id="accordion-advance-margin-heading-1">
+                                             <button type="button" 
+                                                 class="flex items-center justify-between text-sm rtl:text-right !text-white rounded-md 
+                                                 !bg-gray-300/25 dark:!bg-gray-300/25 p-2 hover:ring-2 hover:!ring-gray-200 gap-3" data-accordion-target="#accordion-advance-margin-1" aria-expanded="true" aria-controls="accordion-advance-margin-body">
+                                                 <span >Advance</span>
+                                                 <svg data-accordion-icon class="w-3 h-3 rotate-180 shrink-0" aria-hidden="true"  fill="none" viewBox="0 0 10 6">
+                                                     <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5 5 1 1 5"/>
+                                                 </svg>
+                                             </button>
+                                         </h2>
+                                         <div id="accordion-advance-margin-1" class="hidden" aria-labelledby="accordion-advance-margin-heading-1">
+                                             <div class="flex justify-start items-center gap-2 flex-wrap py-1 px-2 bg-gray-300/25 rounded">
+                                                 <table class="w-full flex">
+                                                     <tbody class="w-full">
+                                                         <tr class="w-full flex gap-3 items-center">
+                                                             <td class="flex justify-center items-center flex-col">
+                                                                 <label for="margin-field-left">Left</label>
+                                                                 <input type="number" id="margin-field-left" class="text-black text-sm rounded-md focus:ring-blue-500 focus:border-blue-500 block w-full p-1"/>
+                                                             </td>
+                                                             <td class="flex justify-center items-center flex-col">
+                                                                 <label for="margin-field-right">Right</label>
+                                                                 <input type="number" id="margin-field-right" class="text-black text-sm rounded-md focus:ring-blue-500 focus:border-blue-500 block w-full p-1"/>
+                                                             </td>
+                                                         </tr>
+     
+                                                         <tr class="w-full flex gap-3 items-center">
+                                                             <td class="flex justify-center items-center flex-col">
+                                                                 <label for="margin-field-top">Top</label>
+                                                                 <input type="number" id="margin-field-top" class="text-black text-sm rounded-md focus:ring-blue-500 focus:border-blue-500 block w-full p-1"/>
+                                                             </td>
+                                                             <td class="flex justify-center items-center flex-col">
+                                                                 <label for="margin-field-bottom">Bottom</label>
+                                                                 <input type="number" id="margin-field-bottom" class="text-black text-sm rounded-md focus:ring-blue-500 focus:border-blue-500 block w-full p-1"/>
+                                                             </td>
+                                                         </tr>
+                                                     </tbody>
+                                                 </table>
+                                             </div>
+                                         </div>
+                                     </div>
+                                 </div>
+                             </div>
+                         </div>
                     </div>
 
                     <div id="wrapper-btn-save" class="hidden w-full bg-white p-4 mt-4 rounded-md">

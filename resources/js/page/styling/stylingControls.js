@@ -102,14 +102,15 @@ export function updateStylingControls(data, field) {
       const idParts = data.id.split('-')
       setPaddingMarginBoxBorder(computedField)
       let stylingWebpage=['heading-text-wrapper','accordion-head-indicator-wrapper','accordion-modal-type','accordion-accordion-type',
-        'accordion-carousel-styling','accordion-font-styling','font-order-list','font-unorder-list','reset-box',
-        'accordion-box-field','box-width-field','box-height-field','flex-position','accordion-border-field',
-        'accordion-background','bg-image-styling',
-        'accordion-padding','accordion-margin','wrapper-btn-save',
+        'accordion-carousel-styling','accordion-font-styling-wrapper','font-order-list','font-unorder-list','reset-box',
+        'accordion-box-field-wrapper','box-width-field','box-height-field','flex-position','accordion-border-field-wrapper',
+        'accordion-background-wrapper','bg-image-styling',
+        'accordion-padding-wrapper','accordion-margin-wrapper','wrapper-btn-save',
       ]
       
       stylingWebpage.forEach(id => {
         const el = document.getElementById(id);
+        const bodyEl = document.getElementById(`${id}-body`)
         if (el && id !== 'wrapper-btn-save') {
             // 1. Tambahkan class hidden ke kontainer
             el.classList.add('hidden')
@@ -120,14 +121,14 @@ export function updateStylingControls(data, field) {
         let stylingWebpage
         if(idParts.includes('prolog')){
           stylingWebpage=[ 
-            'accordion-box-field','flex-position',
-            'accordion-background','bg-image-styling','accordion-padding','wrapper-btn-save'
+            'accordion-box-field-wrapper','flex-position',
+            'accordion-background-wrapper','bg-image-styling','accordion-padding-wrapper','wrapper-btn-save'
           ]
         }else{
           stylingWebpage=[ 
-            'accordion-box-field','box-height-field','flex-position','accordion-border-field',
-            'accordion-background','bg-image-styling','accordion-padding',
-            'accordion-margin','wrapper-btn-save','reset-box'
+            'accordion-box-field-wrapper','box-height-field','flex-position','accordion-border-field-wrapper',
+            'accordion-background-wrapper','bg-image-styling','accordion-padding-wrapper',
+            'accordion-margin-wrapper','wrapper-btn-save','reset-box'
           ]
         }
 
@@ -166,9 +167,9 @@ export function updateStylingControls(data, field) {
 
       }else if(idParts[0] == 'field'){
         //console.log('field')
-        let stylingWebpage=['accordion-font-styling','font-order-list','font-unorder-list',
-          'accordion-box-field','box-width-field','box-height-field','accordion-border-field','reset-box',
-          'accordion-background','bg-image-styling','accordion-padding','accordion-margin','wrapper-btn-save'
+        let stylingWebpage=['accordion-font-styling-wrapper','font-order-list','font-unorder-list',
+          'accordion-box-field-wrapper','box-width-field','box-height-field','accordion-border-field-wrapper','reset-box',
+          'accordion-background-wrapper','bg-image-styling','accordion-padding-wrapper','accordion-margin-wrapper','wrapper-btn-save'
         ]
 
         stylingWebpage.forEach(id=>{
@@ -202,7 +203,7 @@ export function updateStylingControls(data, field) {
         document.getElementById('border-color-field').value = borderColor
 
         if(idParts[1] == 'head' && idParts[2] == 'modal'){
-          document.getElementById('accordion-box-field').classList.add('hidden')
+          document.getElementById('accordion-box-field-wrapper').classList.add('hidden')
         }
 
         // //console.log('field')
@@ -210,9 +211,9 @@ export function updateStylingControls(data, field) {
       }else if(data.id == 'heading-text'){
         //console.log('hedaing text')
         let stylingWebpage=['heading-text-wrapper','accordion-head-indicator-wrapper',
-          'accordion-font-styling','accordion-box-field','box-width-field',
-          'accordion-border-field','accordion-background','bg-image-styling','accordion-padding',
-          'accordion-margin','wrapper-btn-save'
+          'accordion-font-styling-wrapper','accordion-box-field-wrapper','box-width-field',
+          'accordion-border-field-wrapper','accordion-background-wrapper','bg-image-styling','accordion-padding-wrapper',
+          'accordion-margin-wrapper','wrapper-btn-save'
         ]
 
         if(globals.editorFieldSelect.id.startsWith('btn-modal')){
@@ -253,7 +254,7 @@ export function updateStylingControls(data, field) {
         document.getElementById('border-color-field').value = borderColor
 
         if(idParts[1] == 'head' && idParts[2] == 'modal'){
-          document.getElementById('accordion-box-field').classList.add('hidden')
+          document.getElementById('accordion-box-field-wrapper').classList.add('hidden')
         }
 
         // //console.log('field')
@@ -274,9 +275,9 @@ export function updateStylingControls(data, field) {
         headingText.style.backgroundColor = bgColor;
         // //console.log('btn head modal accordion')
         let stylingWebpage=['heading-text-wrapper','accordion-head-indicator-wrapper',
-          'accordion-font-styling','accordion-box-field','box-width-field',
-          'accordion-border-field','accordion-background','bg-image-styling','accordion-padding',
-          'accordion-margin','wrapper-btn-save'
+          'accordion-font-styling-wrapper','accordion-box-field-wrapper','box-width-field',
+          'accordion-border-field-wrapper','accordion-background-wrapper','bg-image-styling','accordion-padding-wrapper',
+          'accordion-margin-wrapper','wrapper-btn-save'
         ]
 
         if(data.id.startsWith('btn-modal')){
@@ -334,7 +335,7 @@ export function updateStylingControls(data, field) {
 
       }else if(data.id.startsWith('parent-modal')){
         let stylingWebpage=['accordion-head-indicator-wrapper','accordion-modal-type',
-          'accordion-background','bg-image-styling','wrapper-btn-save'
+          'accordion-background-wrapper','bg-image-styling','wrapper-btn-save'
         ]
         
         stylingWebpage.forEach(id=>{
@@ -372,9 +373,9 @@ export function updateStylingControls(data, field) {
         document.getElementById("heading-text").innerHTML = data.parentElement.parentElement.querySelector('[id^="btn-heading-accordion"]').children[0].innerHTML
 
         let stylingWebpage=['heading-text-wrapper','accordion-head-indicator-wrapper',
-          'accordion-font-styling','accordion-box-field','box-width-field','accordion-accordion-type',
-          'accordion-border-field','accordion-background','bg-image-styling','accordion-padding',
-          'accordion-margin','wrapper-btn-save'
+          'accordion-font-styling-wrapper','accordion-box-field-wrapper','box-width-field','accordion-accordion-type',
+          'accordion-border-field-wrapper','accordion-background-wrapper','bg-image-styling','accordion-padding-wrapper',
+          'accordion-margin-wrapper','wrapper-btn-save'
         ]
         
         stylingWebpage.forEach(id=>{
@@ -415,11 +416,11 @@ export function updateStylingControls(data, field) {
         document.getElementById('btn-hide-next').textContent = carouselSelect.dataset.nextBtnHide === "true" ? "Unhide" : "Hide"
         
         let stylingWebpage=[
-          'accordion-box-field','box-width-field','box-height-field','accordion-background','accordion-margin','wrapper-btn-save','accordion-border-field'
+          'accordion-box-field-wrapper','box-width-field','box-height-field','accordion-background-wrapper','accordion-margin-wrapper','wrapper-btn-save','accordion-border-field-wrapper'
         ]
 
         // 2. Cari button di dalamnya dan paksa aria-expanded jadi false
-        const fontStyling = document.getElementById('accordion-font-styling')
+        const fontStyling = document.getElementById('accordion-font-styling-wrapper')
         const btn = fontStyling.querySelector('button[data-accordion-target]');
         if (btn) {
             btn.setAttribute('aria-expanded', 'false');
@@ -526,7 +527,7 @@ export function updateStylingControls(data, field) {
         
         setListenerSetImage()
         dropdownInitialized('multi', data.id)
-        document.getElementById('accordion-font-styling-body-1').classList.add('hidden')
+        document.getElementById('accordion-font-styling-wrapper-body-1').classList.add('hidden')
       }
 
       let rgba = null
@@ -648,9 +649,9 @@ export function updateStylingControls(data, field) {
       }
     }else{
       let stylingWebpage=['heading-text-wrapper','accordion-head-indicator-wrapper','accordion-modal-type','accordion-accordion-type',
-        'accordion-carousel-styling','accordion-font-styling','font-order-list','font-unorder-list',
-        'accordion-box-field','box-width-field','box-height-field','flex-position','accordion-border-field',
-        'accordion-background','bg-image-styling','accordion-padding','accordion-margin'
+        'accordion-carousel-styling','accordion-font-styling-wrapper','font-order-list','font-unorder-list',
+        'accordion-box-field-wrapper','box-width-field','box-height-field','flex-position','accordion-border-field-wrapper',
+        'accordion-background-wrapper','bg-image-styling','accordion-padding-wrapper','accordion-margin-wrapper'
       ]
       
       stylingWebpage.forEach(id=>{
