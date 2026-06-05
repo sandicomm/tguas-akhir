@@ -1091,6 +1091,7 @@ function borderField(){
   document.getElementById('border-field').addEventListener('change', function(){
     editorFieldSelect = globals.editorFieldSelect
     accordionPartSelect = globals.accordionPartSelect
+
     if(editorFieldSelect.id === 'heading-text'){
       accordionPartSelect.style.borderWidth=`${this.value}px`
       updateStyle(accordionPartSelect)
@@ -1951,7 +1952,7 @@ function setImageGallery(indicator){
   }
   fileDb.forEach(file =>{
     if(file.filetype === 'img' || file.type === 'img'){
-      let url=`${globals.url}/media/${file.id}`
+      let url=`${globals.url}public/media/${file.id}`
       if(file.url){
         url=file.url
       }

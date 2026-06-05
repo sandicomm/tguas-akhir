@@ -135,7 +135,7 @@
                                 <div class="flex gap-3 w-full">
                                     <div class="flex flex-col justify-end w-full">
                                         <h3 class="text-black text-sm text-center">Text Position</h3>
-                                        <button id="btn-text-position" data-position="image" type="button" class="text-sm w-full p-1 text-white bg-sky-500 rounded shadow-md shadow-orange-400">On Image</button>
+                                        <button id="btn-text-position" data-position="image" type="button" class="text-sm w-full p-1 text-white bg-sky-500 rounded shadow-md shadow-orange-400">On Item</button>
                                     </div>
                                     <div class="w-full">
                                         <h3 class="text-black text-sm text-center">Next Button</h3>
@@ -493,7 +493,7 @@
                          </div>
 
                         <!-- ============================== PADDING ================================== -->
-                         <div id="accordion-padding-wrapper">
+                         <div id="accordion-padding-wrapper" class="hidden">
                              <h2 id="accordion-padding" class="mt-3">
                                  <button type="button" 
                                          class="w-full flex items-center justify-between font-bold text-sm rtl:text-right gap-3 !text-white

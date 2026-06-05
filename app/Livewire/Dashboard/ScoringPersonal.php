@@ -185,8 +185,29 @@ class ScoringPersonal extends Component
     {
         $data = Responses::query()
             ->with(['responden', 'answer.question.section.form'])
+            // 1. Filter Responden (Hanya jalan jika searchByEmail TIDAK kosong)
+            ->when(!empty($this->searchByEmail), function ($q) {
+                $q->whereHas('responden', fn ($subQ) => 
+                    $subQ->where('email', 'like', '%' . $this->searchByEmail . '%')
+                );
+            })
             ->whereHas('answer.question.section.form', function($q) {
-                $q->where('placement', 'like', '%'.$this->selectedFormPlacement);
+                // Menggunakan grouped where () untuk membungkus logika OR agar tidak merusak query utama
+                $q->where(function($query) {
+                    
+                    // Jalankan pencarian placement jika selectedFormPlacement tidak kosong
+                    $query->when(!empty($this->selectedFormPlacement), function($subQuery) {
+                        $subQuery->where('placement', 'like', '%'.$this->selectedFormPlacement.'%'); // Jangan lupa tambahkan '%' di akhir jika ingin pencarian 'like' yang fleksibel
+                    });
+
+                    // Jalankan pencarian ID jika selectedForm tidak kosong
+                    $query->when(!empty($this->selectedForm), function($subQuery) {
+                        // Gunakan orWhere jika pencarian pertama juga jalan, 
+                        // atau otomatis disesuaikan oleh Laravel jika ini satu-satunya yang jalan
+                        $subQuery->where('id', $this->selectedForm);
+                    });
+
+                });
             }) 
             ->get();
 
@@ -219,7 +240,22 @@ class ScoringPersonal extends Component
             ->with(['responden', 'answer.question.section.form'])
             ->whereHas('responden', fn ($q) => $q->where('email', $userKey))
             ->whereHas('answer.question.section.form', function($q) {
-                $q->where('placement', 'like', '%'.$this->selectedFormPlacement);
+                // Menggunakan grouped where () untuk membungkus logika OR agar tidak merusak query utama
+                $q->where(function($query) {
+                    
+                    // Jalankan pencarian placement jika selectedFormPlacement tidak kosong
+                    $query->when(!empty($this->selectedFormPlacement), function($subQuery) {
+                        $subQuery->where('placement', 'like', '%'.$this->selectedFormPlacement.'%'); // Jangan lupa tambahkan '%' di akhir jika ingin pencarian 'like' yang fleksibel
+                    });
+
+                    // Jalankan pencarian ID jika selectedForm tidak kosong
+                    $query->when(!empty($this->selectedForm), function($subQuery) {
+                        // Gunakan orWhere jika pencarian pertama juga jalan, 
+                        // atau otomatis disesuaikan oleh Laravel jika ini satu-satunya yang jalan
+                        $subQuery->where('id', $this->selectedForm);
+                    });
+
+                });
             }) 
             ->get();
        ;

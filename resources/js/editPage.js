@@ -603,7 +603,7 @@ function removeGlobalItem(id) {
 const sendBatch = async (batch, indexLabel, extraFields = false) => {
   const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
   const form = new FormData();
-
+  console.log(batch)
   batch.forEach((item, idx) => {
       form.append(`items[${idx}][id]`, item.id);
       form.append(`items[${idx}][type]`, item.type);
@@ -623,7 +623,7 @@ const sendBatch = async (batch, indexLabel, extraFields = false) => {
   });
 
   form.append("paramStatus", param);
-
+  console.log(form, extraFields)
   let raw = "";
   try {
       const response = await fetch('/admin/webpage/store', {
@@ -648,6 +648,9 @@ const sendBatch = async (batch, indexLabel, extraFields = false) => {
       
       let data = JSON.parse(raw);
       if (data.success) {
+        console.log('data no puri:',data.datano)
+        console.log('data puri:', data.datapuri)
+        console.log('data content:',data.datacontent)
           batch.forEach(item => {
               if (item.action === 'delete') {
                   // JIKA DELETE: Hapus total objek ini dari array global
@@ -727,6 +730,7 @@ async function submitData(isAutosave=false){
           showToast('Form disimpan otomatis'); // Contoh notifikasi kecil
     } else {
         // Jika manual, jalankan event redirect kamu yang lama
+        
         document.getElementById('loading-overlay')?.classList.add('hidden')
         window.dispatchEvent(new CustomEvent('alert-success', { 
             detail: { pesan: 'Data form telah berhasil diperbarui.'} 
@@ -755,12 +759,17 @@ setInterval(async () => {
             console.error("Autosave gagal, status dirty tetap true", error);
         }
     }
-},5 * 60 *1000); // Cek setiap 5 menit
+},1 * 60 *1000); // Cek setiap 5 menit
 
 const btnSave = getEl('btn-save')
 btnSave.addEventListener('click', async function() {
   document.getElementById('loading-overlay')?.classList.remove('hidden');
   submitData();
+});
+
+const btnCek = getEl('btn-cek')
+btnCek.addEventListener('click', async function() {
+  console.log(globals)
 });
 
 bs.fontStylingField()

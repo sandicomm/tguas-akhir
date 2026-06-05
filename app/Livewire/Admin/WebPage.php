@@ -23,6 +23,9 @@ class WebPage extends Component
     public $webpage;
     public $file;
     public $param;
+    public $dataStyle;
+    public $dataStylePuri;
+    public $dataContent;
 
     public function mount($params)
     {
@@ -35,270 +38,6 @@ class WebPage extends Component
             $this->webpage = Page::where('id', 'like', '%prolog-emodul%')->get();
         } else {
             $this->webpage = Page::where('id', 'not like', '%prolog%')->get();
-        }
-    }
-
-    public function store2(Request $request)
-    {
-        try {
-            $ids = [];
-            $urlMap = session('urlMap', []);
-            $paramStatus = $request->input('paramStatus');
-
-            $requestFile = $request->items;
-            foreach ($requestFile as $index => $item) {
-                // Validasi masing-masing item
-                \Validator::make($item, [
-                    'id' => 'required|string',
-                    'type'=>'required|string',
-                    'filetype'=>'nullable|string'
-                ])->validate();
-
-                if($request->hasFile("items.$index.file") && $item['type'] === 'file' && $item['action'] === 'add'){
-                    $original = pathinfo($request->file("items.$index.file")->getClientOriginalName(), PATHINFO_FILENAME);
-                    $ext = $request->file("items.$index.file")->getClientOriginalExtension();
-
-                    // singkatkan nama jika terlalu panjang
-                    $original = Str::limit($original, 50, '');
-                    $original = preg_replace('/[^A-Za-z0-9_\-]/', '_', $original);
-
-                    $filename = Str::uuid() . '_' . $original . '.' . $ext;
-                    $request->file("items.$index.file")->move(public_path('media'), $filename);
-
-                    $newUrl = asset('media/' . $filename);
-                    $urlMap[$item['id']] = $newUrl;
-
-                    \App\Models\File::updateOrCreate(
-                        ['id' => $filename],
-                        ['type'=>$item['filetype']]
-                    );
-
-                    // HAPUS dari array
-                    unset($requestFile[$index]);
-                }
-            }
-            
-            foreach ($requestFile as $index => $item) {
-                // Validasi masing-masing item
-                \Validator::make($item, [
-                    'id' => 'required|string',
-                    'type' => 'required|string',
-                    'content' => 'nullable|string',
-                    'action' => 'nullable|string',
-                    'style' => 'nullable|string',
-                    'element_order' => 'nullable|string',
-                    'element_count' => 'nullable|string',
-                ])->validate();
-                
-                if((str_contains($item['action'] , 'update') || str_contains($item['action'], 'add')) && $item['type'] !== 'file'){
-                    if ($item['type'] === 'video') {
-                        $content = $item['content'] ?? '';
-                        // Jika ada URL lama yg sudah diubah di map, ganti dgn URL baru
-                        foreach ($urlMap as $idMedia => $urlMedia) {
-                            if (str_contains($content, $idMedia)) {
-                                $content = str_replace($idMedia, $urlMedia, $content);
-                                break;
-                            }
-                        }
-                        $item['content'] = $content;
-
-                    }else if($item['type'] === 'img-carousel'){
-                        $content = $item['content'] ?? '';
-                        
-                        if(str_contains($content, 'almond1DefaultImageCarousel.jpg')){
-                            $content =  asset('media/' . 'almond1DefaultImageCarousel.jpg');
-                        }else{
-                    
-                            foreach ($urlMap as $idMedia => $urlMedia) {
-                                if (str_contains($content, $idMedia)) {
-                                    $namaFile='uhuy'.$content; 
-                                    $content = str_replace($idMedia, $urlMedia, $content);
-                                    break;
-                                }
-                            }
-                        }
-                        $item['content'] = $content;
-                    }else{
-                        $style = $item['style'] ?? '';
-                        if(!str_contains($style, 'storage/media')){
-                            if(str_contains($style, 'almond1DefaultImageCarousel.jpg')){
-                                $style = preg_replace(
-                                    "/url\((.*?)\)/",
-                                    "url('" . asset('media/' . 'almond1DefaultImageCarousel.jpg') . "')",
-                                    $style
-                                );
-                            }else{
-                                foreach ($urlMap as $idMedia => $urlMedia) {
-                                    if (str_contains($style, $idMedia)) {
-                                        $style = str_replace($idMedia, $urlMedia, $style);
-                                        break;
-                                    }
-                                }
-                            }
-                            $item['style']=$style;
-                        }
-                    }
-
-                    // Simpan ke database
-
-                    \App\Models\Webpage::updateOrCreate(
-                        ['id' => $item['id']], // kondisi pencarian (biasanya 'id' atau unique key lain)
-                        [
-                            'type' => $item['type'],
-                            'content' => $item['content'] ?? null,
-                            'style' => $item['style'] ?? null,
-                            'element_order' => (string) ($item['element_order'] ?? null),
-                            'element_count' => (string) ($item['element_count'] ?? null)
-                        ]
-                    );
-                }else if((str_contains($item['action'] , 'delete')) && $item['type'] !== 'file'){
-                    $ids[] = $item['id'];  
-                    
-                    $page='';
-                    if($paramStatus ==='prolog-web'){
-                        $page =  \App\Models\Webpage::where('id', $item['id'])->where('id', 'like', '%prolog-web%')->first();
-                    }else if($paramStatus === 'prolog-emodul'){
-                        $page =  \App\Models\Webpage::where('id',$item['id'])->where('id', 'like', '%prolog-emodul%')->first();
-                    }else{
-                        $page =  \App\Models\Webpage::where('id', $item['id'])->where('id', 'not like', '%prolog-web%')->where('id', 'not like', '%prolog-emodul%')->first();
-                    }
-
-                    if ($page && $page->type === 'video' && $page->content) {
-                        preg_match("/media\/([^')]+)/", $page->content, $matches);
-                        if (isset($matches[1])) {
-                            $filename = $matches[1];
-
-                            if (!str_contains($filename, 'almond1DefaultImageCarousel')) {
-
-                                // Cek di database (1 query saja)
-                                    $isUsedDB = \App\Models\Webpage::where('id', '!=', $item['id'])
-                                        ->where(function ($q) use ($filename) {
-                                            $q->where('content', 'like', "%$filename%")
-                                            ->orWhere('style', 'like', "%$filename%");
-                                        })
-                                        ->exists();
-
-                                    // Cek di request items (1 kali loop saja)
-                                    $isUsedRequest = collect($request->items)->contains(function ($item) use ($filename) {
-
-                                        // abaikan item yang mau dihapus
-                                        if ($item['action'] === 'delete') return false;
-
-                                        return 
-                                            (!empty($item['content']) && str_contains($item['content'], $filename)) ||
-                                            (!empty($item['style']) && str_contains($item['style'], $filename));
-                                    });
-
-                                $filePath = public_path('media/' . $filename);
-                                if (!$isUsedDB && !$isUsedRequest && file_exists($filePath)) {                                    
-                                    File::delete(public_path('media/' . $filename));
-                                    \App\Models\File::where('id', $filename)->delete();
-                                }
-                            }
-                        }
-                    } else if($page){
-                        // logic lama untuk style (image/background)
-                        if($page->type === "img-carousel"){
-                            preg_match("/media\/([^')]+)/", $page->content, $matches);
-    
-                            if (isset($matches[1])) {
-                                $filename = $matches[1];
-    
-                                // Pastikan bukan default image
-                                if (!str_contains($filename, 'almond1DefaultImageCarousel')) {
-    
-                                    // Cek di database (1 query saja)
-                                    $isUsedDB = \App\Models\Webpage::where('id', '!=', $item['id'])
-                                        ->where(function ($q) use ($filename) {
-                                            $q->where('content', 'like', "%$filename%")
-                                            ->orWhere('style', 'like', "%$filename%");
-                                        })
-                                        ->exists();
-
-                                    // Cek di request items (1 kali loop saja)
-                                    $isUsedRequest = collect($request->items)->contains(function ($item) use ($filename) {
-
-                                        // abaikan item yang mau dihapus
-                                        if ($item['action'] === 'delete') return false;
-
-                                        return 
-                                            (!empty($item['content']) && str_contains($item['content'], $filename)) ||
-                                            (!empty($item['style']) && str_contains($item['style'], $filename));
-                                    });
-    
-                                    $filePath = public_path('media/' . $filename);
-                                    if (!$isUsedDB && !$isUsedRequest && file_exists($filePath)) {                                        
-                                        File::delete(public_path('media/' . $filename));
-                                        \App\Models\File::where('id', $filename)->delete();
-                                    }
-                                }
-                            }
-
-                        }else{
-                            preg_match("/media\/([^')]+)/", $page->style, $matches);
-    
-                            if (isset($matches[1])) {
-                                $filename = $matches[1];
-    
-                                // Pastikan bukan default image
-                                if (!str_contains($filename, 'almond1DefaultImageCarousel')) {
-    
-                                    // Cek apakah ada elemen lain yang masih pakai file ini
-                                    $isUsedDB = \DB::table('webpage')
-                                        ->where('id', '!=', $page->id) // selain elemen yang lagi dihapus
-                                        ->where('style', 'like', '%' . $filename . '%')
-                                        ->exists();
-    
-                                    $isUsedRequest = collect($request->items)->contains(function ($item) use ($filename) {
-                                        return !empty($item['style']) && str_contains($item['style'], $filename) && $item['action'] !=='delete';
-                                    });
-    
-                                   $filePath = public_path('media/' . $filename);
-                                    if (!$isUsedDB && !$isUsedRequest && file_exists($filePath)) {
-                                        File::delete(public_path('media/' . $filename));
-                                        \App\Models\File::where('id', $filename)->delete();
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    
-                    if($paramStatus ==='prolog-web'){
-                        \App\Models\Webpage::where('id', $item['id'])
-                            ->where('id', 'like', '%prolog-web%')
-                            ->where('id', '<>', 'webpage-section-prolog-web-1')
-                            ->where('id', '<>', 'webpage')->delete();
-                        
-                    }else if($paramStatus === 'prolog-emodul'){
-                        \App\Models\Webpage::where('id', $item['id'])
-                            ->where('id', 'like', '%prolog-emodul%')
-                            ->where('id', '<>', 'webpage-section-prolog-emodul-1')
-                            ->where('id', '<>', 'webpage')->delete();
-
-                    }else{
-                        \App\Models\Webpage::where('id', $item['id'])
-                            ->where('id', 'not like', '%prolog-web%')
-                            ->where('id', 'not like', '%prolog-emodul%')
-                            ->where('id', '<>', 'webpage-section-footer')
-                            ->where('id', '<>', 'webpage-section-prolog-web-1')
-                            ->where('id', '<>', 'webpage-section-prolog-emodul-1')
-                            ->where('id', '<>', 'webpage')->delete();
-
-                    } 
-                }
-            }
-            session(['urlMap' => $urlMap]);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Data berhasil diperbarui',
-            ]);
-
-        } catch (\Throwable $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Data Gagal Diperbarui'
-            ], 500);
         }
     }
 
@@ -330,7 +69,7 @@ class WebPage extends Component
                     $filename = Str::uuid() . '_' . $original . '.' . $file->getClientOriginalExtension();
                     $file->move(public_path('media'), $filename);
 
-                    $urlMap[$item['id']] = asset('media/' . $filename);
+                    $urlMap[$item['id']] = asset('public/media/' . $filename);
 
                     \App\Models\File::updateOrCreate(
                         ['id' => $filename],
@@ -356,6 +95,11 @@ class WebPage extends Component
                     // Cek purifier
                     $content = Purifier::clean($originalContent);
                     $style = Purifier::clean($originalStyle);
+                    if($item['type'] == 'item-carousel'){
+                        $this->dataStyle = $originalStyle;
+                        $this->dataStylePuri = $style;
+                        $this->dataContent = $content;
+                    }
 
                     // B. Mapping URL Baru (Replace ID Media dengan URL Asli)
                     foreach ($urlMap as $idMedia => $urlMedia) {
@@ -404,7 +148,7 @@ class WebPage extends Component
             DB::commit();
             session(['urlMap' => $urlMap]);
 
-            return response()->json(['success' => true, 'message' => 'Data berhasil diperbarui']);
+            return response()->json(['success' => true, 'message' => 'Data berhasil diperbarui', 'datano'=>$this->dataStyle, 'datapuri'=>$this->dataStylePuri,'datacontent'=>$this->dataContent]);
 
         } catch (\Throwable $e) {
             DB::rollBack();
@@ -428,7 +172,7 @@ class WebPage extends Component
             
             // Pastikan filename tidak kosong dan cek keberadaannya
             if ($filename && !str_contains($megaContent, $filename)) {
-                $filePath = public_path('media/' . $filename);
+                $filePath = public_path('public/media/' . $filename);
                 
                 // Hapus fisik
                 if (File::exists($filePath)) {

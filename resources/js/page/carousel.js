@@ -970,7 +970,7 @@ function addTextCarousel(event){
         `
       }else{
         let img = item.querySelector('img').getAttribute('src') 
-        item.setAttribute('style', `background-image:linear-gradient(rgba(0,0,0,0.0)), url("${img}");background-size:cover;background-position:center;`)
+        item.setAttribute('style', `background-image:linear-gradient(rgba(0,0,0,0.0)), url('${img}');background-size:cover;background-position:center;`)
         item.innerHTML =item.querySelector('[id^="field-"]').outerHTML
       }
       webpageDb.push({
@@ -989,15 +989,20 @@ function addTextCarousel(event){
       let img
       if(carouselSelect.dataset.textPosition !== 'on-image'){
         img = item.querySelector('img').getAttribute('src') 
-        item.setAttribute('style', `background-image:linear-gradient(rgba(0,0,0,0.0)), url("${img}");background-size:cover;background-position:center;`)
+        item.setAttribute('style', `background-image:linear-gradient(rgba(0,0,0,0.0)), url('${img}');background-size:cover;background-position:center;`)
       }
+
       item.innerHTML =''
       if(carouselSelect.dataset.textPosition === 'below-image'){
         webpageDb.forEach(field =>{
           if(field.id === item.id){
             // field.file = webpageDb.find(img => img.id === `img-text-on-image-${field.id}`).file,
             field.action = updateActionProperty(field.action, 'update')
-            field.style= `background-image:linear-gradient(rgba(0,0,0,0.0)), url("${img}");background-size:cover;background-position:center;`
+
+            if(field.temp){
+              img = field.temp
+            }
+            field.style= `background-image:linear-gradient(rgba(0,0,0,0.0)), url('${img}');background-size:cover;background-position:center;`
           }
         })
       }
@@ -1041,6 +1046,7 @@ function addTextCarousel(event){
       let content=parseStyleObj(field.content)
       content.dataTextPosition = carouselSelect.dataset.textPosition
       content.dataText=carouselSelect.dataset.text
+
       field.content = stringifyStyleObj(content)
       field.action=updateActionProperty(field.action, 'update')
     }
@@ -1139,14 +1145,11 @@ function btnTextPosition(event){
 
       newImg.style.width='100%'
 
-
       item.classList.remove('p-6')
 
       item.querySelector('[id^="field-"]').removeAttribute('data-listener-added')
       item.querySelector('[id^="field-"]').removeAttribute('data-listener-mouse-added')
 
-
-      
       imgWrapper.appendChild(newImg)
       let newText = `
         ${imgWrapper.outerHTML}
@@ -1154,8 +1157,6 @@ function btnTextPosition(event){
           ${item.querySelector('[id^="field-"]').outerHTML}
         </div>
       `
- 
-
 
       item.innerHTML =''
       item.insertAdjacentHTML('beforeend', newText)
@@ -1164,6 +1165,15 @@ function btnTextPosition(event){
 
       webpageDb.forEach(field=>{
         if(field.id === item.id){
+          if(field.style.includes('temp')){
+            const regex = /url\(['"]?([^'"]+)['"]?\)/;
+            const match = field.style.match(regex);
+            
+            if (match) {
+              field.temp = match[1]; // match[1] mengambil data di dalam kurung (capture group)
+            }
+          }
+
           field.style = `background-color: ${rgba};`
           field.action=updateActionProperty(field.action, 'update')
         }
@@ -1179,7 +1189,7 @@ function btnTextPosition(event){
     }else{
       let imgField = item.querySelector('img')
       img = imgField.getAttribute('src') 
-      item.setAttribute('style', `background-image:linear-gradient(rgba(0,0,0,0.0)), url("${img}");background-size:cover;background-position:center;`)
+      item.setAttribute('style', `background-image:linear-gradient(rgba(0,0,0,0.0)), url('${img}');background-size:cover;background-position:center;`)
       item.innerHTML =item.querySelector('[id^="field-"]').outerHTML
 
       item.classList.add('p-6')
@@ -1203,7 +1213,11 @@ function btnTextPosition(event){
 
       webpageDb.forEach(field => {
         if(field.id === item.id){
-          field.style = `background-image:linear-gradient(rgba(0,0,0,0.0)), url("${img}");background-size:cover;background-position:center;`
+          if(field.temp){
+            img = field.temp
+          }
+
+          field.style = `background-image:linear-gradient(rgba(0,0,0,0.0)), url('${img}');background-size:cover;background-position:center;`
           field.action=updateActionProperty(field.action, 'update')
         }
       })
@@ -1226,7 +1240,7 @@ function btnTextPosition(event){
   globals.isFormDirty = true
 
   const btnPosition = event.target
-  btnPosition.textContent = btnPosition.textContent == "On Image" ? "Below Image" : "On Image"
+  btnPosition.textContent = btnPosition.textContent == "On Item" ? "Below The Item" : "On Item"
 }
 
 export {

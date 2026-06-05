@@ -412,11 +412,11 @@ export function updateStylingControls(data, field) {
       }else if(data.id.startsWith('carousel')){
       
         document.getElementById('add-text-carousel').textContent = carouselSelect.dataset.text === "true" ? "Remove Text" : "Add Text"
-        document.getElementById('btn-text-position').textContent = carouselSelect.dataset.textPosition === "on-image" ? "On Image" : "Below Image"
+        document.getElementById('btn-text-position').textContent = carouselSelect.dataset.textPosition === "on-image" ? "On Item" : "Below The Item"
         document.getElementById('btn-hide-next').textContent = carouselSelect.dataset.nextBtnHide === "true" ? "Unhide" : "Hide"
         
         let stylingWebpage=[
-          'accordion-box-field-wrapper','box-width-field','box-height-field','accordion-background-wrapper','accordion-margin-wrapper','wrapper-btn-save','accordion-border-field-wrapper'
+          'accordion-box-field-wrapper','box-width-field','box-height-field','accordion-background-wrapper','accordion-margin-wrapper','wrapper-btn-save'
         ]
 
         // 2. Cari button di dalamnya dan paksa aria-expanded jadi false
@@ -527,7 +527,7 @@ export function updateStylingControls(data, field) {
         
         setListenerSetImage()
         dropdownInitialized('multi', data.id)
-        document.getElementById('accordion-font-styling-wrapper-body-1').classList.add('hidden')
+        document.getElementById('accordion-font-styling-wrapper').classList.add('hidden')
       }
 
       let rgba = null

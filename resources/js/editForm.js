@@ -1106,7 +1106,7 @@ function formOrderUpQuestion (event) {
         const target = questionEl.previousElementSibling;
         if (!target) return;
 
-        console.log("up question in" )
+        console.log("up question in", previousQuestion, question)
 
         // Tukar dataset dan posisi DOM
         target.insertAdjacentElement('beforebegin', questionEl);
@@ -1136,7 +1136,7 @@ function formOrderUpQuestion (event) {
                 }
             });
 
-            console.log("up question out",section)
+            console.log("up question out", section)
 
             section.changeOrder = true;
             section.changeContent='update'
@@ -1174,7 +1174,7 @@ function formOrderDownQuestion (event) {
     
     const nextQuestion = section.questions.find(q => q.order == question.order + 1);
 
-
+    console.log('before down question:', question, nextQuestion)
     if (nextQuestion) {
         // [question.order, nextQuestion.order] = [nextQuestion.order, question.order];
 
@@ -1193,6 +1193,8 @@ function formOrderDownQuestion (event) {
         if(!questionEl) return
         const target = questionEl.nextElementSibling;
         if (!target) return;
+
+        console.log('down question in:', question, nextQuestion)
 
         // Tukar dataset dan posisi DOM
         target.insertAdjacentElement('afterend', questionEl);
@@ -1230,6 +1232,8 @@ function formOrderDownQuestion (event) {
             const containerQuestion = getEl(`container-question-${questionId}`)
             if(!containerQuestion) return
             containerQuestion.remove()
+
+            console.log('down question out:', question, nextSection, section)
 
             const target = getEl(`container-section-${nextSection.id}`)
             if(!target) return
