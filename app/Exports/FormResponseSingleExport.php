@@ -25,7 +25,6 @@ class FormResponseSingleExport implements FromView, ShouldAutoSize, WithTitle
 
     public function view(): View
     {
-
         return view('exports.responses-single', [
             'formName' => $this->formName,
             'questions' => $this->questions,

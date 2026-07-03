@@ -59,7 +59,7 @@ function accordionStyling(){
                 try {
                     initFlowbite();
                 } catch (error) {
-                    console.error('❌ Gagal menginisialisasi Accordion:', error);
+                    console.error('❌ Gagal menginisialisasi Accordion:');
                 }
             }, 50);  
           }
@@ -141,7 +141,7 @@ function accordionStyling(){
           // dan setelah ada sedikit penundaan
           initFlowbite();
       } catch (error) {
-          console.error('❌ Gagal menginisialisasi Modal:', error);
+          console.error('❌ Gagal menginisialisasi Modal:');
       }
     }, 100);  
   })
@@ -678,7 +678,7 @@ const addAccordion=(event)=>{
           initFlowbite();
 
       } catch (error) {
-          console.error('❌ Gagal menginisialisasi Accordion:', error);
+          console.error('❌ Gagal menginisialisasi Accordion:');
       }
   }, 100);  
   dropdownInitialized('multi', idPrefix)
@@ -698,8 +698,6 @@ const copyAccordion=(idAccordion, mode="all")=>{
         window.dispatchEvent(new CustomEvent('notif-pesan', { 
           detail: { pesan: 'accordionEl add carousel tidak ditemukan', status:false} 
         }));
-
-        console.error('container parent accordion tidak ditemukan');
         return false;
       }
 
@@ -899,12 +897,12 @@ const copyAccordion=(idAccordion, mode="all")=>{
               activeClasses: 'bg-gray-100 text-gray-900',
               inactiveClasses: 'text-gray-500'
             });
-            // //console.log('✅ Accordion berhasil diinisialisasi:', newAccId);
+            //console.log('✅ Accordion berhasil diinisialisasi:', newAccId);
           }
           initFlowbite();
         } catch (error) {
           
-          console.error('❌ Gagal inisialisasi accordion', error);
+          console.error('❌ Gagal inisialisasi accordion');
         }
       }, 100);
       let webpageDbParentSection = globals.webpageDbParentSection
@@ -915,7 +913,7 @@ const copyAccordion=(idAccordion, mode="all")=>{
 
       return true;
   } catch (e) {
-    console.error('duplicateModal error', e);
+    console.error('duplicateModal error');
     return false;
   }
 }
@@ -935,7 +933,6 @@ const copyHeadAccordion=(idHeadAcc, mode="all")=>{
           detail: { pesan: 'container copyhead accordion tidak ditemukan', status:false} 
         }));
       
-        console.error('container parent accordion tidak ditemukan');
         return false;
       }
 
@@ -1118,7 +1115,7 @@ const copyHeadAccordion=(idHeadAcc, mode="all")=>{
               activeClasses: 'bg-gray-100 text-gray-900',
               inactiveClasses: 'text-gray-500'
             });
-            // //console.log('✅ Accordion berhasil diinisialisasi:', newHeadAccId.split('-').slice(0,-1).join('-'));
+            //console.log('✅ Accordion berhasil diinisialisasi:', newHeadAccId.split('-').slice(0,-1).join('-'));
           }
           initFlowbite();
         } catch (error) {
@@ -1128,7 +1125,7 @@ const copyHeadAccordion=(idHeadAcc, mode="all")=>{
 
       return true;
   } catch (e) {
-    console.error('duplicateModal error', e);
+    console.error('duplicateModal error');
     return false;
   }
 }

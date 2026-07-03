@@ -30,11 +30,11 @@
         @if ($form)
             <script>
                 formJs = @js($form);
-                let fileJs=@js($file);
                 let formPlacementJs=@js($formPlacement);
                 let sectionMaxID = @js($sectionMaxID);
                 let questionMaxID = @js($questionMaxID);
                 let answerMaxID = @js($answerMaxID);
+                let statAction = @js($formDetailStatus);
             </script>
 
             <!-- ------------- MODAL NOTIF UMUM ----------------- -->
@@ -99,30 +99,6 @@
                 </div>
             </div>
 
-            <!-- Recent Image Modal -->
-            <div id="recent-image-modal" aria-modal="true" data-modal-backdrop="" tabindex="-1" role="dialog" class="fixed z-[80] top-0 right-0 w-full sm:pl-[18rem] h-full hidden justify-center items-center">
-                <div class="relative dark:bg-white bg-slate-800 rounded-md w-full max-w-2xl max-h-[90vh] overflow-hidden text-white dark:text-black">
-                <!-- Modal content -->
-                <div class="shadow-sm">
-                    <!-- Modal header -->
-                    <div class="flex items-center justify-between p-4 md:p-5 border-b-2 rounded-t border-gray-200">
-                        <h3 class="text-lg font-medium text-heading">
-                            Recent Image
-                        </h3>
-                        <button type="button" class="text-body bg-transparent hover:bg-neutral-tertiary hover:text-heading rounded-base text-sm w-9 h-9 ms-auto inline-flex justify-center items-center" data-modal-hide="recent-image-modal">
-                            <svg class="w-5 h-5" aria-hidden="true" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18 17.94 6M18 18 6.06 6"/></svg>
-                            <span class="sr-only">Close modal</span>
-                        </button>
-                    </div>
-
-                    <!-- Modal body -->
-                    <div id="body-media-recent" class="flex flex-row flex-wrap gap-2 justify-center items-start p-3 overflow-y-auto max-h-[70vh]">
-                        -- Belum Ada Gambar Yang Diupload --
-                    </div>
-                </div>
-                </div>
-            </div>
-            
             <div id="form" class="lg:mt-10">
                 <div class="w-full fixed top-0 right-0 z-30 hidden" id="btn-update-form">
                     <div class="bg-white dark:bg-slate-700 p-4 text-center sm:ml-64 flex justify-center items-center gap-4 shadow-lg border-t">
@@ -141,7 +117,7 @@
                 </div>
                 @if(session('success'))
                     <div class="fixed top-5 left-1/2 transform -translate-x-1/2 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded shadow-lg z-50">
-                        <div class="flex items-center justify-between gap-4">
+                        <div class="flex items-center justify-between gap-4">       
                             <span>{{ session('success') }}</span>
                             <button type="button" class="text-green-700 hover:text-green-900" onclick="this.parentElement.parentElement.remove()">
                                 &times;
@@ -153,7 +129,7 @@
                 @if (session('error'))
                     <div class="fixed top-5 left-1/2 transform -translate-x-1/2 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded shadow-lg z-50">
                         <div class="flex items-center justify-between gap-4">
-                            <span>error pesan</span>
+                            <span>{{ session('error') }}</span>
                             <button type="button" class="text-red-700 hover:text-red-900" onclick="this.parentElement.parentElement.remove()">
                                 &times;
                             </button>

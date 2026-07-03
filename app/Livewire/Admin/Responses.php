@@ -44,7 +44,7 @@ class Responses extends Component
         $questions = DB::table('questions')
             ->join('sections', 'sections.id', '=', 'questions.section_id')
             ->where('sections.form_id', $formId)
-            ->select('questions.id', 'questions.question', 'questions.image as questionImage')
+            ->select('questions.id', 'questions.question')
             ->orderBy('sections.order')
             ->orderBy('questions.order')
             ->get();
@@ -54,7 +54,8 @@ class Responses extends Component
         // 2. Ambil Header Users (Gunakan get() tapi dengan Logic Sorting yang sama)
         $allUsers = Response::query()
             ->with('responden') 
-            ->select('form_id', 'responden_id', 'uuid', 'attempt', 'created_at')
+            ->select('form_id', 'responden_id', 'uuid', 'attempt')
+            ->selectRaw('MAX(created_at) as created_at')
             ->where('form_id', $formId)
             
             ->addSelect(['first_sub' => Response::selectRaw('MIN(created_at)')
@@ -69,7 +70,7 @@ class Responses extends Component
                 })
             ])
             
-            ->groupBy('form_id', 'responden_id', 'uuid', 'attempt', 'created_at')
+            ->groupBy('form_id', 'responden_id', 'uuid', 'attempt')
             ->orderBy('first_sub', 'asc') 
             ->orderBy('responden_id', 'asc')
             ->orderBy('uuid', 'asc')
@@ -97,7 +98,7 @@ class Responses extends Component
                     }
                 })
                 ->leftJoin('answers', 'answers.id', '=', 'responses.answer_id')
-                ->select(['responses.*', 'answers.answer', 'answers.question_id', 'answers.image as answerImage'])
+                ->select(['responses.*', 'answers.answer', 'answers.question_id'])
                 ->get();
         }
 
@@ -152,33 +153,48 @@ class Responses extends Component
     public function destroySingleResponse()
     {
         // Validasi input konfirmasi
-        if (strtolower($this->deleteConfirmText) === 'hapus') {
+        if (strtolower($this->deleteConfirmText) === 'hapus response') {
             try {
                 DB::transaction(function () {
-                    // A. Hapus Response sesuai kriteria (Form + Responden + Attempt)
-                    Response::where('form_id', $this->targetFormId)
-                        ->where('responden_id', $this->targetRespondenId)
-                        ->where('attempt', $this->targetAttempt)
-                        ->delete();
+                    // 1. Cek apakah yang dikirim adalah UUID (mengandung huruf/bukan murni angka)
+                    // Kita bisa gunakan is_numeric() untuk membedakan ID integer dan UUID string
+                    $isUuid = !is_numeric($this->targetRespondenId) && !is_null($this->targetRespondenId);
 
-                    // B. Cek Orphan Responden (Hapus responden jika sudah tidak punya response sama sekali)
-                    // Kita gunakan logika yang sudah kita bahas sebelumnya
-                    $respondenHasOtherData = Response::where('responden_id', $this->targetRespondenId)->exists();
-                    
-                    if (!$respondenHasOtherData) {
-                        Responden::find($this->targetRespondenId)->delete();
+                    if ($isUuid) {
+                        // --- ALUR A: HAPUS BERDASARKAN UUID ---
+                        Response::where('form_id', $this->targetFormId)
+                            ->where('uuid', $this->targetRespondenId) // Gunakan kolom uuid
+                            ->where('attempt', $this->targetAttempt)
+                            ->delete();
+
+                        // Tidak perlu cek Orphan Responden karena dia tidak punya baris di tabel respondens
+                    } else {
+                        // --- ALUR B: HAPUS BERDASARKAN RESPONDEN_ID (INTEGERS) ---
+                        // A. Hapus Response sesuai kriteria (Form + Responden + Attempt)
+                        Response::where('form_id', $this->targetFormId)
+                            ->where('responden_id', $this->targetRespondenId)
+                            ->where('attempt', $this->targetAttempt)
+                            ->delete();
+
+                        // B. Cek Orphan Responden (Hapus responden jika sudah tidak punya response sama sekali)
+                        // Kita gunakan logika yang sudah kita bahas sebelumnya
+                        $respondenHasOtherData = Response::where('responden_id', $this->targetRespondenId)->exists();
+                        
+                        if (!$respondenHasOtherData) {
+                            Responden::find($this->targetRespondenId)->delete();
+                        }
                     }
                 });
 
                 session()->flash('success', 'Response berhasil dihapus.');
                 $this->isDeleteModalOpen = false;
-                return $this->redirect(route('admin.responses'), navigate: true);
+                return $this->redirect(route('admin.responses'));
 
             } catch (\Exception $e) {
                 session()->flash('error', 'Gagal menghapus: ' . $e->getMessage());
             }
         } else {
-            $this->addError('deleteConfirmText', 'Konfirmasi salah. Ketik "hapus".');
+            $this->addError('deleteConfirmText', 'Konfirmasi salah. Ketik "hapus response".');
         }
     }
 
@@ -217,7 +233,7 @@ class Responses extends Component
         $questions = DB::table('questions')
             ->join('sections', 'sections.id', '=', 'questions.section_id')
             ->where('sections.form_id', $this->selectedForm)
-            ->select('questions.id', 'questions.question', 'questions.image as questionImage')
+            ->select('questions.id', 'questions.question')
             ->orderBy('sections.order')
             ->orderBy('questions.order')
             ->get();
@@ -225,7 +241,8 @@ class Responses extends Component
         $paginatedUsers = Response::query()
             ->with('responden') 
             // TAMBAHKAN form_id di select
-            ->select('form_id', 'responden_id', 'uuid', 'attempt', 'created_at')
+            ->select('form_id', 'responden_id', 'uuid', 'attempt')
+            ->selectRaw('MAX(created_at) as created_at')
             ->where('form_id', $this->selectedForm)
 
             ->when($this->searchByEmail, function ($query) {
@@ -247,7 +264,7 @@ class Responses extends Component
             ])
             
             // TAMBAHKAN form_id di groupBy
-            ->groupBy('form_id', 'responden_id', 'uuid', 'attempt', 'created_at')
+            ->groupBy('form_id', 'responden_id', 'uuid', 'attempt')
 
             // Urutan tetap sama agar Red (18 Jan) naik ke kiri
             ->orderBy('first_sub', 'asc') 
@@ -279,7 +296,7 @@ class Responses extends Component
                     }
                 })
                 ->leftJoin('answers', 'answers.id', '=', 'responses.answer_id')
-                ->select(['responses.*', 'answers.answer', 'answers.question_id', 'answers.image as answerImage'])
+                ->select(['responses.*', 'answers.answer', 'answers.question_id'])
                 ->get();
         }
 

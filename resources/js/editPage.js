@@ -603,7 +603,7 @@ function removeGlobalItem(id) {
 const sendBatch = async (batch, indexLabel, extraFields = false) => {
   const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
   const form = new FormData();
-  console.log(batch)
+  //console.log(batch)
   batch.forEach((item, idx) => {
       form.append(`items[${idx}][id]`, item.id);
       form.append(`items[${idx}][type]`, item.type);
@@ -623,7 +623,7 @@ const sendBatch = async (batch, indexLabel, extraFields = false) => {
   });
 
   form.append("paramStatus", param);
-  console.log(form, extraFields)
+  //console.log(form, extraFields)
   let raw = "";
   try {
       const response = await fetch('/admin/webpage/store', {
@@ -648,9 +648,9 @@ const sendBatch = async (batch, indexLabel, extraFields = false) => {
       
       let data = JSON.parse(raw);
       if (data.success) {
-        console.log('data no puri:',data.datano)
-        console.log('data puri:', data.datapuri)
-        console.log('data content:',data.datacontent)
+        //console.log('data no puri:',data.datano)
+        //console.log('data puri:', data.datapuri)
+        //console.log('data content:',data.datacontent)
           batch.forEach(item => {
               if (item.action === 'delete') {
                   // JIKA DELETE: Hapus total objek ini dari array global
@@ -727,21 +727,20 @@ async function submitData(isAutosave=false){
     
     if (isAutosave) {
           //console.log('Autosave sukses');
-          showToast('Form disimpan otomatis'); // Contoh notifikasi kecil
+          showToast('Perubahan disimpan otomatis');
     } else {
         // Jika manual, jalankan event redirect kamu yang lama
         
         document.getElementById('loading-overlay')?.classList.add('hidden')
         window.dispatchEvent(new CustomEvent('alert-success', { 
-            detail: { pesan: 'Data form telah berhasil diperbarui.'} 
+            detail: { pesan: 'Tampilan telah berhasil diperbarui.'} 
         }));
     }
   }catch(err) {
-    console.error("Gagal menyimpan:", err);
 
     document.getElementById('loading-overlay')?.classList.add('hidden');
     window.dispatchEvent(new CustomEvent('notif-pesan', { 
-        detail: { pesan: 'Gagal sinkronisasi data.', status: false } 
+        detail: { pesan: 'Gagal simpan data.', status: false } 
     }));
 
   }
@@ -756,10 +755,10 @@ setInterval(async () => {
               document.getElementById('loading-overlay')?.classList.add('hidden');
             },2000)
         } catch (error) {
-            console.error("Autosave gagal, status dirty tetap true", error);
+            console.error("Autosave gagal");
         }
     }
-},1 * 60 *1000); // Cek setiap 5 menit
+},5 * 60 *1000); // Cek setiap 5 menit
 
 const btnSave = getEl('btn-save')
 btnSave.addEventListener('click', async function() {
@@ -768,9 +767,9 @@ btnSave.addEventListener('click', async function() {
 });
 
 const btnCek = getEl('btn-cek')
-btnCek.addEventListener('click', async function() {
-  console.log(globals)
-});
+// btnCek.addEventListener('click', async function() {
+//   
+// });
 
 bs.fontStylingField()
 bs.widthHeightField()

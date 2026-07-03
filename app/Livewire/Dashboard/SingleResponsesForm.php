@@ -130,7 +130,7 @@ class SingleResponsesForm extends Component
         $questions = DB::table('questions')
             ->join('sections', 'sections.id', '=', 'questions.section_id')
             ->where('sections.form_id', $this->selectedForm)
-            ->select('questions.id', 'questions.question', 'questions.image as questionImage')
+            ->select('questions.id', 'questions.question')
             ->get();
 
         // 2. Paginate User Attempts
@@ -162,7 +162,7 @@ class SingleResponsesForm extends Component
                     }
                 })
                 ->leftJoin('answers', 'answers.id', '=', 'responses.answer_id')
-                ->select(['responses.*', 'answers.answer','answers.question_id', 'answers.image as answerImage'])
+                ->select(['responses.*', 'answers.answer','answers.question_id'])
                 ->get()
                 // Trick: Ubah model menjadi object biasa agar getMorphClass tidak dipanggil
                 ->map(fn($item) => (object) collect($item)->toArray());

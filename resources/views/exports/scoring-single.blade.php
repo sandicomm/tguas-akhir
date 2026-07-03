@@ -52,7 +52,10 @@
 
             $questions = $formResponses->pluck('answer.question')
                 ->unique('id')
-                ->sortBy('order')
+                ->sortBy([
+                    ['section.order', 'asc'],
+                    ['order', 'asc']          
+                ])
                 ->values();
 
             $matrix = [];
@@ -69,11 +72,11 @@
         <table border="1" style="border-collapse: collapse; width: 100%;">
             <thead>
                 <tr>
-                    <th style="background-color: #f3f4f6; font-weight: bold; width: 300px; padding: 8px;">
+                    <th style="background-color: #f3f4f6; font-weight: bold; width: 300px; padding: 8px; border: 1px solid #000000;">
                         PERTANYAAN
                     </th>
                     @foreach ($columns as $col)
-                        <th style="background-color: #e5e7eb; font-weight: bold; width: 100px; text-align: center;">
+                        <th style="background-color: #e5e7eb; font-weight: bold; width: 100px; text-align: center; border: 1px solid #000000;">
                             ATTEMPT {{ $col['attempt'] }}
                         </th>
                     @endforeach
@@ -82,7 +85,7 @@
             <tbody>
                 @foreach ($questions as $question)
                     <tr>
-                        <td style="background-color: #f9fafb; padding: 8px; font-size: 12px;">
+                        <td style="text-align: left; background-color: #f9fafb; padding: 8px; font-size: 12px; border: 1px solid #000000;">
                             {{ $question->question }}
                         </td>
 
@@ -90,7 +93,7 @@
                             @php 
                                 $dataCell = $matrix[$question->id][$col['col_key']] ?? null; 
                             @endphp
-                            <td style="text-align: center; vertical-align: middle; padding: 5px;">
+                            <td style="text-align: center; vertical-align: middle; padding: 5px; border: 1px solid #000000;">
                                 @if($dataCell)
                                     <span style="font-size: 11px;">{{ $dataCell['answer'] }}</span><br>
                                     <strong style="font-size: 10px;">({{ $dataCell['value'] }})</strong>
@@ -104,7 +107,7 @@
             </tbody>
             <tfoot>
                 <tr>
-                    <td style="background-color: #f3f4f6; font-weight: bold; text-align: right; padding: 8px;">TOTAL SCORING</td>
+                    <td style="background-color: #f3f4f6; font-weight: bold; text-align: right; padding: 8px; border: 1px solid #000000;">TOTAL SCORING</td>
                     @foreach ($columns as $col)
                         @php
                             $currentColTotal = 0;
@@ -112,7 +115,7 @@
                                 $currentColTotal += $matrix[$q->id][$col['col_key']]['value'] ?? 0;
                             }
                         @endphp
-                        <td style="background-color: #fef08a; font-weight: bold; text-align: center;">
+                        <td style="background-color: #fef08a; font-weight: bold; text-align: center; border: 1px solid #000000;">
                             {{ $currentColTotal }}
                         </td>
                     @endforeach

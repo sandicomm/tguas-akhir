@@ -11,7 +11,6 @@ class Questions extends Model
     protected $fillable = [
         'question',
         'rules',
-        'image',
         'section_id',
         'order'
         ];

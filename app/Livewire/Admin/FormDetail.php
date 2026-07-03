@@ -12,16 +12,15 @@ use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
-use Livewire\WithFileUploads;
-use Illuminate\Support\Facades\File;
-
-use App\Models\File as FileMedia;
-
 use Illuminate\Support\Str;
 
 class FormDetail extends Component
 {
-    use WithFileUploads;
+    public $formDetailStatus;
+    public $formDetailStatusRaw;
+    public $msg;
+    public $redirect;
+    public $status;
 
     public $form;
     public $formPlacement;
@@ -30,19 +29,21 @@ class FormDetail extends Component
     public $questionMaxID;
     public $answerMaxID;
     public $test;
-    public $file;
     public $answerDeleteOut = [];
     
     public function mount($id)
     {
         try{
-            $this->file = FileMedia::where('id', 'like', 'form-%')->get();
             $this->formPlacement = Form::pluck('placement')->unique();
 
             $this->sectionMaxID = Sections::max('id');
             $this->questionMaxID = Questions::max('id');
             $this->answerMaxID = Answers::max('id');
-            if (ctype_digit($id)) {
+
+            $this->formDetailStatus = ctype_digit($id);
+            $this->formDetailStatusRaw = $id;
+
+            if ($this->formDetailStatus) {
                 $this->form = Form::with([
                     'sections.questions' => function ($q) {
                         $q->with(['answers']);
@@ -92,272 +93,228 @@ class FormDetail extends Component
                 ];
             }
         }catch(\Throwable $e){
-            session()->flash('error', 'Mount Gagal');
+            return redirect()->route('admin.forms');
+            /*
             return response()->json([
                 'success' => false,
-                'message' => 'mount gagal',
+                'message' => 'Form tidak ditemukan',
+                'redirect' => route('admin.forms'),
                 //'file' => $e->getFile(),
                 //'line' => $e->getLine(),
                 //'trace' => $e->getTraceAsString(),
-            ], 500);
+            ], 500);*/
         }
     }
 
     public function updateForm(Request $request)
     {
         try { 
-            
             DB::transaction(function () use ($request) {
                 //------------- PROSES FILE ----------------
-                $urlMap = session('urlMap', []);
-                $isMultipart = str_contains(
-                    $request->header('Content-Type'),
-                    'multipart/form-data'
-                );
+                $validator = Validator::make($request->all(), [
+                    'form_name' => 'required|string|max:100',
+                    'placement' => 'required|string',
+                    'collect_email' => 'required|in:0,1',
+                    'one_attempt' => 'required|in:0,1',
+                    'must_fill' => 'required',
 
-                if($isMultipart){
-                    if (!$request->filled('form_id')) {
-                        throw new \Exception('form_id wajib untuk upload file');
+                    'sections' => 'required|array',
+
+                    'sections.*.section_id' => 'required',
+                    'sections.*.order' => 'required|integer',
+                    'sections.*.section' => 'required|string|max:255',
+                    'sections.*.description' => 'nullable|string|max:255',
+                    'sections.*.changeContent' => 'required|in:add,update,delete',
+
+                    'sections.*.questions' => 'nullable|array',
+
+                    'sections.*.questions.*.question_id' => 'required',
+                    'sections.*.questions.*.question' => 'required|string',
+                    'sections.*.questions.*.rule' => 'required|integer',
+                    'sections.*.questions.*.changeContent' => 'required|in:add,update,delete',
+
+                    'sections.*.questions.*.answer' => 'nullable|array',
+                ]);
+                //---------------- PROSES FORM ------------------
+                if ($request->batch_number == 0 && in_array($request->changeContent, ['add','update'])) {
+
+                    $oneAttempt = $request->collect_email == 0 ? 0 : $request->one_attempt;
+
+                    if ($request->placement !== 'disable') {
+                        Form::where('placement', $request->placement)
+                            ->where('id', '!=', $request->form_id) // Pastikan id lain
+                            ->update(['placement' => 'disable']);
                     }
-                    $requestFile = $request->input('items', []);
                     
-                    foreach ($requestFile as $index => $item) {
-                        // Validasi masing-masing item
-                        \Validator::make($item, [
-                            'id' => 'required|string',
-                            'type'=>'required|string',
-                            'filetype'=>'nullable|string'
-                        ])->validate();
-    
-                        if($request->hasFile("items.$index.file") && $item['type'] === 'file' && $item['action'] === 'add'){
-                            $original = pathinfo($request->file("items.$index.file")->getClientOriginalName(), PATHINFO_FILENAME);
-                            $ext = $request->file("items.$index.file")->getClientOriginalExtension();
-    
-                            // singkatkan nama jika terlalu panjang
-                            $original = Str::limit($original, 50, '');
-                            $original = preg_replace('/[^A-Za-z0-9_\-]/', '_', $original);
-    
-                            $filename = "form-".Str::uuid() . '_' . $original . '.' . $ext;
-                            $request->file("items.$index.file")->move(public_path('media'), $filename);
-    
-                            $newUrl = asset('media/' . $filename);
-                            $urlMap[$item['id']] = $newUrl;
-    
-                            \App\Models\File::updateOrCreate(
-                                ['id' => $filename],
-                                ['type'=>$item['filetype']]
-                            );
-                            $this->answerDeleteOut = 'urlMap' . $item['id'] . $newUrl;
-    
-                            // HAPUS dari array
-                            unset($requestFile[$index]);
+                    if($request->stat){
+                       // === MODE EDIT ===
+                       
+                        $form = Form::find($request->form_id);
+                        $this->formDetailStatusRaw = 'form edit update';
+            
+                        if (!$form) {
+                            $this->formDetailStatusRaw = 'form tidak ditemukan update';
+
+                            $this->msg = 'Form Tidak Ditemukan, Mungkin Sudah Dihapus.';
+                            $this->status = false;
+                            $this->redirect = route('admin.forms');
+
+                            return response()->json([
+                                'success' => $this->status,
+                                'message' => $this->msg,
+                                //'file'=>$this->formDetailStatusRaw,
+                                'redirect' => $this->redirect,
+                            ]); 
                         }
+
+                        // Jika data ada, lakukan update biasa
+                        $form->update([
+                            'form_name'     => $request->form_name,
+                            'placement'     => $request->placement,
+                            'collect_email' => (int)$request->collect_email,
+                            'one_attempt'   => (int)$oneAttempt,
+                            'must_fill'     => (int)$request->must_fill,
+                        ]);
+                        $this->form = $form;
+
+                    }else{
+                        // === MODE ADD ===
+                        // Pada fungsi create(), cukup masukkan satu array data. 
+                        // ID tidak perlu dimasukkan karena biasanya auto-increment.
+                        $this->formDetailStatusRaw = 'form add';
+                        $this->form = Form::create([
+                            'form_name'     => $request->form_name,
+                            'placement'     => $request->placement,
+                            'collect_email' => (int)$request->collect_email,
+                            'one_attempt'   => (int)$oneAttempt,
+                            'must_fill'     => (int)$request->must_fill,
+                        ]);
                     }
-                }else{
-          
-                    $validator = Validator::make($request->all(), [
-                        'form_name' => 'required|string|max:100',
-                        'placement' => 'required|string',
-                        'collect_email' => 'required|in:0,1',
-                        'one_attempt' => 'required|in:0,1',
-                        'must_fill' => 'required',
+                } else {    
+                    $this->form = Form::findOrFail($request->form_id);
+                }
 
-                        'sections' => 'required|array',
+                /* ================================
+                * 2. BATCH CONTAINER
+                * ================================ */
+                $sectionUpdate = [];
+                $sectionDelete = [];
 
-                        'sections.*.section_id' => 'required',
-                        'sections.*.order' => 'required|integer',
-                        'sections.*.section' => 'required|string|max:255',
-                        'sections.*.description' => 'nullable|string|max:255',
-                        'sections.*.changeContent' => 'required|in:add,update,delete',
+                $questionUpdate = [];
+                $questionDelete = [];
 
-                        'sections.*.questions' => 'nullable|array',
+                $answerUpdate = [];
+                $answerDelete = [];
 
-                        'sections.*.questions.*.question_id' => 'required',
-                        'sections.*.questions.*.question' => 'required|string',
-                        'sections.*.questions.*.rule' => 'required|integer',
-                        'sections.*.questions.*.changeContent' => 'required|in:add,update,delete',
+                /* ================================
+                * 3. LOOP MULTI SECTION
+                * ================================ */
+                foreach ($request->sections as $sec) {
 
-                        'sections.*.questions.*.answer' => 'nullable|array',
-                    ]);
-                    //---------------- PROSES FORM ------------------
-                    if ($request->batch_number == 0 && in_array($request->changeContent, ['add','update'])) {
-    
-                        $oneAttempt = $request->collect_email == 0 ? 0 : $request->one_attempt;
+                    $sid = $sec['id'];
 
-                        if ($request->placement !== 'disable') {
-                            Form::where('placement', $request->placement)
-                                ->where('id', '!=', $request->form_id) // Pastikan id lain
-                                ->update(['placement' => 'disable']);
-                        }
-
-                        $this->form = Form::updateOrCreate(
-                            ['id' => $request->form_id],
-                            [
-                                'form_name' => $request->form_name,
-                                'placement' => $request->placement,
-                                'collect_email' => (int)$request->collect_email,
-                                'one_attempt' => (int)$oneAttempt,
-                                'must_fill' => (int)$request->must_fill,
-                            ]
-                        );
-                    } else {    
-                        $this->form = Form::findOrFail($request->form_id);
+                    if ($sec['changeContent'] === 'delete') {
+                        $sectionDelete[] = $sid;
+                        continue;
                     }
-    
-                    /* ================================
-                    * 2. BATCH CONTAINER
-                    * ================================ */
-                    $sectionUpdate = [];
-                    $sectionDelete = [];
-    
-                    $questionUpdate = [];
-                    $questionDelete = [];
-    
-                    $answerUpdate = [];
-                    $answerDelete = [];
-    
-                    /* ================================
-                    * 3. LOOP MULTI SECTION
-                    * ================================ */
-                    foreach ($request->sections as $sec) {
-    
-                        $sid = $sec['id'];
-    
-                        if ($sec['changeContent'] === 'delete') {
-                            $sectionDelete[] = $sid;
-                            continue;
-                        }
-    
-                        $sectionUpdate[] = [
-                            'id' => $sid,
-                            'form_id' => $this->form->id,
-                            'order' => $sec['order'],
-                            'name' => $sec['name'],
-                            'description' => $sec['description'],
-                            'updated_at' => now(),
-                            'created_at' => now(),
-                        ];
-    
-                        /* ================================
-                        * 4. QUESTIONS
-                        * ================================ */
-                        if (!empty($sec['questions'])) {
-                            foreach ($sec['questions'] as $q) {
-                                $image = $q['image'] ?? '';
-                               
-                                if ($q['changeContent'] === 'delete') {
-                                    $questionDelete[] = $q['id'];
-                                    continue;
-                                }
 
-                                // Jika ada URL lama yg sudah diubah di map, ganti dgn URL baru
-                                foreach ($urlMap as $idMedia => $urlMedia) {
-                                    if (str_contains($image, $idMedia)) {
-                                        $image = str_replace($idMedia, $urlMedia, $image);
-                                        break;
-                                    }
-                                }
-                                $q['image'] = $image;
-    
-                                $questionUpdate[] = [
-                                    'id' => $q['id'],
-                                    'section_id' => $sid,
-                                    'image' => $q['image'],
-                                    'question' => $q['question'],
-                                    'order' => $q['order'],
-                                    'updated_at' => now(),
-                                    'created_at' => now(),
-                                ];
+                    $sectionUpdate[] = [
+                        'id' => $sid,
+                        'form_id' => $this->form->id,
+                        'order' => $sec['order'],
+                        'name' => $sec['name'],
+                        'description' => $sec['description'],
+                        'updated_at' => now(),
+                        'created_at' => now(),
+                    ];
+
+                    /* ================================
+                    * 4. QUESTIONS
+                    * ================================ */
+                    if (!empty($sec['questions'])) {
+                        foreach ($sec['questions'] as $q) {
                             
-                                /* ================================
-                                * 5. ANSWERS
-                                * ================================ */
-                                if (!empty($q['answer'])) {
-                                    foreach ($q['answer'] as $ans) {
-                                        if ($ans['changeContent'] == 'delete') {
-                                            $answerDelete[] = $ans['id'];
-                                                                                      
-                                            continue;
-                                        }
-                                        $image = $ans['image'] ?? '';
-                                        // Jika ada URL lama yg sudah diubah di map, ganti dgn URL baru
-                                        foreach ($urlMap as $idMedia => $urlMedia) {
-                                            if (str_contains($image, $idMedia)) {
-                                                $image = str_replace($idMedia, $urlMedia, $image);
-                                                break;
-                                            }
-                                        }
-                                        
-                                        $ans['image'] = $image;
-    
-                                        $answerUpdate[] = [
-                                            'id' => $ans['id'],
-                                            'question_id' => $q['id'],
-                                            'answer' => $ans['answer'],
-                                            'image' => $ans['image'],
-                                            'value' => $ans['value'],
-                                            'updated_at' => now(),
-                                            'created_at' => now(),
-                                        ];
+                            if ($q['changeContent'] === 'delete') {
+                                $questionDelete[] = $q['id'];
+                                continue;
+                            }
+
+                            $questionUpdate[] = [
+                                'id' => $q['id'],
+                                'section_id' => $sid,
+                                'question' => $q['question'],
+                                'order' => $q['order'],
+                                'updated_at' => now(),
+                                'created_at' => now(),
+                            ];
+                        
+                            /* ================================
+                            * 5. ANSWERS
+                            * ================================ */
+                            if (!empty($q['answer'])) {
+                                foreach ($q['answer'] as $ans) {
+                                    if ($ans['changeContent'] == 'delete') {
+                                        $answerDelete[] = $ans['id'];
+                                                                                    
+                                        continue;
                                     }
-                                    $this->answerDeleteOut=$answerUpdate;
-                            
+
+                                    $answerUpdate[] = [
+                                        'id' => $ans['id'],
+                                        'question_id' => $q['id'],
+                                        'answer' => $ans['answer'],
+                                        'value' => $ans['value'],
+                                        'updated_at' => now(),
+                                        'created_at' => now(),
+                                    ];
                                 }
+                                $this->answerDeleteOut=$answerUpdate;
+                        
                             }
                         }
-                        
                     }
-    
-                    /* ================================
-                    * 6. EXECUTE BATCH
-                    * ================================ */
                     
-                    if ($sectionUpdate)
-                        Sections::upsert($sectionUpdate, ['id'], ['name','description','order','updated_at']);
-    
-                    if ($sectionDelete)
-                        Sections::whereIn('id', $sectionDelete)->delete();
-    
-                    if ($questionUpdate)
-                        Questions::upsert($questionUpdate, ['id'], ['question','order','image','section_id','updated_at']);
-    
-                    if ($questionDelete)
-                        Questions::whereIn('id', $questionDelete)->delete();
-    
-                    if ($answerUpdate)
-                        Answers::upsert($answerUpdate, ['id'], ['answer','value','updated_at','image','question_id']);
-                        
-                    if ($answerDelete)
-                        Answers::whereIn('id', $answerDelete)->delete();
-
-                    //----- KODE PERIKSA APAKAH IMAGE MASIH DIGUNAKAN DI QUESTION/ANSWER KLO GK DIGUNAKAN MAKA HAPUS-----
-                    $fileDb = FileMedia::where('id', 'like', "form-%")->pluck('id');
-                    foreach ($fileDb as $filename) {
-                        $usedInQuestion = Questions::where('image', 'like', "%$filename%")->exists();
-                        $usedInAnswer   = Answers::where('image', 'like', "%$filename%")->exists();
-
-                        $filePath = public_path('media/' . $filename);
-
-                        if (!$usedInQuestion && !$usedInAnswer && file_exists($filePath)) {
-                            File::delete($filePath);
-                            FileMedia::where('id', $filename)->delete();
-                        }
-                    }
                 }
-                session(['urlMap' => $urlMap]);
+
+                /* ================================
+                * 6. EXECUTE BATCH
+                * ================================ */
+                
+                if ($sectionUpdate)
+                    Sections::upsert($sectionUpdate, ['id'], ['name','description','order','updated_at']);
+
+                if ($sectionDelete)
+                    Sections::whereIn('id', $sectionDelete)->delete();
+
+                if ($questionUpdate)
+                    Questions::upsert($questionUpdate, ['id'], ['question','order','section_id','updated_at']);
+
+                if ($questionDelete)
+                    Questions::whereIn('id', $questionDelete)->delete();
+
+                if ($answerUpdate)
+                    Answers::upsert($answerUpdate, ['id'], ['answer','value','updated_at','question_id']);
+                    
+                if ($answerDelete)
+                    Answers::whereIn('id', $answerDelete)->delete();
+
+                $this->msg='Form berhasil diperbarui';
+                $this->status = true;
+                $this->redirect = route('admin.form.detail', $this->form ? $this->form->id : 2);
             });
             return response()->json([
-                'success' => true,
-                'message' => 'Batch berhasil diproses',
-                'redirect' => route('admin.form.detail', $this->form ? $this->form->id : 2),
+                'success' => $this->status,
+                'message' => $this->msg,
+                //'file'=>$this->formDetailStatusRaw,
+                'redirect' => $this->redirect,
             ]);
-
         } catch (\Throwable $e) {
+            
             return response()->json([
                 'success' => false,
-                'message' => 'gagal update form' . $e->getMessage(),
-                'line'=> $e->getLine(),
-                'file'=> $e->getFile(),
+                'message' => 'gagal update form ',
+                //'test'=> $this->formDetailStatusRaw,
+                //'line'=> $e->getLine(),
             ]);
         }
     }

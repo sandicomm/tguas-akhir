@@ -225,7 +225,6 @@ function updateStyle(editorFieldSelect, indicator, file, indicatorCarousel, url,
           item.style = stringifyStyleObj(styleObj);
           
         }else{
-          // //console.log('bukan carousel')
           if(id.startsWith('item-carousel')){
        
             let baseStyle = editorFieldSelect.style.cssText
@@ -310,10 +309,10 @@ function fontStylingField(){
         window.dispatchEvent(new CustomEvent('notif-pesan', { 
           detail: { pesan: 'heading styling tidak ditemukan', status:false} 
         }));
-        console.error('heading tidak ditemukan')
+
         return
       }
-      console.log('ll')
+
       heading.children[0].innerHTML = this.innerHTML
       updateContent(heading)
     }else{
@@ -426,7 +425,6 @@ function fontStylingField(){
         const endInside = fontField.contains(range.endContainer.nodeType === 3 ? range.endContainer.parentNode : range.endContainer);
     
         if (startInside && endInside && !range.collapsed) {
-          // //console.log('test')
           fontField.dataset.fieldFontFamily = this.value;
 
           if(!(document.getElementById('heading-text-wrapper').classList.contains('hidden'))){
@@ -499,7 +497,6 @@ function fontStylingField(){
         const endInside = fontField.contains(range.endContainer.nodeType === 3 ? range.endContainer.parentNode : range.endContainer);
     
         if (startInside && endInside && !range.collapsed) {
-          // //console.log('test')
           fontField.dataset.fieldFontSize = this.value;
 
           if(!(document.getElementById('heading-text-wrapper').classList.contains('hidden'))){
@@ -577,7 +574,6 @@ function fontStylingField(){
         const endInside = fontField.contains(range.endContainer.nodeType === 3 ? range.endContainer.parentNode : range.endContainer);
     
         if (startInside && endInside && !range.collapsed) {
-          // //console.log('test')
           document.execCommand('bold');
 
         } else {
@@ -748,7 +744,6 @@ function fontStylingField(){
     
         if (startInside && endInside && !range.collapsed) {
           document.execCommand('justifyLeft');
-          // //console.log('✅ aligned selected content');
         } else {
           const range = document.createRange();
           range.selectNodeContents(fontField);
@@ -759,9 +754,6 @@ function fontStylingField(){
     
           // Terapkan warna ke seluruh teks dalam fontField
           document.execCommand('justifyLeft');
-    
-          // Optional: hapus seleksi biar gak kelihatan disorot
-          // //console.log('select all')
         }
 
         if(!fontField.id.startsWith('field-')){
@@ -798,7 +790,6 @@ function fontStylingField(){
     
         if (startInside && endInside && !range.collapsed) {
           document.execCommand('justifyRight');
-          // //console.log('✅ aligned selected content');
         } else {
           const range = document.createRange();
           range.selectNodeContents(fontField);
@@ -810,7 +801,6 @@ function fontStylingField(){
           // Terapkan warna ke seluruh teks dalam editorFieldSelect
           document.execCommand('justifyRight');
     
-          // //console.log('select all')
         }
         
         if(!fontField.id.startsWith('field-')){
@@ -849,7 +839,6 @@ function fontStylingField(){
     
         if (startInside && endInside && !range.collapsed) {
           document.execCommand('justifyCenter');
-          // //console.log('✅ aligned selected content');
         } else {
           const range = document.createRange();
           range.selectNodeContents(fontField);
@@ -863,7 +852,6 @@ function fontStylingField(){
     
           // Optional: hapus seleksi biar gak kelihatan disorot
           selection.removeAllRanges();
-          // //console.log('select all')
         }
 
         if(!fontField.id.startsWith('field-')){
@@ -899,7 +887,7 @@ function fontStylingField(){
     
         if (startInside && endInside && !range.collapsed) {
           document.execCommand('justifyFull');
-          // //console.log('✅ aligned selected content');
+
         } else {
           const range = document.createRange();
           range.selectNodeContents(fontField);
@@ -913,7 +901,6 @@ function fontStylingField(){
     
           // Optional: hapus seleksi biar gak kelihatan disorot
           selection.removeAllRanges();
-          // //console.log('select all')
         }
         
         if(!fontField.id.startsWith('field-')){
@@ -992,7 +979,7 @@ function widthHeightField(){
     editorFieldSelect = globals.editorFieldSelect
     accordionSelect = globals.accordionSelect
     carouselSelect = globals.carouselSelect
-    // //console.log('width')
+
     if(editorFieldSelect){
       if(accordionSelect){
         accordionSelect.style.width=`${this.value}px`
@@ -1067,20 +1054,17 @@ function flexPosition(){
       section.style.justifyContent = 'start'
       section.style.alignItems = 'center'
 
-      // //console.log('ini top')
     }else if(this.value == 'center'){
       editorFieldSelect.style.justifyContent = 'center'
       editorFieldSelect.style.alignItems = 'center'
       section.style.justifyContent = 'center'
       section.style.alignItems = 'center'
-      
-      // //console.log('ini center')
+
     }else if(this.value == 'end'){
       editorFieldSelect.style.justifyContent = 'end'
       editorFieldSelect.style.alignItems = 'center'
       section.style.justifyContent = 'end'
       section.style.alignItems = 'center'
-      // //console.log('ini bottom')
     }
     updateStyle(editorFieldSelect)
     globals.editorFieldSelect=editorFieldSelect
@@ -1680,7 +1664,7 @@ function colorBackgroundField(){
           }
         })
       }
-      // //console.log('tipe 2')
+  
       globals.carouselSelect=carouselSelect
     }else{
       let Style = fieldEditor.style.cssText
@@ -1780,7 +1764,6 @@ function colorBackgroundField(){
     }else{
       let Style = fieldEditor.style.cssText
       if(Style.includes('background-image')){
-        // //console.log('ada bgImage')
         let urlPart = '';
 
         const match = Style.match(/url\(([^)]+)\)/i);
@@ -1815,7 +1798,6 @@ function colorBackgroundField(){
     try {
       await handleFieldBgUpload(file);
     } catch (err) {
-      console.error(err);
       window.dispatchEvent(new CustomEvent('notif-pesan', { 
         detail: { pesan: `Gagal memproses gambar`, status:false} 
       }));
@@ -1832,7 +1814,6 @@ function colorBackgroundField(){
     try {
       await handleCarouselBgUpload(file);
     } catch (err) {
-      console.error(err);
       window.dispatchEvent(new CustomEvent('notif-pesan', { 
         detail: { pesan: 'Gagal memproses gambar', status:false} 
       }));
@@ -1842,7 +1823,6 @@ function colorBackgroundField(){
 
   document.querySelectorAll('[name="bg-image-size"]').forEach(bgImageSize =>{
     bgImageSize.addEventListener('click', function(){
-      // //console.log('image sizer')
       
       let fieldEditor
       editorFieldSelect = globals.editorFieldSelect

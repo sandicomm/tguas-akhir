@@ -12,13 +12,12 @@
 <table border="1">
     <thead>
         <tr>
-            <th style="background-color: #cccbca; font-weight: bold; width: 300px; text-align: center; vertical-align: middle;">
+            <th style="background-color: #f3f4f6; font-weight: bold; width: 300px; text-align: center; vertical-align: middle; border: 1px solid #000000;">
                 PERTANYAAN
             </th>
-            
             @foreach ($columns as $col)
-                <th style="background-color:#cccbca; font-weight: bold; width: 200px; text-align: center;">
-                    {{ $col['email'] != '' ?  strtoupper($col['email']) : 'No Email' }}<br>
+                <th style="background-color: #f3f4f6; font-weight: bold; width: 200px; text-align: center; border: 1px solid #000000;">
+                    {{ $col['email'] != '' ? strtoupper($col['email']) : 'No Email' }}<br>
                     (ATTEMPT {{ $col['attempt'] }})
                 </th>
             @endforeach
@@ -27,7 +26,7 @@
     <tbody>
         @foreach ($questions as $question)
             <tr>
-                <td style="font-weight: 500;">
+                <td style="text-align: left; font-weight: 500; vertical-align: top; border: 1px solid #000000;">
                     {{ $question->question }}
                 </td>
 
@@ -37,9 +36,9 @@
                         $cellResponses = $rowResponses[$col['key']] ?? collect();
                     @endphp
 
-                    <td style="text-align: center; vertical-align: middle;">
+                    <td style="text-align: center; vertical-align: top; border: 1px solid #000000;">
                         @forelse ($cellResponses as $r)  
-                            {{ $r->answer, 20 }}
+                            {{ $r->answer }}
                         @empty
                             <span style="color: #d1d5db;">-</span>
                         @endforelse

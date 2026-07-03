@@ -113,11 +113,9 @@ class Dashboard extends Component
 
                     'answers.answer',
                     'answers.value',
-                    'answers.image as answerImage',
 
                     'questions.id as question_id',
                     'questions.question',
-                    'questions.image as questionImage',
 
                     'forms.form_name',
                     'forms.placement',
@@ -192,52 +190,6 @@ class Dashboard extends Component
             new FormResponseSingleExport($data, $formName),
             $fileName
         );
-    }
-
-    // 1. Fungsi yang dipanggil saat tombol 'X' diklik
-    public function confirmDeleteSingle($formId, $respondenId, $attempt)
-    {
-        $this->reset(['deleteConfirmText']); // Reset input text
-        
-        $this->targetFormId = $formId;
-        $this->targetRespondenId = $respondenId;
-        $this->targetAttempt = $attempt;
-        
-        $this->isDeleteModalOpen = true; // Buka Modal
-    }
-
-    // 2. Fungsi Eksekusi Hapus (Dipanggil dari form di dalam Modal)
-    public function destroySingleResponse()
-    {
-        // Validasi input konfirmasi
-        if (strtolower($this->deleteConfirmText) === 'hapus') {
-            try {
-                DB::transaction(function () {
-                    // A. Hapus Response sesuai kriteria (Form + Responden + Attempt)
-                    Response::where('form_id', $this->targetFormId)
-                        ->where('responden_id', $this->targetRespondenId)
-                        ->where('attempt', $this->targetAttempt)
-                        ->delete();
-
-                    // B. Cek Orphan Responden (Hapus responden jika sudah tidak punya response sama sekali)
-                    // Kita gunakan logika yang sudah kita bahas sebelumnya
-                    $respondenHasOtherData = Response::where('responden_id', $this->targetRespondenId)->exists();
-                    
-                    if (!$respondenHasOtherData) {
-                        Responden::find($this->targetRespondenId)->delete();
-                    }
-                });
-
-                session()->flash('success', 'Response berhasil dihapus.');
-                $this->isDeleteModalOpen = false;
-                return $this->redirect(route('admin.dashboard'), navigate: true);
-
-            } catch (\Exception $e) {
-                session()->flash('error', 'Gagal menghapus: ' . $e->getMessage());
-            }
-        } else {
-            $this->addError('deleteConfirmText', 'Konfirmasi salah. Ketik "hapus".');
-        }
     }
 
     public function render()

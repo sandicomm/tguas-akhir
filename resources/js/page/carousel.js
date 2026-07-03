@@ -306,14 +306,14 @@ const addCarousel = (event)=>{
           const carouselElement = getEl(idPrefix);
           if (carouselElement) {
             new Carousel(carouselElement);
-
           } else {
-            console.warn('⚠️ Elemen Crousel tidak ditemukan setelah appendChild');
+            //console.warn('⚠️ Elemen Crousel tidak ditemukan setelah appendChild');
           }
+
           initFlowbite();
 
       } catch (error) {
-          console.error('❌ Gagal menginisialisasi Carousel:', error);
+          console.error('❌ Gagal menginisialisasi Carousel');
       }
     }, 100);  
 
@@ -330,13 +330,11 @@ const copyCarousel=(idCarousel, mode="all")=>{
       if(!carouselEl)return
 
       if (!carouselEl) {
-        console.error('carousel tidak ditemukan:', carouselId);
         return false;
       }
 
       const container = carouselEl.parentElement;
       if (!container) {
-        console.error('container carousel tidak ditemukan');
         return false;
       }
 
@@ -525,13 +523,13 @@ const copyCarousel=(idCarousel, mode="all")=>{
         try {
           initFlowbite();
         } catch (error) {
-          // console.error('❌ Gagal inisialisasi carousel', error);
+          console.error('❌ Gagal inisialisasi carousel');
         }
       }, 100);
 
       return true;
   } catch (e) {
-    console.error('duplicateCarousel error', e);
+    console.error('duplicateCarousel error');
     return false;
   }
 }
@@ -655,7 +653,7 @@ function addItemCarousel(event){
     try {
       initFlowbite();
     } catch (error) {
-      console.error('❌ Gagal menginisialisasi Carousel:', error);
+      console.error('❌ Gagal menginisialisasi Carousel');
     }
   }, 100);
 }
@@ -674,7 +672,6 @@ const copyItemCarousel=(idItemCarousel, mode="all")=>{
 
       const container = containerItem.parentElement.parentElement;
       if (!container) {
-        console.error('container carousel tidak ditemukan');
         return false;
       }
 
@@ -891,13 +888,13 @@ const copyItemCarousel=(idItemCarousel, mode="all")=>{
         try {
           initFlowbite();
         } catch (error) {
-          // console.error('❌ Gagal inisialisasi carousel', error);
+          console.error('❌ Gagal inisialisasi carousel');
         }
       }, 100);
 
       return true;
   } catch (e) {
-    console.error('duplicateCarousel error', e);
+    console.error('duplicateCarousel error');
     return false;
   }
 }

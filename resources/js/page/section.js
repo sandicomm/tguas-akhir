@@ -20,7 +20,7 @@ const createSection = (idPrefix,borderWave,order,count,style,edit)=>{
     let section=``
     let dropdownSection=''
     let dropdownElement=''
-     console.log('status edit:',edit)
+
     if(edit){
       dropdownSection = `
               <ul class="py-2 text-sm text-gray-700 dark:text-gray-200 border-0 border-b-1 border-gray-500 " aria-labelledby="dropdownDefaultButton">
@@ -129,7 +129,7 @@ const createSection = (idPrefix,borderWave,order,count,style,edit)=>{
       `
     }
     section=`
-      <div id="webpage-${idPrefix}" data-element-order="${order}" class="bg-gray-200 flex flex-col ${idPrefix.includes('prolog') ? 'min-h-[100dvh]' : ''} justify-center items-center border border-gray-700" style="${styleWebpage}">
+      <div id="webpage-${idPrefix}" data-element-order="${order}" class="bg-gray-200 flex flex-col ${idPrefix.includes('prolog') ? 'min-h-[100dvh]' : ''} justify-center items-center border border-gray-700x z-10" style="${styleWebpage}">
         ${dropdown}
         ${svg}
         <div id="editor-container-${idPrefix}" data-element-count="${count}" class="md:px-3 md:py-5 md:pt-0 px-4 py-5 pt-10 w-full flex flex-col" style="${styleEditor}"></div>
@@ -318,7 +318,7 @@ const addSection = (event)=>{
     })
 
     newSection =`
-        <div id="webpage-section-${newCount}" data-element-order="${newCount}" class="bg-gray-200 flex flex-col justify-center items-center border border-gray-700" style="position:relative;min-height:100dvh;">
+        <div id="webpage-section-${newCount}" data-element-order="${newCount}" class="bg-gray-200 flex flex-col justify-center items-center border border-gray-700 z-10" style="position:relative;min-height:100dvh;">
           <div class="bg-white rounded-full absolute right-1 top-1 z-20 cursor-pointer" data-dropdown-toggle="dropdown-section-${newCount}" data-dropdown-placement="right-end">
               ${renderSvg()}                
           </div>
@@ -383,7 +383,7 @@ const addSection = (event)=>{
       try {
         initFlowbite();
       } catch (error) {
-          console.error('❌ Gagal menginisialisasi Dropdown:', error);
+          console.error('❌ Gagal menginisialisasi Dropdown:');
       }
   }, 100); 
 } 
@@ -407,7 +407,6 @@ const copySection=(idSection, mode="all", event)=>{
 
     const container = sectionEl.parentElement;
     if (!container) {
-      console.error('container parent accordion tidak ditemukan');
 
       window.dispatchEvent(new CustomEvent('notif-pesan', { 
         detail: { pesan: 'container parent accordion tidak ditemukan', status:false} 
@@ -696,13 +695,13 @@ const copySection=(idSection, mode="all", event)=>{
       try {
         initFlowbite();
       } catch (error) {
-        console.error('❌ Gagal inisialisasi accordion', error);
+        console.error('❌ Gagal inisialisasi accordion');
       }
     }, 100);
 
     return true;
   } catch (e) {
-    console.error('duplicateModal error', e);
+    console.error('duplicateModal error');
     return false;
   }
 }

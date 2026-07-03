@@ -61,7 +61,7 @@ class TotalResponded extends Component
             ]);
 
         } catch (\Exception $e) {
-            dd($e->getMessage(), $e->getLine(), $e->getFile()); 
+           // dd($e->getMessage(), $e->getLine(), $e->getFile()); 
             session()->flash('error', "Gagal: " . $e->getMessage());
         }
     }

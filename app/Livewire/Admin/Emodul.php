@@ -152,8 +152,10 @@ class Emodul extends Component
                     session()->flash('error', 'Emodul tidak ditemukan.');
                 }
             }catch(\Exception $e){
-                session()->flash('error', $e->getMessage());
+                session()->flash('error', 'gagal hapus emodul');
             }
+        }else{
+            session()->flash('error', 'ketikan anda salah');
         }
     }
 

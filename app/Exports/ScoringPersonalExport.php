@@ -21,7 +21,7 @@ class ScoringPersonalExport implements FromView, ShouldAutoSize, WithTitle
 
     public function view(): View
     {
-        return view('exports.single-form-scoring', [
+        return view('exports.scoring-single', [
             'responses' => $this->responses,
             'userKey'   => $this->userKey,
             'formName'  => $this->formName

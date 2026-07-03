@@ -16,7 +16,6 @@ return new class extends Migration
             $table->string('question');
             $table->foreignId('section_id')->constrained('sections')->onDelete('cascade');
             $table->integer('order')->nullable();
-            $table->string('image')->nullable();
             $table->timestamps();
         });
     }

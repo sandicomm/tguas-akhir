@@ -64,6 +64,7 @@ class User extends Component
                 $this->name = $user->name;
                 $this->email = $user->email;
                 $this->statsAction= $action;
+                
             } catch (ValidationException $e) {
                 // Tangani error validasi secara eksplisit
                 $this->addError('name', $e->validator->errors()->first('name'));

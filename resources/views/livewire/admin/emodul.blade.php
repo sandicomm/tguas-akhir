@@ -64,7 +64,7 @@
                                                 <td class="p-3">{{ $data['judul'] }}</td>
                                                 <td class="p-3">{{ $data['penyusun'] }}</td>
                                                 <td class="p-3 flex justify-center items-center gap-3 w-auto">
-                                                    <a href="http://127.0.0.1:8000/{{ $data['file_path'] }}" target="_blank" class="block text-white bg-sky-400 hover:bg-sky-600 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-3 py-1.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">Lihat</a>
+                                                    <a href="http://127.0.0.1:8000/{{ $data['file_path'] }}" target="_blank" class="block text-white bg-sky-400 hover:bg-sky-600 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-3 py-1.5 text-center">Lihat</a>
                                                     <button wire:click="setStatsAction({{ $data['id'] }}, 'edit')" class="block text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-3 py-1.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">Edit</button>
                                                     <button wire:click="setStatsAction({{ $data['id'] }}, 'delete')" class="block text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-3 py-1.5 text-center dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-blue-800">Delete</button>
                                                 </td>
@@ -83,7 +83,7 @@
                         >
                             <div class="bg-white dark:bg-slate-800 text-black dark:text-white rounded-lg xl:w-1/3 w-[70%] max-h-[90vh] flex flex-col">
                                 <!-- HEADER -->
-                                <div class="flex items-center justify-between p-4 border-b">
+                                <div class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-600">
                                     <h3 class="text-xl font-bold">
                                         @if ($statsAction === 'add')
                                             Tambah Emodul
@@ -93,7 +93,9 @@
                                             Hapus Emodul
                                         @endif
                                     </h3>
-                                    <button @click="open = false">✕</button>
+                                    <button @click="open = false" class="text-gray-400 hover:bg-gray-200 rounded-lg w-8 h-8 flex justify-center items-center">
+                                        <span class="text-2xl">&times;</span>
+                                    </button>
                                 </div>
                                 <div class="flex-1 overflow-y-auto">
                                     @if($statsAction === 'add')
@@ -102,9 +104,8 @@
                                                 <div class="mb-4">
                                                     <label>Judul</label>
                                                     <input type="text" wire:model="judul" 
-                                                            class="bg-gray-50 border dark:border-gray-300 text-gray-900 text-sm rounded-lg 
-                                                            dark:focus:ring-blue-500 dark:focus:border-blue-500 block w-full dark:bg-gray-700 border-gray-600 
-                                                            dark:placeholder-gray-400 dark:text-white focus:ring-blue-500 focus:border-blue-500" required>
+                                                            placeholder="Ketik Judul disini..."
+                                                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white" required>
                                                     @error('judul') 
                                                         <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
                                                     @enderror
@@ -112,9 +113,8 @@
                                                 <div class="mb-4">
                                                     <label>Penyusun</label>
                                                     <input type="text" wire:model="penyusun" 
-                                                        class="bg-gray-50 border dark:border-gray-300 text-gray-900 text-sm rounded-lg 
-                                                            dark:focus:ring-blue-500 dark:focus:border-blue-500 block w-full dark:bg-gray-700 border-gray-600 
-                                                            dark:placeholder-gray-400 dark:text-white focus:ring-blue-500 focus:border-blue-500" required>
+                                                        placeholder="Ketik Penyusun disini..."
+                                                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white" required>
                                                     @error('penyusun') 
                                                         <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
                                                     @enderror
@@ -135,11 +135,13 @@
                                                 </div>
                                             </div>
                                             
-                                            <div class="flex items-center p-4 md:p-5 border-t dark:border-gray-200 rounded-b border-gray-600">
-                                                <button type="submit" 
-                                                    class="text-white dark:bg-green-700 dark:hover:bg-green-800 focus:ring-4 focus:outline-none dark:focus:ring-green-300 
-                                                    font-medium rounded-lg text-sm px-5 py-2.5 text-center bg-green-600 hover:bg-green-700 
-                                                    focus:ring-green-800">Simpan</button>
+                                            <div class="flex items-center justify-end p-4 border-t border-gray-200 dark:border-gray-600 gap-2">
+                                                <button type="button" @click="open = false" class="text-gray-500 bg-white hover:bg-gray-100 focus:ring-4 focus:outline-none focus:ring-blue-300 rounded-lg border border-gray-200 text-sm font-medium px-5 py-2.5 hover:text-gray-900 focus:z-10 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-500 dark:hover:text-white dark:hover:bg-gray-600">
+                                                    Batal
+                                                </button>
+                                                <button type="submit" class="text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-green-600 dark:hover:bg-green-700">
+                                                    Simpan
+                                                </button>
                                             </div>
                                         </form>
                                     @elseif ($statsAction === 'edit')
@@ -148,9 +150,8 @@
                                                 <div class="mb-4">
                                                     <label>Judul</label>
                                                     <input type="text" wire:model="judul" 
-                                                        class="bg-gray-50 border dark:border-gray-300 text-gray-900 text-sm rounded-lg 
-                                                            dark:focus:ring-blue-500 dark:focus:border-blue-500 block w-full dark:bg-gray-700 border-gray-600 
-                                                            dark:placeholder-gray-400 dark:text-white focus:ring-blue-500 focus:border-blue-500" required>
+                                                        placeholder="Ketik Judul disini"
+                                                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white" required>
                                                     @error('judul') 
                                                         <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
                                                     @enderror
@@ -158,9 +159,8 @@
                                                 <div class="mb-4">
                                                     <label>Penyusun</label>
                                                     <input type="text" wire:model="penyusun" 
-                                                        class="bg-gray-50 border dark:border-gray-300 text-gray-900 text-sm rounded-lg 
-                                                            dark:focus:ring-blue-500 dark:focus:border-blue-500 block w-full dark:bg-gray-700 border-gray-600 
-                                                            dark:placeholder-gray-400 dark:text-white focus:ring-blue-500 focus:border-blue-500" required>
+                                                        placeholder="Ketik Penyusun disini..."
+                                                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white" required>
                                                     @error('penyusun') 
                                                         <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
                                                     @enderror
@@ -181,26 +181,40 @@
                                                 </div>
                                             </div>
     
-                                            <div class="flex items-center p-4 md:p-5 border-t dark:border-gray-200 rounded-b border-gray-600">
-                                                <button type="submit"  class="text-white dark:bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none dark:focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center bg-blue-600 dark:hover:bg-blue-700 focus:ring-blue-800">Edit</button>
+                                            <div class="flex items-center justify-end p-4 border-t border-gray-200 dark:border-gray-600 gap-2">
+                                                <button type="button" @click="open = false" class="text-gray-500 bg-white hover:bg-gray-100 focus:ring-4 focus:outline-none focus:ring-blue-300 rounded-lg border border-gray-200 text-sm font-medium px-5 py-2.5 hover:text-gray-900 focus:z-10 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-500 dark:hover:text-white dark:hover:bg-gray-600">
+                                                    Batal
+                                                </button>
+                                                <button type="submit" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700">
+                                                    Edit
+                                                </button>
                                             </div>
                                         </form>
                                     @elseif ($statsAction === 'delete')
                                         <form wire:submit.prevent="delete">
                                             @csrf
-                                            <div class="p-4 md:p-5 space-y-2">
-                                                <p>Jika anda yakin ingin <span class="font-bold">MENGHAPUS</span> emodul ini, Ketik <span class="font-bold">"Hapus Emodul"</span> Di field dibawah</p>
+                                            <div class="p-4 md:p-5 space-y-4">
+                                                <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+                                                    <strong class="font-bold">Perhatian!</strong>
+                                                    <span class="block sm:inline">Tindakan ini akan menghapus emodul.</span>
+                                                </div>
+
+                                                <p>Jika anda yakin ingin <span class="font-bold">MENGHAPUS</span> emodul ini, Ketik <span class="font-bold">"Hapus Emodul"</span></p>
                                                 <input type="text" wire:model="confirmDelete" 
-                                                    class="bg-gray-50 border dark:border-gray-300 text-gray-900 text-sm rounded-lg 
-                                                            dark:focus:ring-blue-500 dark:focus:border-blue-500 block w-full dark:bg-gray-700 border-gray-600 
-                                                            dark:placeholder-gray-400 dark:text-white focus:ring-blue-500 focus:border-blue-500">
+                                                    placeholder="Ketik 'hapus emodul' disini..."
+                                                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-red-500 focus:border-red-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                                                 @if(session()->has('error'))
                                                     <p class="text-red-500 text-sm m-0">{{ session('error') }}</p>
                                                 @endif
                                             </div>
                               
-                                            <div class="flex items-center p-4 md:p-5 border-t dark:border-gray-200 rounded-b border-gray-600">
-                                                <button type="submit" class="text-white dark:bg-red-700 dark:hover:bg-red-800 focus:ring-4 focus:outline-none dark:focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center bg-red-600 hover:bg-red-700 focus:ring-red-800">Hapus</button>
+                                            <div class="flex items-center justify-end p-4 border-t border-gray-200 dark:border-gray-600 gap-2">
+                                                <button type="button" @click="open = false" class="text-gray-500 bg-white hover:bg-gray-100 focus:ring-4 focus:outline-none focus:ring-blue-300 rounded-lg border border-gray-200 text-sm font-medium px-5 py-2.5 hover:text-gray-900 focus:z-10 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-500 dark:hover:text-white dark:hover:bg-gray-600">
+                                                    Batal
+                                                </button>
+                                                <button type="submit" class="text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-red-600 dark:hover:bg-red-700">
+                                                    Hapus
+                                                </button>
                                             </div>
                                         </form>
                                     @endif

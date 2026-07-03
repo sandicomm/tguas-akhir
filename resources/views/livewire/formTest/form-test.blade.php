@@ -79,11 +79,6 @@
                                 <h4 class="numbering">{{ $index }}.</h4>
                                 <div class="flex justify-start items-center w-full flex-col ms-2">
                                     <div class="flex flex-col w-full p-2 rounded mb-2" style="background-color:rgba(0, 0, 0, 0.10);">
-                                        @if($question->image)
-                                            <div class="flex">
-                                                <img src="{{ $question->image }}" alt="" class="rounded" style="width:50%;height:auto;" loading="lazy">
-                                            </div>
-                                        @endif
                                         <p class="p-1 rounded" style="background-color:rgba(0, 0, 0, 0);">{{ $question->question }}</p>    
                                     </div>
                                     
@@ -110,9 +105,6 @@
                                                     <h6 class="me-2 mb-0"><b>{{ $pilgan++ }}.</b></h6>
 
                                                     <div class="flex flex-col w-full">
-                                                        @if($answer->image)
-                                                            <img src="{{ $answer->image }}" alt="" class="rounded mb-2" style="width:150px; height:auto;" loading="lazy">
-                                                        @endif
                                                         <span>{{ $answer->answer }}</span>
                                                     </div>
                                                 </label>

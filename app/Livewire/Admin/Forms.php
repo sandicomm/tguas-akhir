@@ -70,7 +70,7 @@ class Forms extends Component
             });
 
             session()->flash('message', 'Form berhasil disalin.');
-            return redirect()->route('admin.forms');
+            $this->forms = FormModel::all();
         }catch(\Exception $e){
             session()->flash('error', $e->getMessage());
         }
@@ -82,42 +82,42 @@ class Forms extends Component
     }
 
     public function delete()
-{
-    if (strtolower($this->confirmDelete) === 'hapus form') {
-        try {
-            DB::transaction(function () {
-                // 1. Ambil ID responden yang mengisi form ini 
-                // Kita ambil langsung dari relasi responses yang punya form_id tersebut
-                $responderIds = Responden::whereHas('responses', function ($query) {
-                    $query->where('form_id', $this->formId);
-                })->pluck('id');
+    {
+        if (strtolower($this->confirmDelete) === 'hapus form') {
+            try {
+                DB::transaction(function () {
+                    // 1. Ambil ID responden yang mengisi form ini 
+                    // Kita ambil langsung dari relasi responses yang punya form_id tersebut
+                    $responderIds = Responden::whereHas('responses', function ($query) {
+                        $query->where('form_id', $this->formId);
+                    })->pluck('id');
 
-                // 2. Hapus Form 
-                // (Pastikan di Database sudah ada onDelete('cascade') untuk responses.form_id)
-                FormModel::findOrFail($this->formId)->delete();
+                    // 2. Hapus Form 
+                    // (Pastikan di Database sudah ada onDelete('cascade') untuk responses.form_id)
+                    FormModel::findOrFail($this->formId)->delete();
 
-                // 3. Bersihkan Responden "Yatim Piatu"
-                // Hanya hapus responden yang setelah form ini dihapus, 
-                // mereka tidak punya lagi data di tabel responses (dari form manapun)
-                if ($responderIds->isNotEmpty()) {
-                    Responden::whereIn('id', $responderIds)
-                        ->whereDoesntHave('responses')
-                        ->delete();
-                }
-            });
+                    // 3. Bersihkan Responden "Yatim Piatu"
+                    // Hanya hapus responden yang setelah form ini dihapus, 
+                    // mereka tidak punya lagi data di tabel responses (dari form manapun)
+                    if ($responderIds->isNotEmpty()) {
+                        Responden::whereIn('id', $responderIds)
+                            ->whereDoesntHave('responses')
+                            ->delete();
+                    }
+                });
 
-            // Update UI
-            $this->forms = $this->forms->reject(fn($form) => $form['id'] == $this->formId);
-            $this->reset(['formId', 'confirmDelete', 'isModalOpen']);
-            session()->flash('success', 'Form dan Responden yang tidak aktif berhasil dihapus!');
+                // Update UI
+                $this->forms = FormModel::all();
+                $this->reset(['formId', 'confirmDelete', 'isModalOpen']);
+                session()->flash('success', 'Form berhasil dihapus!');
 
-        } catch (\Exception $e) {
-            session()->flash('error', 'Gagal menghapus: ' . $e->getMessage());
+            } catch (\Exception $e) {
+                session()->flash('error', 'Gagal menghapus: ' . $e->getMessage());
+            }
+        } else {
+            session()->flash('error', 'Konfirmasi hapus salah.');
         }
-    } else {
-        session()->flash('error', 'Konfirmasi hapus salah.');
     }
-}
 
     public function render()
     {

@@ -48,7 +48,7 @@ function modalTypeStyling(){
       try {
           initFlowbite();
       } catch (error) {
-          console.error('❌ Gagal menginisialisasi Modal:', error);
+          console.error('❌ Gagal menginisialisasi Modal');
       }
     }, 100);  
   })
@@ -317,7 +317,7 @@ const addModal = (event)=>{
         initFlowbite();
 
     } catch (error) {
-        // console.error('❌ Gagal menginisialisasi Modal:', error);
+        console.error('❌ Gagal menginisialisasi Modal');
     }
   }, 100);  
 }
@@ -340,9 +340,10 @@ const copyModal = (idModal, mode = 'full', newId, oldId) => {
       const suffix = btnModal.id.slice(btnModal.id.indexOf('-') + 1);
       const found = document.querySelector(`[id*="${suffix}"][id^="element-"]`);
       
-      if (found) modalEl = found;
-      else {
-        console.error('❌ Modal body tidak ditemukan untuk btn:', idModal);
+      if (found) {
+        modalEl = found;
+      
+      } else {
         window.dispatchEvent(new CustomEvent('notif-pesan', { 
           detail: { pesan: 'modalElement copyModal tidak ditemukan delete head', status:false} 
         }));
@@ -352,7 +353,6 @@ const copyModal = (idModal, mode = 'full', newId, oldId) => {
 
     const container = btnModal.parentElement;
     if (!container) {
-      console.error('❌ Container parent btn tidak ditemukan');
       return false;
     }
 
@@ -447,7 +447,7 @@ const copyModal = (idModal, mode = 'full', newId, oldId) => {
             }
             
         } catch (error) {
-            console.error('❌ Gagal inisialisasi modal', error);
+            console.error('❌ Gagal inisialisasi modal');
         }
     }, 100);
     }
@@ -601,7 +601,7 @@ const copyModal = (idModal, mode = 'full', newId, oldId) => {
     return true;
 
   } catch (e) {
-    console.error('❌ copyModal error:', e);
+    console.error('❌ copyModal error');
     return false;
   }
 };

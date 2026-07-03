@@ -12,7 +12,6 @@ class Answers extends Model
         'question_id',
         'answer',
         'value',
-        'image'
         ];
     public function question(){
         return $this->belongsTo(Questions::class, 'question_id');

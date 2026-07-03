@@ -23,6 +23,7 @@ class ScoringPersonal extends Component
     public $selectedForm = null; 
 
     public $searchByEmail = '';
+    public $responsesStatus=true;
     
     public function mount()
     {
@@ -93,9 +94,14 @@ class ScoringPersonal extends Component
             ->groupBy('user_key', 'responses.form_id', 'responses.attempt', 'forms.form_name', 'forms.placement')
             ->orderBy('user_key')
             ->paginate(10);
+
         if ($paginatedData->isEmpty()) {
             $this->selectedForm = null;
+            $this->responsesStatus = false;
+        }else{
+            $this->responsesStatus = true;
         }
+
         // 2. Transformasi struktur data hanya untuk data yang di-paginate
         // Ini mengubah attempt yang terpisah menjadi satu grup di dalam form
         $transformedItems = collect($paginatedData->items())
@@ -121,7 +127,7 @@ class ScoringPersonal extends Component
     public function search()
     {
         // Cukup panggil ini untuk mereset paginasi ke halaman 1 saat search diklik
-        $this->resetPage(); 
+        $this->resetPage();
     }
 
     public $showModal = false;
@@ -183,62 +189,80 @@ class ScoringPersonal extends Component
 
     public function exportAll()
     {
-        $data = Responses::query()
-            ->with(['responden', 'answer.question.section.form'])
-            // 1. Filter Responden (Hanya jalan jika searchByEmail TIDAK kosong)
-            ->when(!empty($this->searchByEmail), function ($q) {
-                $q->whereHas('responden', fn ($subQ) => 
-                    $subQ->where('email', 'like', '%' . $this->searchByEmail . '%')
-                );
-            })
-            ->whereHas('answer.question.section.form', function($q) {
-                // Menggunakan grouped where () untuk membungkus logika OR agar tidak merusak query utama
-                $q->where(function($query) {
-                    
-                    // Jalankan pencarian placement jika selectedFormPlacement tidak kosong
-                    $query->when(!empty($this->selectedFormPlacement), function($subQuery) {
-                        $subQuery->where('placement', 'like', '%'.$this->selectedFormPlacement.'%'); // Jangan lupa tambahkan '%' di akhir jika ingin pencarian 'like' yang fleksibel
+        if($this->responsesStatus === true){
+            $data = Responses::query()
+                ->with(['responden', 'answer.question.section.form'])
+                // 1. Filter Responden (Hanya jalan jika searchByEmail TIDAK kosong)
+                ->when(!empty($this->searchByEmail), function ($q) {
+                    $q->whereHas('responden', fn ($subQ) => 
+                        $subQ->where('email', 'like', '%' . $this->searchByEmail . '%')
+                    );
+                })
+                ->whereHas('answer.question.section.form', function($q) {
+                    // Menggunakan grouped where () untuk membungkus logika OR agar tidak merusak query utama
+                    $q->where(function($query) {
+                        
+                        // Jalankan pencarian placement jika selectedFormPlacement tidak kosong
+                        $query->when(!empty($this->selectedFormPlacement), function($subQuery) {
+                            $subQuery->where('placement', 'like', '%'.$this->selectedFormPlacement.'%'); // Jangan lupa tambahkan '%' di akhir jika ingin pencarian 'like' yang fleksibel
+                        });
+    
+                        // Jalankan pencarian ID jika selectedForm tidak kosong
+                        $query->when(!empty($this->selectedForm), function($subQuery) {
+                            // Gunakan orWhere jika pencarian pertama juga jalan, 
+                            // atau otomatis disesuaikan oleh Laravel jika ini satu-satunya yang jalan
+                            $subQuery->where('id', $this->selectedForm);
+                        });
+    
                     });
-
-                    // Jalankan pencarian ID jika selectedForm tidak kosong
-                    $query->when(!empty($this->selectedForm), function($subQuery) {
-                        // Gunakan orWhere jika pencarian pertama juga jalan, 
-                        // atau otomatis disesuaikan oleh Laravel jika ini satu-satunya yang jalan
-                        $subQuery->where('id', $this->selectedForm);
-                    });
-
+                }) 
+                ->get();
+            
+            if ($data->isEmpty()) return;
+    
+            // Grouping tetap dilakukan agar urutan per user rapi
+    
+            $groupedData = $data->groupBy(function ($item) {
+                return $item->responden->email ?? 'No_Email:'.$item->uuid;
+            })->map(function ($responsesPerEmail) {
+                return $responsesPerEmail->groupBy(function ($item) {
+                    return $item->answer->question->section->form->id;
                 });
-            }) 
-            ->get();
-
-        if ($data->isEmpty()) return;
-
-        // Grouping tetap dilakukan agar urutan per user rapi
-
-        $groupedData = $data->groupBy(function ($item) {
-            return $item->responden->email ?? 'Guest-' . $item->uuid;
-        })->map(function ($responsesPerEmail) {
-            return $responsesPerEmail->groupBy(function ($item) {
-                return $item->answer->question->section->form->id;
             });
-        });
-        
-        
-        $name = $this->selectedFormPlacement ?: 'All';
-        $fileName = 'Rekap-Full-' . $name . '-Form.xlsx';
-        
-        // Panggil class baru: ScoringAllInOneExport
-        return Excel::download(
-            new ScoringAllInOneExport($groupedData, $this->selectedFormPlacement),
-            $fileName
-        );
+            
+            
+            $name = $this->selectedFormPlacement ?: 'All';
+            $fileName = 'Rekap-Full-' . $name . '-Form.xlsx';
+            
+            // Panggil class baru: ScoringAllInOneExport
+            return Excel::download(
+                new ScoringAllInOneExport($groupedData, $this->selectedFormPlacement),
+                $fileName
+            );
+        }else{
+            session()->flash('error', 'Response pada form tidak ada');
+            return;
+        }
     }
 
     public function export($userKey)
     {
+        $isEmail = filter_var($userKey, FILTER_VALIDATE_EMAIL);
+        
         $data = Responses::query()
             ->with(['responden', 'answer.question.section.form'])
-            ->whereHas('responden', fn ($q) => $q->where('email', $userKey))
+
+            // Jika $isEmail TRUE, jalankan query relasi responden
+            ->when($isEmail, function ($q) use ($userKey) {
+                $q->whereHas('responden', fn ($subQ) => $subQ->where('email', $userKey));
+            })
+
+            // Jika $isEmail FALSE (berarti UUID), langsung cari di tabel utama responses
+            ->when(!$isEmail, function ($q) use ($userKey) {
+                $cleanUserKey = str_replace('uuid:', '', $userKey);
+                $q->where('uuid', $cleanUserKey);
+            })
+
             ->whereHas('answer.question.section.form', function($q) {
                 // Menggunakan grouped where () untuk membungkus logika OR agar tidak merusak query utama
                 $q->where(function($query) {
@@ -258,18 +282,25 @@ class ScoringPersonal extends Component
                 });
             }) 
             ->get();
-       ;
+          
         if ($data->isEmpty()) {
-            $this->dispatch('alert', ['type' => 'error', 'message' => 'Data tidak ditemukan']);
+            session()->flash('error', 'Data tidak ditemukan');
             return;
         }
 
         // Ambil nama form untuk judul file
+
+        if(!$isEmail){
+            $userName = "No_email";
+        }else{
+            $userName = $userKey;
+        }
+        
         $formName = $data->first()->answer->question->section->form->form_name ?? 'Form';
-        $namaFile = "Detail_Scoring_{$userKey}_" . \Str::slug($formName) . ".xlsx";
+        $namaFile = "Detail_Scoring_{$userName}_" . \Str::slug($formName) . ".xlsx";
 
         return Excel::download(
-            new ScoringPersonalExport($data, $userKey, $formName), 
+            new ScoringPersonalExport($data, $userName, $formName), 
             $namaFile
         );
     }

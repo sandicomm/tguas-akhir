@@ -166,7 +166,6 @@ export function updateStylingControls(data, field) {
         document.getElementById('border-color-field').value = borderColor;
 
       }else if(idParts[0] == 'field'){
-        //console.log('field')
         let stylingWebpage=['accordion-font-styling-wrapper','font-order-list','font-unorder-list',
           'accordion-box-field-wrapper','box-width-field','box-height-field','accordion-border-field-wrapper','reset-box',
           'accordion-background-wrapper','bg-image-styling','accordion-padding-wrapper','accordion-margin-wrapper','wrapper-btn-save'
@@ -180,7 +179,7 @@ export function updateStylingControls(data, field) {
         if (data) {
           fontColor = findTextColor(data) ?? '';
         } else {
-          console.error("Variabel 'field' bernilai null atau tidak ditemukan.");
+          //console.error("Variabel 'field' bernilai null atau tidak ditemukan.");
         }
 
         let fieldColor= data.style.backgroundImage || data.style.backgroundColor
@@ -206,10 +205,7 @@ export function updateStylingControls(data, field) {
           document.getElementById('accordion-box-field-wrapper').classList.add('hidden')
         }
 
-        // //console.log('field')
-
       }else if(data.id == 'heading-text'){
-        //console.log('hedaing text')
         let stylingWebpage=['heading-text-wrapper','accordion-head-indicator-wrapper',
           'accordion-font-styling-wrapper','accordion-box-field-wrapper','box-width-field',
           'accordion-border-field-wrapper','accordion-background-wrapper','bg-image-styling','accordion-padding-wrapper',
@@ -231,7 +227,7 @@ export function updateStylingControls(data, field) {
           fontColor = findTextColor(data) ?? '';
 
         } else {
-          console.error("Variabel 'field' bernilai null atau tidak ditemukan.");
+          //console.error("Variabel 'field' bernilai null atau tidak ditemukan.");
         }
 
         let fieldColor= data.style.backgroundImage || data.style.backgroundColor
@@ -256,8 +252,6 @@ export function updateStylingControls(data, field) {
         if(idParts[1] == 'head' && idParts[2] == 'modal'){
           document.getElementById('accordion-box-field-wrapper').classList.add('hidden')
         }
-
-        // //console.log('field')
         
       }else if(data.id.startsWith('btn-modal') || data.id.startsWith('btn-heading-accordion')){
         let headingText = document.getElementById("heading-text")
@@ -273,7 +267,7 @@ export function updateStylingControls(data, field) {
       
         let bgColor = isLightColor(colorFontHeading) ? '#000000' : '#ffffff';
         headingText.style.backgroundColor = bgColor;
-        // //console.log('btn head modal accordion')
+
         let stylingWebpage=['heading-text-wrapper','accordion-head-indicator-wrapper',
           'accordion-font-styling-wrapper','accordion-box-field-wrapper','box-width-field',
           'accordion-border-field-wrapper','accordion-background-wrapper','bg-image-styling','accordion-padding-wrapper',

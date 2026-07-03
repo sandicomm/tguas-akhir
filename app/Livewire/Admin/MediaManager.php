@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\File;
 use App\Models\Media;
 
+use Illuminate\Validation\ValidationException;
+
 use Mews\Purifier\Facades\Purifier;
 
 class MediaManager extends Component
@@ -18,17 +20,48 @@ class MediaManager extends Component
     public $filter = 'all'; // 'all', 'image', atau 'video'
     public $statsAction;
     public $mediaId;
+    public $confirmDelete;
+
     public bool $isModalOpen = false;
 
     protected $listeners = ['refreshList' => '$refresh'];
 
     public function setStatsAction($id, $action)
     {
-        $this->reset(['mediaId']); // Reset semua state sebelum diisi
+        $this->reset(['mediaId', 'title', 'sumber', 'link', 'file', 'confirmDelete' ]); // Reset semua state sebelum diisi
 
-        $this->mediaId = $id;
-        $this->statsAction = $action;
+        if ($action === 'add') {
+            $this->statsAction= $action;
+        } else if($action === 'edit') {
+            try{
+                $media = Media::findOrFail($id);
+                //dd($id,$action,$this->statsAction, $user);
+                $this->mediaId = $id;
+                $this->title = $media->title;
+                $this->sumber = $media->sumber;
+                $this->link = $media->link;
+                $this->statsAction= $action;
+
+            } catch (ValidationException $e) {
+                // Tangani error validasi secara eksplisit
+                $this->addError('title', $e->validator->errors()->first('title'));
+                $this->addError('sumber', $e->validator->errors()->first('sumber'));
+                $this->addError('link', $e->validator->errors()->first('link'));
+            }catch(\Exception $e){
+                session()->flash('error', $e->getMessage());
+            }
+
+        } else if($action === 'delete') {
+            $this->mediaId = $id;
+            $this->statsAction = $action;
+        }
+
         $this->isModalOpen = true;
+    }
+
+    public function closeModal()
+    {
+        $this->isModalOpen = false;
     }
 
     public function getMediaListProperty()
@@ -86,21 +119,103 @@ class MediaManager extends Component
         ]);
 
         // reset
+        $this->reset();
+        $this->resetValidation();
         $this->dispatch('resetForm');
-        $this->reset(['title', 'file', 'sumber', 'link']);
-        session()->flash('success', 'File berhasil diunggah!');
+
+        session()->flash('success', 'Media berhasil ditambahkan!');
     }
 
-    public function delete($id)
-    {
-        $media = Media::find($id);
-        if ($media) {
-            File::delete(public_path($media->file_path));
-            $media->delete();
-            $this->isModalOpen = false;
-        }
+    public function update(){
+        try{
+            $this->validate();
 
-        session()->flash('success', 'File berhasil dihapus!');
+            $media = Media::findOrFail($this->mediaId);
+
+            $safeTitle = Purifier::clean($this->title);
+            $safeSumber = Purifier::clean($this->sumber);
+            $safeLink = $this->link;
+
+            $updateData = [
+                'title' => $safeTitle,
+                'sumber' => $safeSumber,
+                'link' => $safeLink,
+            ];
+
+            if($this->file){
+                if ($media) {
+
+                    // ambil nama asli
+                    $ext = $this->file->getClientOriginalExtension();
+
+                    // final filename
+                    $filename = $safeTitle . '_' . time() . '.' . $ext;
+
+                    // pindahkan dari tmp livewire ke PUBLIC/media
+                    $this->file->storeAs('/', $filename, [
+                        'disk' => 'public_uploads'
+                    ]);
+
+                    $filePath = 'media/'.$filename;
+
+                    // deteksi tipe file (image/video)
+                    $isImage = @exif_imagetype(public_path('media/' . $filename));
+                    $type = $isImage ? 'image' : 'video';
+
+                    $updateData['file_path'] = $filePath;
+                    $updateData['type'] = $type;
+                }
+                 //Menghapus file di tmp
+                try {
+                    $this->file->delete();
+                } catch (\Exception $e) {
+                    // kalau gagal hapus, abaikan
+                }
+            }
+            
+            $media->update($updateData);
+            
+            $this->reset();
+            $this->resetValidation(); // Reset validasi setelah penyimpanan
+            $this->isModalOpen = false;
+            
+            session()->flash('success', 'Media Berhasil Diupdate.');
+        
+        } catch (ValidationException $e) {
+            // Tangani error validasi secara eksplisit
+            $this->addError('title', $e->validator->errors()->first('title'));
+            $this->addError('sumber', $e->validator->errors()->first('sumber'));
+            $this->addError('link', $e->validator->errors()->first('link'));
+            $this->addError('file', $e->validator->errors()->first('file'));
+        
+        }catch(\Exception $e){
+            session()->flash('error', $e->getMessage());
+        }
+    }
+
+    public function delete()
+    {
+        if (strtolower($this->confirmDelete)=== 'hapus media') {
+            try{
+                $media = Media::find($this->mediaId);
+                if ($media) {
+                    File::delete(public_path($media->file_path));
+                    $media->delete();
+
+                    $this->reset();
+                    $this->resetValidation(); // Reset validasi setelah penyimpanan
+                    $this->isModalOpen = false;
+
+                    session()->flash('success', 'Media berhasil dihapus.');
+                } else {
+                    session()->flash('error', 'Media tidak ditemukan.');
+                }
+            }catch(\Exception $e){
+                session()->flash('error', 'gagal hapus media');
+            }
+        }else{
+            session()->flash('error', 'ketikan anda salah');
+        }
     }
 
     public function render()

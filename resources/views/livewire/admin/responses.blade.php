@@ -43,10 +43,10 @@
                     <button type="button" id="btn-search-response" wire:click="loadData" class="text-white w-full bg-green-500 box-border border border-transparent hover:bg-green-600 focus:ring-4 focus:ring-green-300 shadow-xs font-medium leading-5 rounded text-sm px-4 py-2.5 focus:outline-none">Search</button>
                 </div>
                 
-                @if($responseData == null)
-                    <div class="bg-blue-200 rounded  m-2 text-center shadow-md overflow-hidden flex flex-col justify-center items-center">
-                        <p class="text-sm text-gray-400 p-1 bg-gray-200 w-1/4 rounded-b-2xl">Nama Form</p>
-                        <h1 class="p-3 ">-- Belum ada response --</h1>
+                @if($userAttempts->isEmpty())
+                    <div class="flex flex-col items-center justify-center my-2 mx-3 p-5 bg-slate-800 rounded border border-dashed border-slate-600 text-slate-400">
+                        <svg class="w-12 h-12 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        <p>Form tidak ada response</p>
                     </div>
                 @else
                     <div class=" rounded my-2 mx-3 p-1 text-center overflow-hidden flex flex-col justify-center items-center">
@@ -104,6 +104,14 @@
                                                 @else
                                                     <div class="text-sm">NoEmail</div>
                                                     <div style="font-size:10px;">({{ date('y-m-d H:i', strtotime($col['created_at'])); }})</div>
+                                                    <button type="button"
+                                                        wire:click="confirmDeleteSingle({{ $responseData->form_id ?? $formId }}, '{{ $col['uuid'] }}', {{ $col['attempt'] }})"
+                                                        class="absolute right-1 bottom-1 text-xsm"
+                                                        title="Hapus Response Ini">
+                                                            <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5 text-white bg-red-800 rounded-full">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" d="m9.75 9.75 4.5 4.5m0-4.5-4.5 4.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                                                            </svg>
+                                                    </button>
                                                 @endif
                                                 
                                             </th>
@@ -113,16 +121,10 @@
                                 </thead>
                                 <tbody class="rounded-md">
                                     @forelse ($questions as $question)
-                                        <tr x-data="{ open: false, pos: { x: 0, y: 0 } }">
-                                            
+                                        <tr>
                                             {{-- KOLOM PERTANYAAN --}}
                                             <td class="sticky left-0 p-2 dark:bg-slate-700 bg-slate-200 z-10 border-b dark:border-gray-300 border-white text-start">
                                                 <p>{{ Str::limit($question->question, 20) }}</p>
-            
-                                                @if($question->questionImage)
-                                                    {{-- (Kode gambar pertanyaan tetap sama, dipersingkat untuk fokus ke solusi) --}}
-                                                    <img src="{{ $question->questionImage }}" ... >
-                                                @endif
                                             </td>
             
                                             {{-- LOOP KOLOM USER (ATTEMPTS) --}}
@@ -134,37 +136,8 @@
                                                 
                                                 <td class="p-3 border-b border-gray-300">
                                                     @foreach ($cellResponses as $r)  
-                                                        <div x-data="{ open: false, pos: { x: 0, y: 0 } }" class="flex justify-center items-center flex-col relative mb-2 last:mb-0">
+                                                        <div class="flex justify-center items-center flex-col relative mb-2 last:mb-0">
                                                             <span class="text-sm">{{ Str::limit($r->answer, 20) }}</span>
-                                                            @if($r->answerImage)                    
-                                                                <img src="{{ $r->answerImage }}" 
-                                                                    @mouseenter="
-                                                                        open = true; 
-                                                                        let rect = $el.getBoundingClientRect(); 
-                                                                        pos.x = rect.left + (rect.width / 2); 
-                                                                        pos.y = rect.top;
-                                                                    " 
-                                                                    @mouseleave="open = false"
-                                                                    src="{{ $r->answerImage }}" 
-                                                                    class="w-8 h-8 rounded-md object-cover cursor-pointer border border-gray-500 hover:scale-110 transition-transform mt-1"
-                                                                    alt="Preview">
-                                                                    
-                                                                <template x-teleport="body">
-                                                                    <div x-show="open" 
-                                                                        x-cloak
-                                                                        x-transition
-                                                                        class="fixed z-[9999] w-64 p-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-2xl pointer-events-none"
-                                                                        :style="`left: ${pos.x}px; top: ${pos.y}px; transform: translate(-50%, -110%);`"
-                                                                    >
-                                                                        <div class="relative">
-                                                                            <img src="{{ $r->answerImage }}" class="w-full h-auto rounded-lg shadow-sm" alt="Full Preview">
-                                                                            {{-- Arrow Indicator --}}
-                                                                            <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 w-3 h-3 bg-white dark:bg-gray-800 border-r border-b border-gray-300 dark:border-gray-600 rotate-45"></div>
-                                                                        </div>
-                                                                    </div>
-                                                                </template>
-                                                            @endif
-            
                                                         </div>                                     
                                                     @endforeach
                                                 </td>
@@ -207,12 +180,12 @@
                                         <span class="block sm:inline">Tindakan ini akan menghapus jawaban responden ini pada attempt {{ $targetAttempt }}.</span>
                                     </div>
             
-                                    <p>Ketik <span class="font-bold">"hapus"</span> untuk konfirmasi:</p>
+                                    <p>Jika anda yakin ingin <span class="font-bold">MENGHAPUS</span> Response ini, Ketik <span class="font-bold">"Hapus Response"</span></p>
                                     
                                     <input type="text" 
                                         wire:model="deleteConfirmText" 
                                         class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-red-500 focus:border-red-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                                        placeholder="Ketik 'hapus' disini..."
+                                        placeholder="Ketik 'hapus response' disini..."
                                         required>
                                     
                                     @error('deleteConfirmText') 
@@ -242,8 +215,7 @@
 
             function generateDropdownFormName(){
                 dropdownNamaForm = document.getElementById('form-name')
-
-                console.log('generator dd: ',dropdownPlacement.value)
+                
                 let option = `<option class='text-gray-300' value='' default>-- Pilih Nama Form --</option>`
 
                 if(formsData.length == 0){
@@ -263,12 +235,8 @@
                 dropdownNamaForm.value = ''; 
 
                 for (let opt of dropdownNamaForm.options) {
-                    console.log('opt val:', opt.value);
-                    console.log('form val:', formId);
-
                     if (opt.value == formId) {
                         dropdownNamaForm.value = formId;
-                        console.log('match');
                         break; 
                     }
                 }  

@@ -19,7 +19,7 @@ class ScoringAllInOneExport implements FromView, ShouldAutoSize, WithTitle
 
     public function view(): View
     {
-        return view('exports.scoring-all-single', [
+        return view('exports.scoring-all', [
             'groupedData' => $this->groupedData,
             'placement' => $this->placement
         ]);

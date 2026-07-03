@@ -37,7 +37,7 @@ let webpageDb = globals.webpageDb,
 
 export function initWebpage(edit) {
   document.getElementById('loading-overlay')?.classList.remove('hidden');
-  console.log('hello load')
+  //console.log('hello load')
   webpageDbRaw = JSON.parse(JSON.stringify(webpageJs));
   globals.webpageDbRaw = webpageDbRaw
   
@@ -51,7 +51,7 @@ export function initWebpage(edit) {
   if(typePage == 'image'){
 
     loadWebpage(edit, true)
-    console.log(typePage)
+    ////console.log(typePage)
     
   }else{
 
@@ -285,11 +285,11 @@ export function resizeElements(edit = false) {
 
       originalCaptured = true;
     }
-    console.log('resize')
+    ////console.log('resize')
     const webpage = document.getElementById('webpage')
     
     const isMobile = edit ? parseInt(webpage.style.width) <= 850 : window.innerWidth <= 850;
-    console.log(isMobile, edit, webpage.style.width, parseInt(webpage.style.width))
+    ////console.log(isMobile, edit, webpage.style.width, parseInt(webpage.style.width))
     document.querySelectorAll("[style]").forEach(el => {
       if(!el.id.startsWith('dropdown')){
 
@@ -348,7 +348,7 @@ const webpage = document.getElementById('webpage')
 
 export function loadWebpage(edit=false, justFooter=false){
   if(!edit) initFlowbite()
-  console.log({edit,justFooter})
+ // //console.log({edit,justFooter})
   const webpageNotFooter = webpageDb.filter(file => !file.id.includes('footer'))
   if(webpageNotFooter.length == 0 && edit){
     let idPrefix = `section-1`
@@ -698,7 +698,7 @@ export function loadWebpage(edit=false, justFooter=false){
           // urutkan berdasarkan element_order biasa
           return a.element_order - b.element_order;
         });
-        console.log(childElements)
+        //console.log(childElements)
         childElements.forEach(page => {
           if(!page.id.includes('footer')){
             let sectionAppend=''
@@ -711,7 +711,7 @@ export function loadWebpage(edit=false, justFooter=false){
     
             }
             const editorContainer = sectionAppend.querySelector('[id^="editor-container-"]');
-            console.log(page.type)
+            //console.log(page.type)
             const renderer = renderers[page.type];
             if (!renderer) return; // skip kalau gak ada handler
             

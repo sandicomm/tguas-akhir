@@ -81,7 +81,7 @@ class RekapScoring extends Component
                 $questions = DB::table('questions')
                     ->join('sections', 'sections.id', '=', 'questions.section_id')
                     ->where('sections.form_id', $this->selectedFormId)
-                    ->select('questions.id', 'questions.question', 'questions.image')
+                    ->select('questions.id', 'questions.question')
                     ->get();
 
                 // D. Mapping Data agar mudah dibaca di View
@@ -95,7 +95,6 @@ class RekapScoring extends Component
                 foreach ($questions as $q) {
                     $row = [
                         'question' => $q->question,
-                        'image' => $q->image,
                         'counts' => []
                     ];
 

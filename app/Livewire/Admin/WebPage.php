@@ -69,7 +69,7 @@ class WebPage extends Component
                     $filename = Str::uuid() . '_' . $original . '.' . $file->getClientOriginalExtension();
                     $file->move(public_path('media'), $filename);
 
-                    $urlMap[$item['id']] = asset('public/media/' . $filename);
+                    $urlMap[$item['id']] = asset('media/' . $filename);
 
                     \App\Models\File::updateOrCreate(
                         ['id' => $filename],
@@ -172,7 +172,7 @@ class WebPage extends Component
             
             // Pastikan filename tidak kosong dan cek keberadaannya
             if ($filename && !str_contains($megaContent, $filename)) {
-                $filePath = public_path('public/media/' . $filename);
+                $filePath = public_path('media/' . $filename);
                 
                 // Hapus fisik
                 if (File::exists($filePath)) {

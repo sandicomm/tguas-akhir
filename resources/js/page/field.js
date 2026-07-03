@@ -260,7 +260,6 @@ const copyField = (idParts) => {
   const parent = element.parentElement;
   const container = parent?.parentElement;
   if (!container) {
-    console.error('Container tidak ditemukan');
     return;
   }
 

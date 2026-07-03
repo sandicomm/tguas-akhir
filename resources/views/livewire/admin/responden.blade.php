@@ -69,11 +69,13 @@
                         </div>
 
                         <!-- MODAL -->
-                        <div x-show="open" x-transition x-cloak class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-[999]">
-                            <div class="bg-white dark:bg-slate-800 rounded-lg p-3 lg:w-1/3 w-[70%] text-black dark:text-white">
-                                <div class="flex items-center justify-between p-4 md:p-5 border-b rounded-t border-gray-600 dark:border-gray-200">
-                                    <h3 class="text-xl font-bold mb-4">Hapus Responden</h3>
-                                    <button type="button" @click="open = false" class="text-gray-400 bg-transparent dark:hover:bg-gray-200 dark:hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center hover:bg-gray-600 hover:text-white">
+                        <div x-show="open" x-transition x-cloak class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-[999] dark:text-white text-black">
+                            <div class="bg-white dark:bg-slate-700 rounded-lg p-2 lg:w-1/3 w-[90%]">
+                                <div class="flex items-center justify-between p-3 rounded-t border-b border-gray-200 dark:border-gray-600">
+                                    <h3 class="text-xl font-bold">
+                                        Hapus Response
+                                    </h3>
+                                    <button type="button" @click="open = false" class="text-gray-400 hover:bg-gray-200 rounded-lg w-8 h-8 flex justify-center items-center" >
                                         <svg class="w-3 h-3" aria-hidden="true" fill="none" viewBox="0 0 14 14">
                                             <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/>
                                         </svg>
@@ -82,19 +84,28 @@
                                 </div>
                                 <form wire:submit.prevent="delete">
                                     @csrf
-                                    <div class="p-4 md:p-5 space-y-2">
-                                        <p>Jika anda yakin ingin <span class="font-bold">MENGHAPUS</span> data ini, Ketik <span class="font-bold">"Hapus Responden"</span> Di field dibawah</p>
+                                    <div class="p-4 md:p-5 space-y-4">
+                                        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+                                            <strong class="font-bold">Perhatian!</strong>
+                                            <span class="block sm:inline">Tindakan ini juga akan menghapus Response dari responden ini.</span>
+                                        </div>
+
+                                        <p>Jika anda yakin ingin <span class="font-bold">MENGHAPUS</span> Responden ini, Ketik <span class="font-bold">"Hapus Responden"</span></p>
                                         <input type="text" wire:model="confirmDelete" 
-                                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg 
-                                                    focus:ring-blue-500 focus:border-blue-500 block w-full dark:bg-gray-700 dark:border-gray-600 
-                                                    dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                                            placeholder="Ketik 'hapus responden' disini..."
+                                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-red-500 focus:border-red-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                                         @if(session()->has('error'))
                                             <p class="text-red-500 text-sm m-0">{{ session('error') }}</p>
                                         @endif
                                     </div>
                                     <!-- Modal footer -->
-                                    <div class="flex items-center p-4 md:p-5 border-t border-gray-200 rounded-b dark:border-gray-600">
-                                        <button type="submit" class="text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-800">Hapus</button>
+                                    <div class="flex items-center justify-end p-4 border-t border-gray-200 dark:border-gray-600 gap-2">
+                                        <button type="button" @click="open = false" class="text-gray-500 bg-white hover:bg-gray-100 focus:ring-4 focus:outline-none focus:ring-blue-300 rounded-lg border border-gray-200 text-sm font-medium px-5 py-2.5 hover:text-gray-900 focus:z-10 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-500 dark:hover:text-white dark:hover:bg-gray-600">
+                                            Batal
+                                        </button>
+                                        <button type="submit" class="text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-red-600 dark:hover:bg-red-700">
+                                            Hapus
+                                        </button>
                                     </div>
                                 </form>
                             </div>

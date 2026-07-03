@@ -6,7 +6,6 @@ let stats
 let sectionsCopy
 let formCopy
 let formPlacementDb
-let fileDb
 let itemSelected
 let SECTION_MAX_ID
 let QUESTION_MAX_ID
@@ -16,14 +15,12 @@ let isFormDirty=false;
 document.addEventListener('DOMContentLoaded', function(){
     formCopy = JSON.parse(JSON.stringify(formJs));
     formPlacementDb = JSON.parse(JSON.stringify(formPlacementJs));
-    fileDb = JSON.parse(JSON.stringify(fileJs));
     SECTION_MAX_ID = sectionMaxID
     QUESTION_MAX_ID = questionMaxID
     ANSWER_MAX_ID = answerMaxID
     sectionsCopy = formCopy.sections
     
     loadForm()
-    setListenerSetImage()
 })
 
 function getEl(id ,name = "Elemen") {
@@ -33,7 +30,7 @@ function getEl(id ,name = "Elemen") {
         window.dispatchEvent(new CustomEvent('notif-pesan', { 
             detail: { pesan: `${name} tidak ditemukan dalam DOM`, status: false } 
         }));
-        console.error(`${name} tidak ditemukan dalam DOM`, id)
+        ////console.error(`${name} tidak ditemukan dalam DOM`, id)
         return null;
     }
     return el;
@@ -155,7 +152,7 @@ function validateBeforeSubmit(fullData) {
         window.dispatchEvent(new CustomEvent('notif-pesan', { 
             detail: { pesan: `Section "${section.name}" wajib memiliki question`, status:false} 
         }));
-        console.log(section, sectionsCopy)
+        //console.log(section, sectionsCopy)
         return false;
     }
 
@@ -172,7 +169,7 @@ function validateBeforeSubmit(fullData) {
             window.dispatchEvent(new CustomEvent('notif-pesan', { 
                 detail: { pesan: `Question "${question.question}" wajib memiliki jawaban`, status:false} 
             }));
-            console.log(section,question, sectionsCopy)
+            //console.log(section,question, sectionsCopy)
             return false;
         }
       }
@@ -238,7 +235,6 @@ function normalizeSectionsToKeyedObject(formCopy, sectionsCopy) {
           id: qid,
           question: q.question,
           order: String(q.order),
-          image: q.image,
           rule: q.rules,
           status: '',
           changeContent: q.changeContent,
@@ -254,7 +250,6 @@ function normalizeSectionsToKeyedObject(formCopy, sectionsCopy) {
               id: aid,
               answer: a.answer,
               value: a.value,
-              image: a.image,
               status: '',
               changeContent: a.changeContent
             };
@@ -291,52 +286,6 @@ async function submitInBatch(form, isAutosave = false) {
         document.getElementById('jsLoader')?.classList.add('hidden');
         return;
     }
-    let fileDbSubmit = fileDb.filter(file => file.action)
-    const fileDbChunk = chunk(fileDbSubmit,15)
-    
-    for (let i = 0; i < fileDbChunk.length; i++) {
-        const formFileDb = new FormData();  
-        fileDbChunk[i].forEach((fileD,idx)=>{
-
-            formFileDb.append(`form_id`, form.id);
-            formFileDb.append(`items[${idx}][id]`, fileD.id);
-            formFileDb.append(`items[${idx}][type]`, fileD.type);
-            formFileDb.append(`items[${idx}][filetype]`, fileD.filetype ?? '');
-            formFileDb.append(`items[${idx}][action]`, fileD.action ?? '');
-            formFileDb.append(`items[${idx}][file]`, fileD.file);
-            formFileDb.append(`items[${idx}][url]`, fileD.blob);
-        })
-
-        let response = await fetch('/admin/form/update', {
-            method: 'POST',
-            headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-            'Accept': 'application/json'
-            },
-            body: formFileDb
-        });
-
-        if (response.status === 419 || response.status === 401) {
-            allowUnload = true;
-
-            window.dispatchEvent(new CustomEvent('redirect-modal', { 
-                detail: { pesan: 'Session Berakhir silahkan login ulang', url: redirect, status:false } 
-            }));
-            return;
-        }
-
-        let json = await response.json();
-        
-        redirect = json.redirect
-
-        if (!json.success) {
-
-            window.dispatchEvent(new CustomEvent('notif-pesan', { 
-                detail: { pesan: json.message, status:false } 
-            }));
-            return;
-        }
-    }
 
     let fullData = filterChangedData(form);
 
@@ -352,10 +301,12 @@ async function submitInBatch(form, isAutosave = false) {
       must_fill: fullData.must_fill,
       changeContent: fullData.changeContent ?? '',
       batch_number: 0,
-      sections: fullData.sections
+      sections: fullData.sections,
+      stat: statAction
     };
-
     const sectionBatches = chunkArray(fullData.sections, 3);
+    //console.log(fullData, sectionBatches)
+    let msg
 
     if(sectionBatches.length == 0){
         document.getElementById('jsLoader')?.classList.remove('hidden');
@@ -381,65 +332,82 @@ async function submitInBatch(form, isAutosave = false) {
         let json = await response.json();
         
         redirect = json.redirect
+        //console.log('base',json)
+        //console.log('base',baseData)
+        msg = json.message
 
         if (!json.success) {
-       
-            window.dispatchEvent(new CustomEvent('notif-pesan', { 
-                detail: { pesan: json.message, status:false } 
-            }));
+            if(json.redirect){
+                window.dispatchEvent(new CustomEvent('redirect-modal', { 
+                    detail: { pesan: `${msg}`, url: redirect, status:false } 
+                }));
+            }else{
+                window.dispatchEvent(new CustomEvent('notif-pesan', { 
+                    detail: { pesan: json.message, status:false } 
+                }));
+            }
             return;
         }
     }
 
     for (let i = 0; i < sectionBatches.length; i++) {
+        //console.log('section')
         const payload = {
             ...baseData,
             batch_number: i,
             sections: sectionBatches[i]
         };
         let response = await fetch('/admin/form/update', {
-          method: 'POST',
-          headers: {
+            method: 'POST',
+            headers: {
             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
             'Accept': 'application/json',
             'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(payload)
+            },
+            body: JSON.stringify(payload)
         });
     
         let json = await response.json();
         raw2=json
         redirect = json.redirect
-
+        msg=json.message
+        //console.log('section base',json)
+        //console.log('section base',sectionBatches)
         if (!json.success) {
-
-            window.dispatchEvent(new CustomEvent('notif-pesan', { 
-                detail: { pesan: json.message, status:false } 
-            }));
+            //console.log(json)
+            if(json.redirect){
+                window.dispatchEvent(new CustomEvent('redirect-modal', { 
+                    detail: { pesan: `${msg}`, url: redirect, status:false } 
+                }));
+            }else{
+                window.dispatchEvent(new CustomEvent('notif-pesan', { 
+                    detail: { pesan: json.message, status:false } 
+                }));
+            }
             return;
         }
     }
-
+    
     document.getElementById('jsLoader')?.classList.add('hidden');
     
     if (isAutosave) {
-        //console.log('Autosave sukses');
+        ////console.log('Autosave sukses');
         showToast('Form disimpan otomatis'); // Contoh notifikasi kecil
         isFormDirty=false
         allowUnload=true
         window.location.href = redirect
     } else {
         // Jika manual, jalankan event redirect kamu yang lama
+        //console.log('event')
         window.dispatchEvent(new CustomEvent('redirect-modal', { 
-            detail: { pesan: 'Data form telah berhasil diperbarui.', url: redirect, status:true } 
+            detail: { pesan: `Data form telah berhasil diperbarui. ${msg}`, url: redirect, status:true } 
         }));
         isFormDirty=false
     }
-
   } catch (err) {
 
     window.dispatchEvent(new CustomEvent('notif-pesan', { 
-        detail: { pesan: 'Terjadi Kesalahan', status:false } 
+        detail: { pesan: `Terjadi Kesalahan ${err.message}`, status:false } 
     }));
     
   }
@@ -539,7 +507,7 @@ function updateFormSetting (event) {
         el.style.borderWidth= '4px'
 
         formCopy.changeSettingAttempt= true
-        console.log(formCopy)
+        //console.log(formCopy)
         formCopy.changeContent='update'
         loadBtnSubmit()
 
@@ -561,7 +529,7 @@ function updateFormSetting (event) {
 // ------------------------------- SECTION -------------------------------
 function formOrderDownSection(event){
     const sectionId = parseInt(event.id.split('-')[4]);
-    //console.log(sectionId)
+    ////console.log(sectionId)
     
     const section = sectionsCopy.find(sec =>  parseInt(sec.id) == sectionId);
     let sectionEl = getEl(`container-section-${sectionId}`)
@@ -572,12 +540,12 @@ function formOrderDownSection(event){
     if (!nextSection) return;
 
     if (nextSection) {
-        //console.log(event)
+        ////console.log(event)
         const wrapperSection = sectionEl.querySelector('[id^="wrapper-section"]')
         wrapperSection.style.borderColor='rgba(255, 141, 62, 1)'
         wrapperSection.style.borderWidth= '4px'
         sectionEl.querySelectorAll('[id^="wrapper-question-"]').forEach(q=>{
-            //console.log(q)
+            ////console.log(q)
             q.style.borderColor='rgba(255, 141, 62, 1)'
             q.style.borderWidth= '4px'
         })
@@ -600,7 +568,7 @@ function formOrderDownSection(event){
         nextSection.changeOrder = true;
         
         loadBtnSubmit();
-        //console.log(sectionsCopy)
+        ////console.log(sectionsCopy)
     }
 }
 
@@ -611,11 +579,11 @@ function formOrderUpSection(event){
     let sectionEl = getEl(`container-section-${sectionId}`)
     if(!sectionEl) return
 
-    console.log(section, sectionEl)
+    //console.log(section, sectionEl)
     if (!section) return;
     
     const nextSection = sectionsCopy.find(nextSec =>  (nextSec.order ==  parseInt(section.order) - 1) && (nextSec.order !=0));
-    console.log(nextSection)
+    //console.log(nextSection)
     
     if (nextSection &&  parseInt(section.order) > 1) {
         // Tukar nilai order
@@ -624,13 +592,13 @@ function formOrderUpSection(event){
         wrapperSection.style.borderWidth= '4px'
 
         sectionEl.querySelectorAll('[id^="wrapper-question-"]').forEach(q=>{
-            //console.log(q)
+            ////console.log(q)
             q.style.borderColor='rgba(255, 141, 62, 1)'
             q.style.borderWidth= '4px'
         })
 
         const target = sectionEl.previousElementSibling;
-        console.log(target)
+        //console.log(target)
         if (!target) return;
         
         // Tukar dataset dan posisi DOM
@@ -677,7 +645,7 @@ function formBtnAddSection(event){
         questions: []
     }
 
-    console.log('add new section:', dataNewSection, sectionTarget.order, sectionsCopy)
+    //console.log('add new section:', dataNewSection, sectionTarget.order, sectionsCopy)
 
     sectionsCopy.push(dataNewSection);
 
@@ -704,7 +672,7 @@ function formBtnCopySection(event){
     })
 
     const maxId = getMax(sectionsCopy)
-    console.log(maxId)
+    //console.log(maxId)
     copySection.id = parseInt(maxId.sectionId) + 1
     copySection.name = copySection.name + ' (copy)'
     copySection.changeContent = 'add'
@@ -748,9 +716,9 @@ function formBtnCopySection(event){
         
         return newQuestion
     })
-    console.log('before push',copySection)
+    //console.log('before push',copySection)
     sectionsCopy.push(copySection)
-    console.log('after push', copySection)
+    //console.log('after push', copySection)
 
     const containerSection = getEl(`container-section-${sectionId}`)
     if(!containerSection) return
@@ -767,7 +735,7 @@ function formBtnDeleteSection(event) {
         window.dispatchEvent(new CustomEvent('notif-pesan', { 
             detail: { pesan: 'Section Tidak Boleh Kosong (Minimal sisa 1)', status: false } 
         }));
-        //console.log('Operasi dibatalkan: Semua section dihapus.');
+        ////console.log('Operasi dibatalkan: Semua section dihapus.');
         return;
     }
         
@@ -919,11 +887,11 @@ function formBtnAddQuestion(event) {
             }]
         }
 
-        console.log('add new question:', section.questions, questionData, question,thisQuestionOrder)
+        //console.log('add new question:', section.questions, questionData, question,thisQuestionOrder)
 
         section.questions.push(questionData);
         loadBtnSubmit()
-        console.log('add quesiton:',sectionsCopy)
+        //console.log('add quesiton:',sectionsCopy)
         if(thisQuestionId == 0){
             const containerSection=getEl(`container-section-${sectionId}`)
             if(!containerSection) return
@@ -1004,16 +972,16 @@ function formBtnDeleteQuestion (event) {
     const sectionId = parseInt(event.id.split('-')[8]);
     const questionId = parseInt(event.id.split('-')[4]);
 
-    sectionsCopy.forEach(s=>console.log(s.id))
+    //sectionsCopy.forEach(s=>//console.log(s.id))
 
     const section = sectionsCopy.find(sec=>sec.id==sectionId)
     if(!section) return
 
-    sectionsCopy.forEach(s=>console.log(s.id))
+    //sectionsCopy.forEach(s=>//console.log(s.id))
     
     const questionActive = section.questions.filter(q => q.changeContent !== 'delete');
 
-    console.log(sectionId,sectionsCopy,section,section.questions)
+    //console.log(sectionId,sectionsCopy,section,section.questions)
    
     if (questionActive.length === 1) {
         window.dispatchEvent(new CustomEvent('notif-pesan', { 
@@ -1066,12 +1034,12 @@ function formOrderUpQuestion (event) {
 
     // Cari section yang sesuai
     const section = sectionsCopy.find(sec =>  sec.id == sectionId);
-    console.log(section)
+    ////console.log(section)
     if (!section) return;
     
     // Cari pertanyaan yang sesuai
     const question = section.questions.find(q =>  q.id == questionId);
-    console.log(question)
+    //console.log(question)
 
     if (!question) return;
 
@@ -1079,7 +1047,7 @@ function formOrderUpQuestion (event) {
 
     const previousQuestion = section.questions.find(q =>  (q.order == questionOrder - 1) && (q.order !=0));
 
-    console.log('before up question:', question, previousQuestion)
+    ////console.log('before up question:', question, previousQuestion)
     
     if (previousQuestion && questionOrder > 1) {
      
@@ -1106,7 +1074,7 @@ function formOrderUpQuestion (event) {
         const target = questionEl.previousElementSibling;
         if (!target) return;
 
-        console.log("up question in", previousQuestion, question)
+        ////console.log("up question in", previousQuestion, question)
 
         // Tukar dataset dan posisi DOM
         target.insertAdjacentElement('beforebegin', questionEl);
@@ -1136,7 +1104,7 @@ function formOrderUpQuestion (event) {
                 }
             });
 
-            console.log("up question out", section)
+            ////console.log("up question out", section)
 
             section.changeOrder = true;
             section.changeContent='update'
@@ -1174,7 +1142,7 @@ function formOrderDownQuestion (event) {
     
     const nextQuestion = section.questions.find(q => q.order == question.order + 1);
 
-    console.log('before down question:', question, nextQuestion)
+    ////console.log('before down question:', question, nextQuestion)
     if (nextQuestion) {
         // [question.order, nextQuestion.order] = [nextQuestion.order, question.order];
 
@@ -1194,7 +1162,7 @@ function formOrderDownQuestion (event) {
         const target = questionEl.nextElementSibling;
         if (!target) return;
 
-        console.log('down question in:', question, nextQuestion)
+        //.log('down question in:', question, nextQuestion)
 
         // Tukar dataset dan posisi DOM
         target.insertAdjacentElement('afterend', questionEl);
@@ -1233,7 +1201,7 @@ function formOrderDownQuestion (event) {
             if(!containerQuestion) return
             containerQuestion.remove()
 
-            console.log('down question out:', question, nextSection, section)
+            ////console.log('down question out:', question, nextSection, section)
 
             const target = getEl(`container-section-${nextSection.id}`)
             if(!target) return
@@ -1451,10 +1419,6 @@ const generateSingleSection = (section, questionSection, yellowStats)=>{
 }
 
 const generatorSingleAnswerPilgan= (answer,question,section, yellowStats)=>{
-    let answerImage = answer.image
-    if(!answer.image?.startsWith('https')){
-        answerImage = answer.url
-    }
     return`
         <div id="container-answer-${section.id}-${question.id}-${answer.id}" class="flex justify-center flex-col items-center my-1 gap-1 border-2 rounded border-gray-100">
             <div class="flex w-full gap-2 p-1">
@@ -1472,60 +1436,6 @@ const generatorSingleAnswerPilgan= (answer,question,section, yellowStats)=>{
                     </div>
                     <div data-popper-arrow></div>
                 </div>
-
-                <label for="image-input-answer-${section.id}-${question.id}-${answer.id}" 
-                    class="bg-blue-500 rounded-md p-1 text-white"
-                    data-popover-target="popover-add-image-answer-${section.id}-${question.id}-${answer.id}">
-
-                    <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
-                    </svg>
-                </label>
-                <div data-popover id="popover-add-image-answer-${section.id}-${question.id}-${answer.id}" role="tooltip" data-popover-placement="left" class="absolute z-10 invisible inline-block text-sm text-white transition-opacity duration-300 bg-gray-600 border border-gray-200 rounded-lg shadow-xs opacity-0 ">
-                    <div class="py-2 px-3">
-                        <p>Tambah Gambar</p>
-                    </div>
-                    <div data-popper-arrow></div>
-                </div>
-
-                <div id="set-image-from-recent-answer-${section.id}-${question.id}-${answer.id}"
-                    class="bg-blue-500 rounded-md p-1 cursor-pointer text-white"
-                    data-popover-target="popover-recent-image-answer-${section.id}-${question.id}-${answer.id}"
-                    data-modal-target="recent-image-modal" 
-                    data-modal-toggle="recent-image-modal">
-                        
-                    <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 9.776c.112-.017.227-.026.344-.026h15.812c.117 0 .232.009.344.026m-16.5 0a2.25 2.25 0 0 0-1.883 2.542l.857 6a2.25 2.25 0 0 0 2.227 1.932H19.05a2.25 2.25 0 0 0 2.227-1.932l.857-6a2.25 2.25 0 0 0-1.883-2.542m-16.5 0V6A2.25 2.25 0 0 1 6 3.75h3.879a1.5 1.5 0 0 1 1.06.44l2.122 2.12a1.5 1.5 0 0 0 1.06.44H18A2.25 2.25 0 0 1 20.25 9v.776" />
-                    </svg>
-                </div>
-                <div data-popover id="popover-recent-image-answer-${section.id}-${question.id}-${answer.id}" role="tooltip" data-popover-placement="left" class="absolute z-10 invisible inline-block text-sm text-white transition-opacity duration-300 bg-gray-600 border border-gray-200 rounded-lg shadow-xs opacity-0 ">
-                    <div class="py-2 px-3">
-                        <p>Pilih Gambar</p>
-                    </div>
-                    <div data-popper-arrow></div>
-                </div>
-
-                <button type="button" id="btn-reset-bg-image-answer-${section.id}-${question.id}-${answer.id}"
-                    class="bg-blue-500 rounded-md p-1 text-white ${answerImage ? '' :'hidden'}" 
-                    data-popover-target="popover-reset-image-answer-${section.id}-${question.id}-${answer.id}">
-
-                    <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
-                    </svg>
-                </button>
-                <div data-popover id="popover-reset-image-answer-${section.id}-${question.id}-${answer.id}" role="tooltip" data-popover-placement="left" class="absolute z-10 invisible inline-block text-sm text-white transition-opacity duration-300 bg-gray-600 border border-gray-200 rounded-lg shadow-xs opacity-0 ">
-                    <div class="py-2 px-3">
-                        <p>Hapus Gambar</p>
-                    </div>
-                    <div data-popper-arrow></div>
-                </div>
-            </div>
-
-            <div class="w-full">
-                <div id="preview-container" class="mt-2">
-                    <img id="preview-image-answer-${section.id}-${question.id}-${answer.id}" src="${answerImage ?? ''}" alt="Preview" class="w-1/2 h-auto rounded-lg ${answerImage ? '' :'hidden'}" />
-                </div>
-                <input type="file" id="image-input-answer-${section.id}-${question.id}-${answer.id}" accept="image/*" class="hidden">
             </div>
             
             <div class="flex justify-center items-end gap-2 w-full">
@@ -1551,7 +1461,6 @@ const generatorSingleAnswerPilgan= (answer,question,section, yellowStats)=>{
 const generatorAnswer=(section,question, yellowStats)=>{
     let answerElement=''
     let btnAddAnswer=''
-    console.log(question,section)
     // ------------------------------- ANSWER PILGAN -------------------------------
     if(question.answers.length != 0){
         question.answers.forEach((answer,index) =>{
@@ -1564,64 +1473,12 @@ const generatorAnswer=(section,question, yellowStats)=>{
 }
 
 const generatorQuestion=(section,question, yellowStats)=>{
-    let questionImage = question.image
-    if(question.image?.startsWith('__temp')){
-        questionImage=question.url
-    }
-
     return `
         <div id="container-question-${question.id}" class="soal-1 w-full flex justify-center items-start gap-2 mb-1">
             <div id="wrapper-question-${question.id}" class="border dark:border-gray-400 border-gray-600 rounded p-1 w-full"
                 style="${yellowStats ? 'border-color:rgba(255, 141, 62, 1);border-width:4px;':''}">
                 <div class="flex items-center gap-2 dark:bg-indigo-400/80 bg-blue-300/80 rounded-md flex-col p-2 mb-1">
                     <h3 class="text-white py-1 px-3 text-lg font-bold bg-blue-700 rounded-md w-full">Question</h3>
-                    <div class="text-white flex gap-2 w-full">
-                        <label for="image-input-question-${section.id}-${question.id}" 
-                            class="bg-blue-500 rounded-md p-1"
-                            data-popover-target="popover-add-image-question-${section.id}-${question.id}">
-
-                            <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
-                            </svg>
-                        </label>
-                        <div data-popover id="popover-add-image-question-${section.id}-${question.id}" role="tooltip" data-popover-placement="left" class="absolute z-10 invisible inline-block text-sm text-white transition-opacity duration-300 bg-gray-600 border border-gray-200 rounded-lg shadow-xs opacity-0 ">
-                            <div class="py-2 px-3">
-                                <p>Tambahkan Gambar</p>
-                            </div>
-                            <div data-popper-arrow></div>
-                        </div>                        
-
-                        <div id="set-image-from-recent-question-${section.id}-${question.id}"
-                            class="bg-blue-500 rounded-md p-1 cursor-pointer"
-                            data-popover-target="popover-recent-image-question-${section.id}-${question.id}"
-                            data-modal-target="recent-image-modal" 
-                            data-modal-toggle="recent-image-modal">
-                                
-                            <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 9.776c.112-.017.227-.026.344-.026h15.812c.117 0 .232.009.344.026m-16.5 0a2.25 2.25 0 0 0-1.883 2.542l.857 6a2.25 2.25 0 0 0 2.227 1.932H19.05a2.25 2.25 0 0 0 2.227-1.932l.857-6a2.25 2.25 0 0 0-1.883-2.542m-16.5 0V6A2.25 2.25 0 0 1 6 3.75h3.879a1.5 1.5 0 0 1 1.06.44l2.122 2.12a1.5 1.5 0 0 0 1.06.44H18A2.25 2.25 0 0 1 20.25 9v.776" />
-                            </svg>
-                        </div>
-                        <div data-popover id="popover-recent-image-question-${section.id}-${question.id}" role="tooltip" data-popover-placement="left" class="absolute z-10 invisible inline-block text-sm text-white transition-opacity duration-300 bg-gray-600 border border-gray-200 rounded-lg shadow-xs opacity-0 ">
-                            <div class="py-2 px-3">
-                                <p>Pilih Gambar</p>
-                            </div>
-                            <div data-popper-arrow></div>
-                        </div>
-
-                        <button type="button" id="btn-reset-bg-image-question-${section.id}-${question.id}"
-                            class="bg-blue-500 rounded-md p-1 ${questionImage ? '' :'hidden'}" 
-                            data-popover-target="popover-reset-image-question-${section.id}-${question.id}">
-                            <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
-                            </svg>
-                        </button>
-                        <div data-popover id="popover-reset-image-question-${section.id}-${question.id}" role="tooltip" data-popover-placement="left" class="absolute z-10 invisible inline-block text-sm text-white transition-opacity duration-300 bg-gray-600 border border-gray-200 rounded-lg shadow-xs opacity-0 ">
-                            <div class="py-2 px-3">
-                                <p>Hapus Gambar</p>
-                            </div>
-                            <div data-popper-arrow></div>
-                        </div>
-                    </div>
 
                     <div class="flex items-center w-full">
                         
@@ -1653,10 +1510,6 @@ const generatorQuestion=(section,question, yellowStats)=>{
                         </div>
 
                         <div class="w-full">
-                            <div id="preview-container" class="mt-3 flex justify-center">
-                                <img id="preview-image-question-${section.id}-${question.id}" src="${questionImage ?? ''}" alt="Preview" class="w-full h-auto rounded-lg ${questionImage ? '' :'hidden'}" />
-                            </div>
-                            <input type="file" id="image-input-question-${section.id}-${question.id}" accept="image/*" class="hidden">
                             <textarea 
                                 class="rounded w-full text-black dark:text-white 
                                 dark:bg-gray-800 bg-white overflow-y-auto"
@@ -1811,329 +1664,12 @@ const generatorSection =(section, yellowStats)=>{
     return generateSingleSection(section, questionSection,yellowStats)
 }
 
-// --------------------- SET IMAGE -------------------------------------
-function shortenName(name, maxLength = 20) {
-  if (name.length <= maxLength) return name;
-  const ext = name.split('.').pop();
-  return name.substring(0, maxLength - ext.length - 3) + '...' + ext;
-}
-
-async function compressToWebPFlow(file) {
-  return new Promise((resolve, reject) => {
-    new Compressor(file, {
-      quality: 0.7,
-      maxWidth: 1920,
-      convertSize: 0,
-      async success(result) {
-        try {
-          const compressed = new File([result], file.name, { type: result.type });
-          const webp = await compressToWebP(compressed, 0.7);
-          resolve(webp);
-        } catch (err) {
-          reject(err);
-        }
-      },
-      error(err) { reject(err) }
-    });
-  });
-}
-
-async function compressToWebP(file, quality = 0.7) {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    const url = URL.createObjectURL(file);
-
-    img.onload = () => {
-      const canvas = document.createElement("canvas");
-      canvas.width = img.width;
-      canvas.height = img.height;
-
-      const ctx = canvas.getContext("2d");
-      ctx.drawImage(img, 0, 0);
-
-      canvas.toBlob(
-        (blob) => {
-          if (!blob) return reject("Gagal compress ke WebP");
-
-          resolve(
-            new File([blob], file.name.replace(/\.\w+$/, ".webp"), {
-              type: "image/webp",
-            })
-          );
-        },
-        "image/webp",
-        quality
-      );
-    };
-
-    img.onerror = reject;
-    img.src = url;
-  });
-}
-
 function showLoader(v = true) {
     if(v){
         document.getElementById('jsLoader').classList.remove('hidden')
     }else{
         document.getElementById('jsLoader').classList.add('hidden')
     }
-}
-
-function isValidImage(file, maxMB = 5) {
-  if (!file || !file.type.startsWith('image/')) {
-    window.dispatchEvent(new CustomEvent('notif-pesan', { 
-      detail: { pesan: 'Please select a valid image file.', status:false} 
-    }));
-    return false;
-  }
-  if (file.size > maxMB * 1024 * 1024) {
-    window.dispatchEvent(new CustomEvent('notif-pesan', { 
-        detail: { pesan: `Ukuran file terlalu besar. Maksimal ${maxMB}MB.`, status:false} 
-      }));
-    return false;
-  }
-  return true;
-}
-
-function setListenerSetImage(){
-  document.querySelectorAll('[id^="set-image-from-recent"]').forEach(btn=>{
-    if (btn.dataset.listenerAdded === "true") return;
-    btn.dataset.listenerAdded = "true";
-
-    btn.addEventListener('click', function(e){
-        itemSelected=btn.id.split('-').slice(4).join('-')
-        setImageGallery()
-    })
-
-  })
-}
-
-function setImageRecent() {
-    document.querySelectorAll('[id^="media-recent"]').forEach(media => {
-        if (media.dataset.listenerAdded === "true") return;
-
-        media.dataset.listenerAdded = "true";
-        media.addEventListener('click', async function () {
-            showLoader(true);
-            const src = media.getAttribute("src");
-            let name = media.dataset.media;
-            if(!src.startsWith('blob')){
-                name = `${globals.url}/media/${name}`
-            }
-
-            const questionId = itemSelected.split('-')[2]
-            const sectionId = itemSelected.split('-')[1]
-      
-            const targetElement = getEl(`preview-image-${itemSelected}`);
-            if(!targetElement)return
-
-            const section = sectionsCopy.find(s=>s.id==sectionId)
-            if(!section)return
-            
-            const question = section.questions.find(q=>q.id==questionId)
-            if(!question)return
-
-            let answerId
-            let answer
-            let targetElementDb
-
-            if(itemSelected.startsWith('answer')){
-                answerId=itemSelected.split('-')[3]
-                answer=question.answers.find(a=>a.id==answerId)
-                targetElementDb=answer
-                question.changeContent='update'
-            }else{
-                targetElementDb=question
-            }
-
-            let oldUrl = targetElementDb.image ?? null;
-
-            // ============== FIELD ===============
-            document.getElementById(`btn-reset-bg-image-${itemSelected}`).classList.remove('hidden')
-
-            targetElement.style.borderColor='rgba(255, 141, 62, 1)'
-            targetElement.style.borderWidth= '4px'
-            targetElement.src = src;
-            targetElement.classList.remove("hidden");
-
-            // ====== Update ke database local =====
-            section.changeContent='update'
-
-            targetElementDb.image = name
-            targetElementDb.url = src
-            targetElementDb.changeContent='update'
-
-            const targetNew = fileDb.find(f => f.id === name && f.file);
-            if (targetNew) targetNew.action = "add";
-
-            if(oldUrl){
-                const checkUsedMedia = section.questions.some(el => {
-                    if (el.id === targetElementDb.id) return false; // skip elemen yg sedang kita proses
-                    //console.log(el)
-                    el.answers.some(ans=>{
-                        if (ans.id === targetElementDb.id) return false; // skip elemen yg sedang kita proses
-                        return ans.image?.includes(oldUrl)
-                    })
-
-                    return el.image?.includes(oldUrl)
-                });
-
-                const target = fileDb.find(el => el.id === oldUrl);
-                //console.log(oldUrl, checkUsedMedia)
-                if (target && !checkUsedMedia) {
-                    target.action='delete';
-                }
-            }
-
-            isFormDirty = true
-            showLoader(false);
-        });
-    });
-    loadBtnSubmit()
-}
-
-function setImageGallery(indicator){
-  let mediaGallery='-- Belum Ada Gambar --'
-  if(fileDb.length > 0){
-    mediaGallery=''
-  }
-  fileDb.forEach(file =>{
-    if(file.filetype === 'img' || file.type === 'img'){
-      let url=`${globals.url}/media/${file.id}`
-      if(file.url){
-        url=file.url
-      }
-      mediaGallery +=`
-        <div class="w-[100px] h-[100px] overflow-hidden rounded relative cursor-pointer group">
-          <img id="media-recent-${file.id}" data-media="${file.id}" src="${url}" 
-          class="w-full h-full object-cover transition-transform duration-200 group-hover:scale-105">
-        </div>
-      `
-    }
-  })
-  isFormDirty = true
-  document.getElementById('body-media-recent').innerHTML=mediaGallery
-
-  setImageRecent()
-}
-
-async function handleFieldBgUpload(file, el) {
-    const sectionId = parseInt(el.id.split('-')[3])
-    const questionId = parseInt(el.id.split('-')[4])
-    let answerId
-    
-    const id = el.id.split('-').slice(2).join('-')
-    if(id.startsWith('answer')){
-        answerId=parseInt(el.id.split('-')[5])
-    }
-
-    const preview = document.getElementById(`preview-image-${id}`);
-    //console.log(document.getElementById(`preview-image-${id}`),id,el,sectionId,questionId)
-
-    const webp = await compressToWebPFlow(file);
-    const blob = URL.createObjectURL(webp);
-
-    // update UI
-    preview.src = blob;
-    preview.classList.remove('hidden');
-
-    preview.style.borderColor='rgba(255, 141, 62, 1)'
-    preview.style.borderWidth= '4px'
-
-    const randomKey = Math.random().toString(36).substring(2, 8);
-    const safeName = shortenName(webp.name.replace(/\s+/g, '_')); // hindari spasi
-    const uniqueKey = `__temp_media_${randomKey}_${safeName}__`;
-
-    const sections = sectionsCopy.find(sec => sec.id == sectionId)
-    if(!sections) return
-    
-    const question = sections.questions.find(q => q.id == questionId)
-    if(!question)return
-
-    let answer
-    let elementTarget
-    if(id.startsWith('answer')){
-        //console.log(question)
-        answer = question.answers.find(a=>a.id == answerId)
-        if(!answer)return
-
-        elementTarget = answer
-    }else{
-        elementTarget = question
-    }
-
-    if(elementTarget){
-        sections.changeContent='update'
-        if(id.startsWith('answer')){
-            question.changeContent='update'
-        }
-        //console.log(elementTarget, uniqueKey)
-        elementTarget.changeContent = 'update' 
-        elementTarget.image = uniqueKey
-        elementTarget.url = blob
-
-        fileDb.push({
-            id:uniqueKey,
-            type:'file',
-            filetype:'img',
-            action:'add',
-            file:webp,
-            url:blob
-        })
-        
-        el.style.borderColor='rgba(255, 141, 62, 1)'
-        el.style.borderWidth= '4px'
-        elementTarget.changeQuestion = true
-
-        loadBtnSubmit()
-    }
-    
-    document.getElementById(`btn-reset-bg-image-${id}`).classList.remove('hidden');
-}
-
-function deleteImage (el){
-    const id = el.id.split('-').slice(4).join('-')
-    //console.log(id)
-    let answerId
-
-    const questionId = id.split('-')[2]
-    if(!questionId)return
-
-    const sectionId = id.split('-')[1]
-    if(!sectionId)return
-    
-    const section = sectionsCopy.find(s=>s.id==sectionId)
-    if(!section)return
-
-    const question = section.questions.find(q=>q.id==questionId)
-    if(!question)return
-
-    let targetElement
-    if(id.startsWith('answer')){
-        question.changeContent='update'
-
-        let answerId = id.split('-')[3]
-        if(!answerId)return
-
-        targetElement = question.answers.find(a=>a.id==answerId)
-        if(!targetElement)return
-    }else{
-        targetElement=question
-    }
-    
-    const previewImage = getEl(`preview-image-${id}`)
-    previewImage.src=''
-    previewImage.classList.add('hidden')
-
-    targetElement.image = ''
-    targetElement.changeContent = 'update'
-    section.changeContent = 'update'
-
-    // Reset input file juga (opsional)
-    document.getElementById(`image-input-${id}`).value = '';
-    document.getElementById(`btn-reset-bg-image-${id}`).classList.add('hidden');
-    isFormDirty = true
-    loadBtnSubmit()
 }
 
 // ---------------------------------- GENERATE FORM --------------------------------------
@@ -2144,7 +1680,7 @@ function loadForm(parameter){
         formField.value = formCopy.form_name
         // Urutkan berdasarkan properti 'order'
         sectionsCopy.sort((a, b) => a.order - b.order);
-        console.log(sectionsCopy)
+        
         let sectionSession = ``
         sectionsCopy.forEach(section => {
             if(section.changeContent !='delete'){
@@ -2196,36 +1732,10 @@ setTimeout(() => {
                 document.getElementById('jsLoader').classList.add('hidden');
             },10)
         }
-
-        if(e.target.matches('[id^="image-input-"]')){
-            const file = e.target.files[0];
-            e.target.value = "";
-            if (!isValidImage(file)) return;
-
-            showLoader(true);
-
-            try {
-                await handleFieldBgUpload(file, e.target);
-            } catch (err) {
-                console.error(err);
-                window.dispatchEvent(new CustomEvent('notif-pesan', { 
-                    detail: { pesan: `Gagal memproses gambar`, status:false} 
-                }));
-            }
-            showLoader(false);
-        }
     });
 
 /* CLICK EVENTS */
     container.addEventListener('click', function(e) {
-        // -------------------------- RESET IMAGE -----------------------
-        if(e.target.closest('[id^="btn-reset-bg-image-"]')){
-            document.getElementById('jsLoader').classList.remove('hidden');
-            setTimeout(()=>{
-                deleteImage(e.target.closest('[id^="btn-reset-bg-image-"]'))
-                document.getElementById('jsLoader').classList.add('hidden');
-            },10)
-        }
         // ---------------------------- SECTION -------------------------
         if (e.target.closest('[id^="form-order-up-section-"]')) {
             document.getElementById('jsLoader').classList.remove('hidden');
@@ -2248,7 +1758,6 @@ setTimeout(() => {
                 formBtnAddSection(e.target.closest('[id^="form-btn-add-section-"]'));
                 document.getElementById('jsLoader').classList.add('hidden');
                 initModals();
-                setListenerSetImage()
             },10)
         }
         if (e.target.closest('[id^="form-btn-copy-section-"]')) {
@@ -2258,7 +1767,6 @@ setTimeout(() => {
                 formBtnCopySection(e.target.closest('[id^="form-btn-copy-section-"]'))
                 document.getElementById('jsLoader').classList.add('hidden');
                 initModals();
-                setListenerSetImage()
             },10)
         }
         if (e.target.closest('[id^="form-btn-delete-section-"]')) {
@@ -2277,7 +1785,6 @@ setTimeout(() => {
                 formBtnAddQuestion(e.target.closest('[id^="form-btn-add-question-"]'))
                 document.getElementById('jsLoader').classList.add('hidden');
                 initModals();
-                setListenerSetImage()
             },10)
         };
         if (e.target.closest('[id^="form-btn-copy-question-"]')) {
@@ -2286,7 +1793,6 @@ setTimeout(() => {
                 formBtnCopyQuestion(e.target.closest('[id^="form-btn-copy-question-"]'))
                 document.getElementById('jsLoader').classList.add('hidden');
                 initModals();
-                setListenerSetImage()
             },10)
         };
         
@@ -2320,7 +1826,6 @@ setTimeout(() => {
                 formBtnAddAnswer(e.target.closest('[id^="form-btn-add-answer"]'))
                 document.getElementById('jsLoader').classList.add('hidden');
                 initModals();
-                setListenerSetImage()
             },10)
         }
         if (e.target.closest('[id^="form-btn-delete-answer-"]')) {
