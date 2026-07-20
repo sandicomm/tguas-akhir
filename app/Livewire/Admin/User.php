@@ -58,8 +58,13 @@ class User extends Component
             $this->statsAction= $action;
         } else if($action === 'edit') {
             try{
-                $user = UserModel::findOrFail($id);
-                //dd($id,$action,$this->statsAction, $user);
+                $user = UserModel::find($id);
+
+                if(!$user){
+                    session()->flash('error', 'User tidak ditemukan.');
+                    return;
+                }
+
                 $this->userId = $id;
                 $this->name = $user->name;
                 $this->email = $user->email;
@@ -100,7 +105,16 @@ class User extends Component
                 ]);
             }
 
-            $user = UserModel::findOrFail($this->userId);
+            $user = UserModel::find($this->userId);
+
+            if(!$user){
+                $this->reset();
+                $this->resetValidation(); 
+                $this->isModalOpen = false;
+
+                session()->flash('error', 'User tidak ditemukan.');
+                return;
+            }
 
             $safeName = Purifier::clean($this->name);
             $safeEmail = Purifier::clean($this->email);
@@ -140,7 +154,13 @@ class User extends Component
     {
         if (strtolower($this->confirmDelete)=== 'hapus user') {
             try{
-                UserModel::findOrFail($this->userId)->delete();
+                $user=UserModel::find($this->userId);
+                if(!$user){
+                    $this->reset();
+                    session()->flash('error', 'User tidak ditemukan.');
+                    return;
+                }
+                $user->delete();
                 $this->reset();
                 session()->flash('success', 'User berhasil dihapus!');
             } catch (\Exception $e) {

@@ -52,6 +52,8 @@ let webpageDb = globals.webpageDb,
 
 document.addEventListener('DOMContentLoaded', function(){
   document.getElementById('loading-overlay')?.classList.remove('hidden');
+
+  // inisialisasi ke variabel globals
   webpageDbRaw = JSON.parse(JSON.stringify(webpageJs));
   globals.webpageDbRaw = webpageDbRaw
 
@@ -136,7 +138,7 @@ defaultSidebar.addEventListener('mouseup', function (event){
   }
 })
 
-defaultSidebar.addEventListener('click', async function (event) {
+defaultSidebar.addEventListener('click', function (event) {
   // ================= EVENT CLICK ====================
   if(event.target.closest("[id='heading-text']")){
     let element = event.target.closest("[id='heading-text']")
@@ -189,7 +191,7 @@ defaultSidebar.addEventListener('click', async function (event) {
   if(idParts[0] =='up' || idParts[0] == 'down' || idParts[0] == 'delete'){
     const { fieldElement: actualField, bodyElement: actualBodyItem } = getTargetElement(idParts);
 
-     if(idParts[0] =='up'){
+    if(idParts[0] =='up'){
       handleElementAction('up', actualField, actualBodyItem, {
         datasetKey: 'itemOrder',
         reinitFlowbite: true,
@@ -213,19 +215,11 @@ defaultSidebar.addEventListener('click', async function (event) {
       }
       
       if(sectionDelete){
-        const confirmDelete = await mintaKonfirmasi(
+        handleDelete(
             "Hapus Item?", 
-            "Apakah kamu yakin ingin menghapus elemen ini?"
-        );
-
-        // 2. Jika user klik "Ya", jalankan logika spesifiknya
-        if (confirmDelete) {
-            handleElementAction('delete', actualField, actualBodyItem, {
-                datasetKey: 'itemOrder',
-                reinitFlowbite: true,
-                afterMove: () => updateStylingControls(carouselSelect)
-            }, idParts);
-        }
+            "Apakah kamu yakin ingin menghapus elemen ini?",
+            idParts,actualField, actualBodyItem,'itemCarousel',carouselSelect
+        )
      
       }else{
         window.dispatchEvent(new CustomEvent('notif-pesan', { 
@@ -259,6 +253,7 @@ defaultSidebar.addEventListener('click', async function (event) {
       mediaLayout.className='cursor-pointer bg-blue-400 p-2 rounded-md text-black'
 
     }
+   
     resizeElements(true)
   }
 })
@@ -276,7 +271,7 @@ webpage.addEventListener('mouseup', function(event){
 webpage.addEventListener('keyup', function(event){
   if(event.target.closest("[id^='field-']")){
     let element = event.target.closest("[id^='field-']")
-
+   
     webpageDb.forEach(item=>{
       if(item.id === element.id){
         item.action= updateActionProperty(item.action, 'update')
@@ -535,7 +530,11 @@ if(idParts[0] =='up' || idParts[0] == 'down' || idParts[0] == 'delete'){
 
     if(sectionDelete){
       
-      handleDelete(fieldElement, bodyElement, idParts)
+      handleDelete(
+          "Hapus Item?", 
+          "Apakah kamu yakin ingin menghapus elemen ini?",
+          idParts,fieldElement, bodyElement,'re'
+      )
 
     }else{
        window.dispatchEvent(new CustomEvent('notif-pesan', { 
@@ -546,21 +545,7 @@ if(idParts[0] =='up' || idParts[0] == 'down' || idParts[0] == 'delete'){
 }
 })
 
-async function handleDelete(fieldElement, bodyElement, idParts) {
-    // Kode ini akan menunggu sampai user klik di modal
-    const confirmDelete = await mintaKonfirmasi(
-        "Hapus Elemen?", 
-        "Apakah kamu yakin ingin menghapus elemen ini?"
-    );
-
-    if (confirmDelete) {
-        handleElementAction('delete', fieldElement, bodyElement, {
-            datasetKey: 'elementOrder'
-        }, idParts);
-    }
-}
-
-function mintaKonfirmasi(judul, pesan) {
+function handleDelete(judul, pesan,idParts,fieldElement, bodyElement, type, carouselSelect) {
     return new Promise((resolve) => {
         // Kirim event untuk buka modal
         window.dispatchEvent(new CustomEvent('confirm-modal', { 
@@ -575,6 +560,29 @@ function mintaKonfirmasi(judul, pesan) {
 
         // Dengarkan klik tombol "Ya" dari modal
         window.addEventListener('modal-konfirmasi-ya', () => {
+
+          const targetElement = fieldElement.id ? fieldElement : fieldElement.querySelector('[id^="field"]');
+          const freshFieldElement = document.getElementById(targetElement.id);
+
+          console.log(type,freshFieldElement,targetElement,fieldElement,bodyElement)
+
+          if (!freshFieldElement) {
+              resolve(false);
+              return;
+          }
+
+          if(type === "itemCarousel"){
+            handleElementAction('delete', fieldElement, bodyElement, {
+                datasetKey: 'itemOrder',
+                reinitFlowbite: true,
+                afterMove: () => updateStylingControls(carouselSelect)
+            }, idParts);
+          }else{
+            
+            handleElementAction('delete', fieldElement, bodyElement, {
+                datasetKey: 'elementOrder'
+            }, idParts);
+          }
             resolve(true);
         }, { once: true }); // {once: true} agar listener langsung terhapus
 
@@ -746,6 +754,64 @@ async function submitData(isAutosave=false){
   }
 }
 
+async function cekStatus(){
+  try{
+    document.getElementById('loading-overlay')?.classList.remove('hidden');
+
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    const clearResponse = await fetch('/admin/webpage/cek', {
+        method: "POST",
+        headers: {
+            "Accept": "application/json",
+            "X-CSRF-TOKEN": csrfToken
+        }
+    });
+    const clearData = await clearResponse.json();
+    //console.log(clearData.success, clearData.redirect)
+
+    if(clearData.success && clearData.redirect){
+      window.location.href = clearData.redirect
+    }
+
+    setTimeout(()=>{
+      document.getElementById('loading-overlay')?.classList.add('hidden');
+    },2000)
+  }catch(err) {
+
+    document.getElementById('loading-overlay')?.classList.add('hidden');
+    window.dispatchEvent(new CustomEvent('notif-pesan', { 
+        detail: { pesan: `Gagal cek status.${err}`, status: false } 
+    }));
+
+  }
+}
+
+async function perbaruiMasaAktifDiServer() {
+  try {
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    await fetch('/admin/webpage/update-visit', {
+        method: "POST",
+        headers: {
+            "Accept": "application/json",
+            "X-CSRF-TOKEN": csrfToken
+        }
+    });
+
+  } catch (err) {
+    console.error("Gagal memperbarui sesi aktif ke server", err);
+  }
+}
+
+let userAktif = false;
+
+// 1. Kumpulkan semua event interaksi user
+['mousemove', 'mousedown', 'click', 'scroll', 'keypress', 'touchstart'].forEach(eventName => {
+    document.addEventListener(eventName, () => {
+        console.log('gak afk')
+        userAktif = true; 
+    }, { passive: true }); // passive: true bagus untuk performa scroll di shared hosting
+});
+
 setInterval(async () => {
     if (globals.isFormDirty) {
         try {
@@ -758,7 +824,32 @@ setInterval(async () => {
             console.error("Autosave gagal");
         }
     }
-},5 * 60 *1000); // Cek setiap 5 menit
+},0.5 * 60 *1000); // Cek setiap 5 menit
+
+setInterval(async () => {
+    try {
+        if (userAktif) {
+            await perbaruiMasaAktifDiServer();
+            userAktif = false;
+            
+            console.log("User aktif berinteraksi. Sesi diperpanjang otomatis.");
+        } else {
+            document.getElementById('loading-overlay')?.classList.remove('hidden');
+  
+            await cekStatus();
+            setTimeout(()=>{
+              document.getElementById('loading-overlay')?.classList.add('hidden');
+            },2000)
+        }
+    } catch (error) {
+        console.error("Sistem pemantau eror:", error);
+
+        document.getElementById('loading-overlay')?.classList.add('hidden');
+        window.dispatchEvent(new CustomEvent('notif-pesan', { 
+            detail: { pesan: `Gagal cek status.${error}`, status: false } 
+        }));
+    }
+}, 0.2 * 60 * 1000);
 
 const btnSave = getEl('btn-save')
 btnSave.addEventListener('click', async function() {
@@ -767,9 +858,6 @@ btnSave.addEventListener('click', async function() {
 });
 
 const btnCek = getEl('btn-cek')
-// btnCek.addEventListener('click', async function() {
-//   
-// });
 
 bs.fontStylingField()
 bs.widthHeightField()

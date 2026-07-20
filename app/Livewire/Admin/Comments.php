@@ -50,6 +50,14 @@ class Comments extends Component
     {
         $this->validate();
 
+        $commentFind = CommentModel::find($this->editingId);
+
+        if (!$commentFind) {
+            $this->reset(['comment', 'parent_id', 'editingId', 'state']);
+            session()->flash('error', 'Comment sepertinya sudah tidak ada atau telah dihapus oleh pengguna lain!');
+            return;
+        }
+
         $comment = CommentModel::findOrFail($this->editingId);
         $safeComment = Purifier::clean($this->comment);
         // Proteksi tambahan: hanya bisa edit jika itu milik admin
@@ -65,7 +73,16 @@ class Comments extends Component
 
     public function delete($id)
     {
-        CommentModel::findOrFail($id)->delete();
+        $commentFind = CommentModel::find($id);
+
+        if (!$commentFind) {
+            $this->reset(['comment', 'parent_id', 'editingId', 'state']);
+            $this->isModalOpen = false;
+            session()->flash('error', 'Comment tidak ditemukan.');
+            return;
+        }
+
+        $commentFind->delete();
         $this->isModalOpen = false;
         session()->flash('success', 'Komentar berhasil dihapus!');
     }
@@ -73,6 +90,13 @@ class Comments extends Component
     // Fungsi untuk memicu form balasan (Reply)
     public function setReply($id)
     {
+        $comment = CommentModel::find($id);
+
+        if(!$comment){
+            session()->flash('error', 'Comment tidak ditemukan.');
+            return;
+        }
+        
         $this->reset(['comment']);
         $this->state = 'reply';
         $this->editingId = $id;
@@ -82,7 +106,13 @@ class Comments extends Component
     // Fungsi untuk memicu form edit (Edit tulisan admin)
     public function setEdit($id)
     {
-        $comment = CommentModel::findOrFail($id);
+        $comment = CommentModel::find($id);
+
+        if(!$comment){
+            session()->flash('error', 'Comment tidak ditemukan.');
+            return;
+        }
+
         if($comment->is_admin) {
             $this->state = 'edit';
             $this->editingId = $id;

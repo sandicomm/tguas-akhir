@@ -515,7 +515,7 @@ export function updateStylingControls(data, field) {
           try {
             initFlowbite();
           } catch (error) {
-            // console.error('❌ Gagal inisialisasi carousel', error);
+            // console.error('Gagal inisialisasi carousel', error);
           }
         }, 100);
         

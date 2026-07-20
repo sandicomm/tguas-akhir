@@ -16,7 +16,7 @@ import { getEl } from './utils/validationGetElement.js';
 let webpageDb=  globals.webpageDb, param=globals.param
 let webpageDbParentSection=globals.webpageDbParentSection
 
-const createSection = (idPrefix,borderWave,order,count,style,edit)=>{
+const createSection = (idPrefix,borderWave,order,count,style,edit,zIndex)=>{
     let section=``
     let dropdownSection=''
     let dropdownElement=''
@@ -72,13 +72,13 @@ const createSection = (idPrefix,borderWave,order,count,style,edit)=>{
     if (justifyMatch) styleEditor += justifyMatch[0] + ' ';
     if (alignMatch) styleEditor += alignMatch[0];
 
-    // ✂️ Hapus justify-content dan align-items dari style asli
+    // Hapus justify-content dan align-items dari style asli
     let styleWebpage = style
       .replace(/justify-content\s*:\s*[^;]+;/gi, '')
       .replace(/align-items\s*:\s*[^;]+;/gi, '')
       .trim();
 
-    // 🧹 Rapikan spasi ganda
+    // Rapikan spasi ganda
     styleWebpage = styleWebpage.replace(/\s{2,}/g, ' ');
 
     let svg=''
@@ -129,9 +129,9 @@ const createSection = (idPrefix,borderWave,order,count,style,edit)=>{
       `
     }
     section=`
-      <div id="webpage-${idPrefix}" data-element-order="${order}" class="bg-gray-200 flex flex-col ${idPrefix.includes('prolog') ? 'min-h-[100dvh]' : ''} justify-center items-center border border-gray-700x z-10" style="${styleWebpage}">
-        ${dropdown}
+    <div id="webpage-${idPrefix}" data-element-order="${order}" class="bg-gray-200 flex flex-col ${idPrefix.includes('prolog') ? 'min-h-[100dvh]' : ''} justify-center items-center border border-gray-700 z-10" style="${styleWebpage}">
         ${svg}
+        ${dropdown}
         <div id="editor-container-${idPrefix}" data-element-count="${count}" class="md:px-3 md:py-5 md:pt-0 px-4 py-5 pt-10 w-full flex flex-col" style="${styleEditor}"></div>
         ${btnNextProlog}
       </div>   
@@ -300,6 +300,8 @@ const addSection = (event)=>{
     btnHeading.element_count=newCount
     btnHeading.action=updateActionProperty(btnHeading.action,'update')
 
+    dropdownInitialized('multi', newId)
+
   }else{
     const webpage = getEl('webpage')
     if(!webpage)return
@@ -317,12 +319,7 @@ const addSection = (event)=>{
         action:'new-add'
     })
 
-    newSection =`
-        <div id="webpage-section-${newCount}" data-element-order="${newCount}" class="bg-gray-200 flex flex-col justify-center items-center border border-gray-700 z-10" style="position:relative;min-height:100dvh;">
-          <div class="bg-white rounded-full absolute right-1 top-1 z-20 cursor-pointer" data-dropdown-toggle="dropdown-section-${newCount}" data-dropdown-placement="right-end">
-              ${renderSvg()}                
-          </div>
-          <div id="dropdown-section-${newCount}" data-accordion="open" class="z-50 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700">
+    let dropdown = `<div id="dropdown-section-${newCount}" data-accordion="open" class="z-50 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700">
             <ul class="py-2 text-sm text-gray-700 dark:text-gray-200 border-0 border-b-1 border-gray-500 " aria-labelledby="dropdownDefaultButton">
                 <li>
                     <a id="add-section-${newCount}" class="font-bold block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Section</a>
@@ -354,8 +351,14 @@ const addSection = (event)=>{
                     <a id="add-carousel-element-section-${newCount}" class="cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Carousel</a>
                 </li>
             </ul>
+          </div>`
+
+    newSection =`
+        <div id="webpage-section-${newCount}" data-element-order="${newCount}" class="bg-gray-200 flex flex-col justify-center items-center border border-gray-700 z-10" style="position:relative;min-height:100dvh;">
+          <div class="bg-green-400 rounded-full absolute right-1 top-1 z-20 cursor-pointer" data-dropdown-toggle="dropdown-section-${newCount}" data-dropdown-placement="right-end">
+          ${dropdown}
+              ${renderSvg()}                
           </div>
-          
           <div id="editor-container-section-${newCount}" data-element-count="0" class="p-2 py-4 w-full flex flex-col flex-1" style="justify-content:start;align-items:center;"></div>
         </div>
     `
@@ -375,15 +378,16 @@ const addSection = (event)=>{
     
     globals.webpageDb=webpageDb
     globals.webpageDbParentSection=webpageDbParentSection
+
+    dropdownInitialized('', `dropdown-section-${newCount}`)
   }
 
   globals.isFormDirty = true
-
   setTimeout(() => {
       try {
         initFlowbite();
       } catch (error) {
-          console.error('❌ Gagal menginisialisasi Dropdown:');
+          console.error('Gagal menginisialisasi Dropdown:');
       }
   }, 100); 
 } 
@@ -430,6 +434,9 @@ const copySection=(idSection, mode="all", event)=>{
     const newSecId = generateUniqueId(sectionEl.id, container);
     sectionCopy.id = newSecId;
 
+    sectionCopy.classList.remove('z-20')
+    sectionCopy.classList.add('z-10')
+    
     // update section attributes
     function updateSectionAttributes(sectionCopyElement, oldSecId, newSecId) {
       const oldSuffix = oldSecId.split('-').slice(1).join('-');
@@ -437,26 +444,26 @@ const copySection=(idSection, mode="all", event)=>{
 
       // Ambil semua elemen di dalam modal yang disalin
       sectionCopyElement.querySelectorAll('*').forEach(el => {
-        // 1️⃣ Cek setiap atribut
+        // Cek setiap atribut
         for (const attr of el.getAttributeNames()) {
           const val = el.getAttribute(attr);
           if (!val || typeof val !== 'string') continue;
 
-          // 2️⃣ Kalau value mengandung ID lama, ganti jadi ID baru
+          // Kalau value mengandung ID lama, ganti jadi ID baru
           if (arraySubsequenceMatch(val.split('-'), oldSuffix.split('-'))) {
             const newVal = replaceIdSuffix(val,oldSuffix,newSuffix);
             el.setAttribute(attr, newVal);
           }
         }
 
-        // 3️⃣ Kalau ID-nya sendiri mengandung substring lama, ganti juga
+        // Kalau ID-nya sendiri mengandung substring lama, ganti juga
         if (el.id && arraySubsequenceMatch(el.id.split('-'), oldSuffix.split('-'))) {
           const newId = replaceIdSuffix(el.id,oldSuffix,newSuffix)
 
           // Update id di DOM
           el.id = newId;
 
-          // 4️⃣ Update juga di database (webpageDb)
+          // 4Update juga di database (webpageDb)
           const originalField = webpageDb.find(f => f.id === el.id);
           if (originalField) {
             const cloned = structuredClone(originalField);
@@ -541,8 +548,19 @@ const copySection=(idSection, mode="all", event)=>{
 
     elementSection.forEach(wrapper=>{
       Array.from(wrapper.children).forEach(el=>{
+        //console.log(el.id)
         if(el.id.startsWith('modal')){
           copyModal(el.id, 'body', newSecId.split('-').slice(1).join('-'), oldSecId.split('-').slice(1).join('-'))
+
+        }else if(el.id.startsWith('accordion')){
+          el.querySelectorAll(`[id^="wrapper-section-accordion"]`).forEach(wrapperAcc=>{
+            Array.from(wrapperAcc.children).forEach(elAcc=>{
+              if(elAcc.id.startsWith('modal')){
+                copyModal(elAcc.id, 'body', newSecId.split('-').slice(1).join('-'), oldSecId.split('-').slice(1).join('-'))
+              }
+            })
+          })
+
         }
       })
     })
@@ -553,6 +571,7 @@ const copySection=(idSection, mode="all", event)=>{
     // Duplikasi elemen dan semua elemen di webpageDb yang terkait dengan section
     //=========================================
     const targetId=oldSecId.split('-').slice(1).join('-')
+    console.log('copy sec',targetId)
     const relatedObjects = webpageDb.filter(obj => arraySubsequenceMatch(obj.id.split('-'), targetId.split('-')));
     relatedObjects.forEach(originalObj => {
       const clonedObj = deepClone(originalObj);
@@ -566,7 +585,11 @@ const copySection=(idSection, mode="all", event)=>{
       clonedObj.id = replaceIdSuffix(clonedObj.id, oldSecId.split('-').slice(1).join('-'), newSecId.split('-').slice(1).join('-'));
       clonedObj.action = 'new-add';
 
-      if (clonedObj.id.startsWith('webpage') || clonedObj.id.startsWith('section')) {
+      if (
+        (clonedObj.id.startsWith('webpage') && targetId.startsWith('section')) || 
+        (clonedObj.id.startsWith('section') && targetId.startsWith('accordion') && !clonedObj.id.startsWith('section-accordion-in-accordion')) ||
+        (clonedObj.id.startsWith('section-accordion-in-accordion') && targetId.startsWith('accordion-in-accordion'))) {
+        console.log(clonedObj)
         clonedObj.element_order = String(newOrderBase);
       }
       webpageDb.push(clonedObj);
@@ -695,13 +718,13 @@ const copySection=(idSection, mode="all", event)=>{
       try {
         initFlowbite();
       } catch (error) {
-        console.error('❌ Gagal inisialisasi accordion');
+        console.error('Gagal inisialisasi accordion');
       }
     }, 100);
 
     return true;
   } catch (e) {
-    console.error('duplicateModal error');
+    console.error('duplicateModal error',e);
     return false;
   }
 }

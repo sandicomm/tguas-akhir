@@ -1,6 +1,9 @@
 // ======== GLOBALS =========
 import { globals } from '../globals.js';
 
+// ======== LOADWEBPAGE ========
+import {findParentWidth,storeOriginalSize} from '../../loadWebpage.js';
+
 // ======== UTILITIES =========
 import { updateContent, updateActionProperty } from '../utils/updateContent.js';
 import { parseStyleObj, stringifyStyleObj } from '../utils/baseStyleObj.js';
@@ -974,28 +977,151 @@ function fontStylingField(){
   });
 }
 // -------- Box Field Styling -----------
+let originalSizes = globals.originalSizes
 function widthHeightField(){
-  document.getElementById('width-field').addEventListener('keyup', function(){
+  document.getElementById('width-field').addEventListener('keyup', function(event){
     editorFieldSelect = globals.editorFieldSelect
     accordionSelect = globals.accordionSelect
     carouselSelect = globals.carouselSelect
 
+    let parentElement
+    let width,padding
+
     if(editorFieldSelect){
       if(accordionSelect){
+        if(Object.keys(originalSizes).length === 0){
+          storeOriginalSize()
+        }
+        let parent = findParentWidth(accordionSelect)
+        if(!parent) return
+        //console.log(accordionSelect)
+        let styling =parent.styling
+
+        width = parent.width
+        padding = parseInt(styling.paddingLeft)+parseInt(styling.paddingRight)
+        let actualWidth = width-padding
+
+        // set width tidak lebih dari parent
+        if(parseInt(this.value) >= actualWidth){
+          this.value = actualWidth
+        }
+
+        // set width jika child melebihi parent
+        let sectionAcc=accordionSelect.querySelectorAll('[id^="section-"]')
+  
         accordionSelect.style.width=`${this.value}px`
+        
+        if(sectionAcc){
+          sectionAcc.forEach(sec=>{
       
+            let parentAcc = getEl(sec.id.split('-').slice(1,-2).join('-'))
+            let parentAccWidth = parseInt(parentAcc.offsetWidth)
+
+            let stylingSec = window.getComputedStyle(sec)
+            //console.log(parentAccWidth)
+
+            sec.querySelectorAll('[style*=width]').forEach(el =>{
+              if (!el.id) return;
+
+              let paddingAcc = parseInt(stylingSec.paddingLeft)+parseInt(stylingSec.paddingRight)
+              let actualWidthAcc = parentAccWidth-paddingAcc;
+              
+              // console.log(originalSizes)
+                // console.log(el.id)
+
+                // console.log('el?: ', el, parseInt(el.style.width), actualWidth)
+                // console.log('kec:',parseInt(el.style.width) >= actualWidthAcc) 
+                // console.log('im:',originalSizes[el.id]?.width, parseInt(el.style.width) <= actualWidthAcc, parseInt(el.style.width) <= parseInt(originalSizes[el.id]?.width))
+                // console.log('set:', originalSizes[el.id]?.width, parseInt(el.style.width) <= actualWidthAcc, parseInt(el.style.width) >= parseInt(originalSizes[el.id]?.width));
+               
+              if(parseInt(el.style.width) >= actualWidthAcc){
+                //console.log('kecilin el', el, parseInt(el.style.width), actualWidth, parseInt(el.style.width) >= actualWidthAcc);
+                el.style.width = actualWidthAcc+'px';
+                updateStyle(el)
+
+              }else if(parseInt(el.style.width) <= actualWidthAcc && parseInt(el.style.width) <= parseInt(originalSizes[el.id]?.width)){
+                //console.log('imbangi el', el, parseInt(el.style.width), actualWidthAcc, originalSizes[el.id].width);
+                if(actualWidthAcc >= parseInt(originalSizes[el.id]?.width)){
+
+                  el.style.width = parseInt(originalSizes[el.id]?.width)+'px';
+                }else{
+                  el.style.width = actualWidthAcc+'px';
+
+                }
+                updateStyle(el)
+
+              }else if(parseInt(el.style.width) <= actualWidthAcc && parseInt(el.style.width) >= parseInt(originalSizes[el.id]?.width)){
+                //console.log('setarakan el',  el, parseInt(el.style.width), actualWidthAcc, originalSizes[el.id].width);
+                el.style.width = originalSizes[el.id].width
+                updateStyle(el)
+              }
+
+            })
+          })
+        }
+
+        console.log('accordion: ',accordionSelect, accordionSelect.id.split('-').slice(2,-1).join('-'))
+
         updateStyle(accordionSelect)
         globals.accordionSelect=accordionSelect
-      }else if(editorFieldSelect.id.startsWith('field')){
-        editorFieldSelect.style.width=`${this.value}px`
+
       }else{
- 
+        console.log(editorFieldSelect)
+        if(editorFieldSelect.id.includes('accordion')){
+          if(editorFieldSelect.id.includes('btn-modal')){
+            console.log(editorFieldSelect.id.split('-').slice(2,-1).join('-'))
+            parentElement=getEl(`section-${editorFieldSelect.id.split('-').slice(2,-1).join('-')}`)
+
+          }else{
+            parentElement=getEl(`section-${editorFieldSelect.id.split('-').slice(1,-1).join('-')}`)
+
+          }
+
+        }else if(editorFieldSelect.id.includes('btn-modal')){
+          parentElement=getEl(`editor-container-${editorFieldSelect.id.split('-').slice(3,-1).join('-')}`)
+          
+        }else{
+          parentElement=getEl(`editor-container-${editorFieldSelect.id.split('-').slice(2,-1).join('-')}`)
+
+        }
+
+        let styling = window.getComputedStyle(parentElement)
+
+        width = parseInt(parentElement.offsetWidth)
+        padding = parseInt(styling.paddingLeft)+parseInt(styling.paddingRight)
+        let actualWidth = width-padding
+
+        if(parseInt(this.value) >= actualWidth){
+          this.value = actualWidth
+        }
+        console.log(parentElement,width, actualWidth)
+        
         editorFieldSelect.style.width=`${this.value}px`
+        console.log('field: ',editorFieldSelect.id.split('-').slice(1,-1).join('-'))
       }
 
       updateStyle(editorFieldSelect)
       globals.editorFieldSelect=editorFieldSelect
     }else if(carouselSelect){
+      if(carouselSelect.id.includes('accordion')){
+        parentElement=getEl(`section-${carouselSelect.id.split('-').slice(1,-1).join('-')}`)
+        
+      }else{
+        parentElement=getEl(`editor-container-${carouselSelect.id.split('-').slice(2,-1).join('-')}`)
+
+      }
+
+      let styling = window.getComputedStyle(parentElement)
+
+      width = parseInt(parentElement.offsetWidth)
+      padding = parseInt(styling.paddingLeft)+parseInt(styling.paddingRight)
+      let actualWidth = width-padding
+
+      if(parseInt(this.value) >= actualWidth){
+        this.value = actualWidth
+      }
+      console.log(parentElement,width, actualWidth)
+
       carouselSelect.style.width=`${this.value}px`
       updateStyle(carouselSelect)
       globals.carouselSelect=carouselSelect
@@ -1932,7 +2058,7 @@ function setImageGallery(indicator){
   }
   fileDb.forEach(file =>{
     if(file.filetype === 'img' || file.type === 'img'){
-      let url=`${globals.url}public/media/${file.id}`
+      let url=`http://127.0.0.1:8000/media/${file.id}` //ubah klo pengen ke hostingan
       if(file.url){
         url=file.url
       }

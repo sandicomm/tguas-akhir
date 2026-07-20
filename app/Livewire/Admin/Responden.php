@@ -22,10 +22,17 @@ class Responden extends Component
 
         if($action === 'edit') {
             try{
-                $responden = RespondenModel::findOrFail($id);
+                $responden = RespondenModel::find($id);
+
+                if(!$responden){
+                    session()->flash('error', 'Responden tidak ditemukan.');
+                    return;
+                }
+
                 $this->userId = $id;
                 $this->email = $responden->email;
                 $this->statsAction= $action;
+
             } catch (ValidationException $e) {
                 // Tangani error validasi secara eksplisit
                 $this->addError('email', $e->validator->errors()->first('email'));
@@ -49,7 +56,17 @@ class Responden extends Component
     {
         if (strtolower($this->confirmDelete)=== 'hapus responden') {
             try{
-                RespondenModel::findOrFail($this->userId)->delete();
+                $responden = RespondenModel::find($this->userId);
+
+                if (!$responden) {
+                    $this->reset();
+                    $this->resetValidation(); // Reset validasi setelah penyimpanan
+                    $this->isModalOpen = false;
+                    session()->flash('error', 'Responden tidak ditemukan.');
+                    return;
+                }
+
+                $responden->delete();
                 $this->reset();
                 session()->flash('success', 'Responden berhasil dihapus!');
             } catch (\Exception $e) {

@@ -149,7 +149,7 @@ class Responses extends Component
         $this->isDeleteModalOpen = true; // Buka Modal
     }
 
-    // 2. Fungsi Eksekusi Hapus (Dipanggil dari form di dalam Modal)
+    /* 2. Fungsi Eksekusi Hapus (Dipanggil dari form di dalam Modal)
     public function destroySingleResponse()
     {
         // Validasi input konfirmasi
@@ -164,8 +164,7 @@ class Responses extends Component
                         // --- ALUR A: HAPUS BERDASARKAN UUID ---
                         Response::where('form_id', $this->targetFormId)
                             ->where('uuid', $this->targetRespondenId) // Gunakan kolom uuid
-                            ->where('attempt', $this->targetAttempt)
-                            ->delete();
+                            ->where('attempt', $this->targetAttempt)->delete();
 
                         // Tidak perlu cek Orphan Responden karena dia tidak punya baris di tabel respondens
                     } else {
@@ -173,8 +172,7 @@ class Responses extends Component
                         // A. Hapus Response sesuai kriteria (Form + Responden + Attempt)
                         Response::where('form_id', $this->targetFormId)
                             ->where('responden_id', $this->targetRespondenId)
-                            ->where('attempt', $this->targetAttempt)
-                            ->delete();
+                            ->where('attempt', $this->targetAttempt)->delete()
 
                         // B. Cek Orphan Responden (Hapus responden jika sudah tidak punya response sama sekali)
                         // Kita gunakan logika yang sudah kita bahas sebelumnya
@@ -186,6 +184,67 @@ class Responses extends Component
                     }
                 });
 
+                session()->flash('success', 'Response berhasil dihapus.');
+                $this->isDeleteModalOpen = false;
+                return $this->redirect(route('admin.responses'));
+
+            } catch (\Exception $e) {
+                session()->flash('error', 'Gagal menghapus: ' . $e->getMessage());
+            }
+        } else {
+            $this->addError('deleteConfirmText', 'Konfirmasi salah. Ketik "hapus response".');
+        }
+    }*/
+
+    public function destroySingleResponse()
+    {
+        // Validasi input konfirmasi
+        if (strtolower($this->deleteConfirmText) === 'hapus response') {
+            try {
+                // 1. Cek tipe ID (UUID atau Integer)
+                $isUuid = !is_numeric($this->targetRespondenId) && !is_null($this->targetRespondenId);
+
+                // 2. Siapkan query pencarian data response
+                $query = Response::where('form_id', $this->targetFormId)
+                    ->where('attempt', $this->targetAttempt);
+
+                if ($isUuid) {
+                    $query->where('uuid', $this->targetRespondenId);
+                } else {
+                    $query->where('responden_id', $this->targetRespondenId);
+                }
+
+                // 3. Eksekusi pencarian data dengan ->first() agar menghasilkan model atau null
+                $response = $query->get();
+
+                // 4. Jika data response sudah tidak ada (telah dihapus orang lain)
+               
+                if ($response->isEmpty()) {
+                    $this->isDeleteModalOpen = false;
+                    session()->flash('error', 'Response tidak ditemukan.');
+                    return $this->redirect(route('admin.responses')); // Langsung hentikan proses di sini
+                }
+
+                // 5. Jalankan transaksi jika data dipastikan masih ada
+                DB::transaction(function () use ($response, $isUuid) {
+                    // Langkah A: Hapus data response
+    
+                    foreach ($response as $singleResponse) {
+                        $singleResponse->delete();
+                    }
+
+                    // Langkah B: Cek Orphan Responden (Hanya jika bukan UUID)
+                    if (!$isUuid) {
+                        $respondenHasOtherData = Response::where('responden_id', $this->targetRespondenId)->exists();
+                        
+                        if (!$respondenHasOtherData) {
+                            // Gunakan query builder delete agar aman meskipun responden sudah tidak ada
+                            Responden::where('id', $this->targetRespondenId)->delete();
+                        }
+                    }
+                });
+
+                // 6. Update UI Sukses
                 session()->flash('success', 'Response berhasil dihapus.');
                 $this->isDeleteModalOpen = false;
                 return $this->redirect(route('admin.responses'));

@@ -8,8 +8,9 @@ export const globals = {
   editCarouselItem: null,
   carouselSelect: null,
   itemCarouselId:null,
-  url:'https://smartdiabetes.my.id/',
+  url:'http://127.0.0.1/',
   
+  originalSizes: {},
   accordionPartSelect: null,
   accordionSelect: null,
   savedSelection: null,
@@ -20,6 +21,7 @@ export const globals = {
   
   bodyFieldELement:null,
   fieldElement:null,
+  prevSection:null,
 
   isFormDirty:false
 };

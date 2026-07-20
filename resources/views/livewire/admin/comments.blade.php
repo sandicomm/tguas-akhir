@@ -87,7 +87,7 @@
                             @endif
                         </div>
 
-                        {{-- BALASAN (FLAT/TIKTOK STYLE) --}}
+                        {{-- REPLY --}}
                         <div class="ml-8 mt-2 space-y-2 border-l-2 border-gray-100 dark:border-slate-700 pl-4">
                             @foreach ($comment->flat_replies as $reply)
                                 <div class="p-3 rounded-lg border {{ $reply->is_admin ? 'bg-blue-50 border-blue-100 dark:bg-indigo-900/20' : 'bg-white border-gray-100 dark:bg-slate-700/50' }}">

@@ -1,3 +1,4 @@
+<div>
 <button data-drawer-target="default-sidebar" data-drawer-toggle="default-sidebar" aria-controls="default-sidebar" type="button" class="inline-flex items-center p-2 mt-2 ms-3 text-sm dark:text-gray-500 rounded-lg sm:hidden dark:hover:bg-gray-100 focus:outline-none focus:ring-2 dark:focus:ring-gray-200 text-gray-400 hover:bg-gray-700 focus:ring-gray-600">
    <span class="sr-only">Open sidebar</span>
    <svg class="w-6 h-6" aria-hidden="true" fill="currentColor" viewBox="0 0 20 20" >
@@ -51,12 +52,17 @@
             </x-nav-link>
         </li>
         <li>
-            <x-nav-link href="{{ route('admin.webpage', 'web') }}">
-                <svg class="w-6 h-6 text-white" aria-hidden="true"  width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
-                    <path fill-rule="evenodd" d="M12 8a1 1 0 0 0-1 1v10H9a1 1 0 1 0 0 2h11a1 1 0 0 0 1-1V9a1 1 0 0 0-1-1h-8Zm4 10a2 2 0 1 1 0-4 2 2 0 0 1 0 4Z" clip-rule="evenodd"/>
-                    <path fill-rule="evenodd" d="M5 3a2 2 0 0 0-2 2v6h6V9a3 3 0 0 1 3-3h8c.35 0 .687.06 1 .17V5a2 2 0 0 0-2-2H5Zm4 10H3v2a2 2 0 0 0 2 2h4v-4Z" clip-rule="evenodd"/>
-                </svg>
-               <span class="flex-1 ms-3 whitespace-nowrap text-white">Web Page</span>
+            <x-nav-link href="{{ route('admin.webpage', 'web') }}" class="flex-col {{ $webpageVisitedUser ? 'bg-gray-200/30' :''}}">
+               <div class="flex ">
+                  <svg class="w-6 h-6 text-white" aria-hidden="true"  width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+                      <path fill-rule="evenodd" d="M12 8a1 1 0 0 0-1 1v10H9a1 1 0 1 0 0 2h11a1 1 0 0 0 1-1V9a1 1 0 0 0-1-1h-8Zm4 10a2 2 0 1 1 0-4 2 2 0 0 1 0 4Z" clip-rule="evenodd"/>
+                      <path fill-rule="evenodd" d="M5 3a2 2 0 0 0-2 2v6h6V9a3 3 0 0 1 3-3h8c.35 0 .687.06 1 .17V5a2 2 0 0 0-2-2H5Zm4 10H3v2a2 2 0 0 0 2 2h4v-4Z" clip-rule="evenodd"/>
+                  </svg>
+                 <span class="flex-1 ms-3 whitespace-nowrap text-white">Web Page</span>
+               </div>
+               @if($webpageVisitedUser)
+                  <div class="text-sm bg-gray-100 p-1 rounded text-blue-700">Visited By {{ $webpageVisitedUser }}</div>
+               @endif
             </x-nav-link>
         </li>
          <li>
@@ -119,3 +125,4 @@
       </ul>
    </div>
 </aside>
+</div>

@@ -310,10 +310,10 @@ function fontStylingField(){
         window.dispatchEvent(new CustomEvent('notif-pesan', { 
           detail: { pesan: 'heading styling tidak ditemukan', status:false} 
         }));
-        console.error('heading tidak ditemukan')
+   
         return
       }
-      console.log('ll')
+     
       heading.children[0].innerHTML = this.innerHTML
       updateContent(heading)
     }else{
@@ -748,7 +748,7 @@ function fontStylingField(){
     
         if (startInside && endInside && !range.collapsed) {
           document.execCommand('justifyLeft');
-          // //console.log('✅ aligned selected content');
+          // //console.log('aligned selected content');
         } else {
           const range = document.createRange();
           range.selectNodeContents(fontField);
@@ -798,7 +798,7 @@ function fontStylingField(){
     
         if (startInside && endInside && !range.collapsed) {
           document.execCommand('justifyRight');
-          // //console.log('✅ aligned selected content');
+          // //console.log(' aligned selected content');
         } else {
           const range = document.createRange();
           range.selectNodeContents(fontField);
@@ -849,7 +849,7 @@ function fontStylingField(){
     
         if (startInside && endInside && !range.collapsed) {
           document.execCommand('justifyCenter');
-          // //console.log('✅ aligned selected content');
+          // //console.log('aligned selected content');
         } else {
           const range = document.createRange();
           range.selectNodeContents(fontField);
@@ -899,7 +899,7 @@ function fontStylingField(){
     
         if (startInside && endInside && !range.collapsed) {
           document.execCommand('justifyFull');
-          // //console.log('✅ aligned selected content');
+          // //console.log(' aligned selected content');
         } else {
           const range = document.createRange();
           range.selectNodeContents(fontField);
@@ -1817,7 +1817,6 @@ function colorBackgroundField(){
     try {
       await handleFieldBgUpload(file);
     } catch (err) {
-      console.error(err);
       window.dispatchEvent(new CustomEvent('notif-pesan', { 
         detail: { pesan: `Gagal memproses gambar`, status:false} 
       }));
@@ -1834,7 +1833,7 @@ function colorBackgroundField(){
     try {
       await handleCarouselBgUpload(file);
     } catch (err) {
-      console.error(err);
+
       window.dispatchEvent(new CustomEvent('notif-pesan', { 
         detail: { pesan: 'Gagal memproses gambar', status:false} 
       }));

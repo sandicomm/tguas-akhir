@@ -8,13 +8,17 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 use App\Models\Webpage as Page;
+use App\Models\WebpageVisited as WebpageVisited;
 use App\Models\File as FileMedia;
 use Illuminate\Support\ItemNotFoundException;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Auth;
 
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Mews\Purifier\Facades\Purifier;
+use PhpOffice\PhpSpreadsheet\Calculation\Web;
 
 class WebPage extends Component
 {
@@ -29,6 +33,24 @@ class WebPage extends Component
 
     public function mount($params)
     {
+        $userId = Auth::id();
+
+        WebpageVisited::where('expires_at', '<', Carbon::now())->delete();
+        $visited = WebpageVisited::with('user')->first();
+        
+        if($visited){
+            if($visited->user_id != $userId){
+                $namaUser = $visited->user ? $visited->user->name : 'User Lain';
+                return redirect()->route('admin.dashboard')->with('error', "Menu ini sedang diakses oleh {$namaUser}.");
+            }
+        }else{
+            
+            WebpageVisited::create([
+                'user_id'=> $userId,
+                'expires_at'=> Carbon::now()->addMinutes(1)
+            ]);
+        }
+
         $this->param = $params;
         
         $this->file = FileMedia::whereNot('id', 'like', 'form-%')->get();
@@ -58,7 +80,6 @@ class WebPage extends Component
             $urlMap = session('urlMap', []);
             $items = $request->items;
             
-
             // --- TAHAP 1: PROSES UPLOAD FILE ---
             foreach ($items as $index => $item) {
                 if ($request->hasFile("items.$index.file") && $item['type'] === 'file' && ($item['action'] ?? '') === 'add') {
@@ -69,7 +90,7 @@ class WebPage extends Component
                     $filename = Str::uuid() . '_' . $original . '.' . $file->getClientOriginalExtension();
                     $file->move(public_path('media'), $filename);
 
-                    $urlMap[$item['id']] = asset('media/' . $filename);
+                    $urlMap[$item['id']] = asset('public/media/' . $filename);
 
                     \App\Models\File::updateOrCreate(
                         ['id' => $filename],
@@ -148,6 +169,8 @@ class WebPage extends Component
             DB::commit();
             session(['urlMap' => $urlMap]);
 
+            WebpageVisited::where('user_id', Auth::user()->id)->update(['expires_at'=>Carbon::now()->addMinutes(1)]);
+
             return response()->json(['success' => true, 'message' => 'Data berhasil diperbarui', 'datano'=>$this->dataStyle, 'datapuri'=>$this->dataStylePuri,'datacontent'=>$this->dataContent]);
 
         } catch (\Throwable $e) {
@@ -172,7 +195,7 @@ class WebPage extends Component
             
             // Pastikan filename tidak kosong dan cek keberadaannya
             if ($filename && !str_contains($megaContent, $filename)) {
-                $filePath = public_path('media/' . $filename);
+                $filePath = public_path('public/media/' . $filename);
                 
                 // Hapus fisik
                 if (File::exists($filePath)) {
@@ -189,6 +212,31 @@ class WebPage extends Component
             'success' => true,
             'message' => "$deletedCount file tidak terpakai telah dibersihkan."
         ]);
+    }
+
+    public function cekStatus(){
+        $cekExpires = WebpageVisited::where('user_id', Auth::user()->id)->where('expires_at', '<', Carbon::now())->first();
+        if($cekExpires){
+            $cekExpires->delete();
+    
+            return response()->json([
+                'success' => true,
+                'redirect' => route('admin.dashboard'),
+                'message' => "Anda Afk dan dikeluarkan dari menu."
+            ]);
+        }
+        return response()->json([
+            'success' => false,
+            'message' => "cek"
+        ]);
+    }
+
+    public function updateVisit()
+    {
+        WebpageVisited::where('user_id', Auth::id())
+            ->update(['expires_at' => Carbon::now()->addMinutes(1)]);
+
+        return response()->json(['success' => true]);
     }
 
     public function render()

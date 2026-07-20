@@ -41,25 +41,25 @@ class Forms extends Component
             }
 
             DB::transaction(function () use ($originalForm) {
-                // 1️⃣ Salin Form
+                // Salin Form
                 $newForm = $originalForm->replicate();
                 $newForm->placement = 'disable';
                 $newForm->form_name = $originalForm->form_name . ' (Copy)';
                 $newForm->save();
 
-                // 2️⃣ Salin Sections
+                // Salin Sections
                 foreach ($originalForm->sections as $section) {
                     $newSection = $section->replicate();
                     $newSection->form_id = $newForm->id;
                     $newSection->save();
 
-                    // 3️⃣ Salin Questions
+                    // Salin Questions
                     foreach ($section->questions as $question) {
                         $newQuestion = $question->replicate();
                         $newQuestion->section_id = $newSection->id;
                         $newQuestion->save();
 
-                        // 4️⃣ Salin Answers
+                        // Salin Answers
                         foreach ($question->answers as $answer) {
                             $newAnswer = $answer->replicate();
                             $newAnswer->question_id = $newQuestion->id;
@@ -85,20 +85,23 @@ class Forms extends Component
     {
         if (strtolower($this->confirmDelete) === 'hapus form') {
             try {
-                DB::transaction(function () {
-                    // 1. Ambil ID responden yang mengisi form ini 
-                    // Kita ambil langsung dari relasi responses yang punya form_id tersebut
+                $findForm = FormModel::find($this->formId);
+
+                if (!$findForm) {
+                    $this->forms = FormModel::all();
+                    $this->reset(['formId', 'confirmDelete', 'isModalOpen']);
+                    session()->flash('error', 'Form tidak ditemukan.');
+                    return;
+                }
+
+                DB::transaction(function () use ($findForm) {
+                    
                     $responderIds = Responden::whereHas('responses', function ($query) {
                         $query->where('form_id', $this->formId);
                     })->pluck('id');
 
-                    // 2. Hapus Form 
-                    // (Pastikan di Database sudah ada onDelete('cascade') untuk responses.form_id)
-                    FormModel::findOrFail($this->formId)->delete();
+                    $findForm->delete();
 
-                    // 3. Bersihkan Responden "Yatim Piatu"
-                    // Hanya hapus responden yang setelah form ini dihapus, 
-                    // mereka tidak punya lagi data di tabel responses (dari form manapun)
                     if ($responderIds->isNotEmpty()) {
                         Responden::whereIn('id', $responderIds)
                             ->whereDoesntHave('responses')
@@ -106,7 +109,6 @@ class Forms extends Component
                     }
                 });
 
-                // Update UI
                 $this->forms = FormModel::all();
                 $this->reset(['formId', 'confirmDelete', 'isModalOpen']);
                 session()->flash('success', 'Form berhasil dihapus!');

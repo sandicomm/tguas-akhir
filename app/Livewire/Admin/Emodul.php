@@ -80,8 +80,16 @@ class Emodul extends Component
                 'file' => 'nullable|mimes:pdf|max:2048',
             ]);
 
-            $emodul = EmodulModel::findOrFail($this->emodulId);
+            $emodul = EmodulModel::find($this->emodulId);
 
+            if(!$emodul){
+                $this->reset();
+                $this->resetValidation(); // Reset validasi setelah penyimpanan
+                $this->isModalOpen = false;
+                session()->flash('error', 'Emodul sepertinya sudah tidak ada atau telah dihapus oleh pengguna lain!');
+                return;
+            }
+            
             $safeJudul = Purifier::clean($this->judul);
             $safePenyusun = Purifier::clean($this->penyusun);
 
@@ -142,15 +150,17 @@ class Emodul extends Component
                 if ($emodul) {
                     File::delete(public_path($emodul->file_path));
                     $emodul->delete();
-
-                    $this->reset();
-                    $this->resetValidation(); // Reset validasi setelah penyimpanan
-                    $this->isModalOpen = false;
-
                     session()->flash('success', 'Emodul berhasil dihapus.');
+
                 } else {
+                
                     session()->flash('error', 'Emodul tidak ditemukan.');
                 }
+
+                $this->reset();
+                $this->resetValidation(); // Reset validasi setelah penyimpanan
+                $this->isModalOpen = false;
+
             }catch(\Exception $e){
                 session()->flash('error', 'gagal hapus emodul');
             }
@@ -168,10 +178,15 @@ class Emodul extends Component
             try{
                 $this->statsAction= $action;
                 $this->emodulId= $id;
-                $emodul = EmodulModel::findOrFail($id);
-                //dd($id,$action,$this->statsAction, $emodul);
-                $this->judul = $emodul->judul;
-                $this->penyusun = $emodul->penyusun;
+                $emodul = EmodulModel::find($id);
+                
+                if ($emodul) {
+                    $this->judul = $emodul->judul;
+                    $this->penyusun = $emodul->penyusun;
+                } else {
+                    session()->flash('error', 'Emodul tidak ditemukan.');
+                    return;
+                }
 
             } catch (ValidationException $e) {
                 // Tangani error validasi secara eksplisit

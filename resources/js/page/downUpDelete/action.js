@@ -10,8 +10,6 @@ import { updateStylingControls } from '../styling/stylingControls.js';
 // ======== Validation get element ==========
 import { getEl } from '../utils/validationGetElement.js';
 
-
-  // ======== gpt ver  =============
 function resolveFieldId(el) {
   if (!el) return null;
 
@@ -100,17 +98,19 @@ function handleElementAction(action, fieldElement, bodyElement, options = {}, id
   let fileDb = globals.file; 
   let webpageDbParentSection = globals.webpageDbParentSection;
   const { datasetKey = 'elementOrder', reinitFlowbite = false, updateIndicators = null, afterMove = null } = options;
+  console.log(options)
 
   if (!fieldElement) return;
 
   // =========================
-  // 🔼🔽 MOVE ELEMENT
+  // MOVE ELEMENT
   // =========================
   if (['up', 'down'].includes(action)) {
     const target = action === 'up' ? fieldElement.previousElementSibling : fieldElement.nextElementSibling;
     if (!target) return;
 
     if(!target.id.includes('footer')){
+      console.log(datasetKey,fieldElement,target);
       // Tukar dataset dan posisi DOM
       [fieldElement.dataset[datasetKey], target.dataset[datasetKey]] = [target.dataset[datasetKey], fieldElement.dataset[datasetKey]];
       target.insertAdjacentElement(action === 'up' ? 'beforebegin' : 'afterend', fieldElement);
@@ -137,7 +137,7 @@ function handleElementAction(action, fieldElement, bodyElement, options = {}, id
   }
 
   // =========================
-  // ❌ DELETE ELEMENT
+  // DELETE ELEMENT
   // =========================
   else if (action === 'delete') {
     function arraySubsequenceMatch(parts, targetParts) {
@@ -220,12 +220,11 @@ function handleElementAction(action, fieldElement, bodyElement, options = {}, id
 
     // ========== Section Delete ==========
     if (idParts[1] === 'section') {
+      console.log('section:',idParts)
         const key =
           parseInt(fieldElement.dataset.elementOrder) >= parseInt(bodyElement.dataset.elementCount)
           ? 'elementCount'
           : null;
-        
-        
         
         if(key && bodyElement.id === 'webpage'){
           webpageDbParentSection[0].element_count = Math.max(
@@ -274,6 +273,7 @@ function handleElementAction(action, fieldElement, bodyElement, options = {}, id
     
     // ========== Carousel Item Delete ==========
     else if (idParts[1] === 'item') {
+      console.log('carousel item:',idParts)
       const actualBodyItem = globals.actualBodyItem;
       const editCarousel = document.getElementById('edit-carousel-item-wrapping')
 
@@ -281,8 +281,18 @@ function handleElementAction(action, fieldElement, bodyElement, options = {}, id
       
       const indicatorWrapper = getEl(`slide-indicator-${idParts.slice(2, -1).join('-')}`);
       if(!indicatorWrapper)return
-      
+      if(fieldElement){
+        console.log('ada',fieldElement)
+      }else{
+        console.log('gk fieldelement', fieldElement)
+      }
+      if(fieldElement.parentElement){
+        console.log('ada parent', fieldElement.parentElement)
+      }else{
+        console.log('gk ada parent', fieldElement.parentElement)
+      }
       const items = [...fieldElement.parentElement.querySelectorAll('[data-item-order]')];
+      console.log(items)
 
       // Urutkan dan buat mapping
       const sortedOrders = items.map(el => +el.dataset.itemOrder).sort((a, b) => a - b);

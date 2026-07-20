@@ -1,26 +1,4 @@
 <div>
-    @if(session('success'))
-        <div class="fixed top-5 left-1/2 transform -translate-x-1/2 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded shadow-lg z-50">
-            <div class="flex items-center justify-between gap-4">
-                <span>{{ session('success') }}</span>
-                <button type="button" class="text-green-700 hover:text-green-900" onclick="this.parentElement.parentElement.remove();">
-                    &times;
-                </button>
-            </div>
-        </div>
-    @endif
-
-    @if (session('error'))
-        <div class="fixed top-5 left-1/2 transform -translate-x-1/2 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded shadow-lg z-50">
-            <div class="flex items-center justify-between gap-4">
-                <span>{{ session('error') }}</span>
-                <button type="button" class="text-red-700 hover:text-red-900" onclick="this.parentElement.parentElement.remove()">
-                    &times;
-                </button>
-            </div>
-        </div>
-    @endif
-
     <div class="flex lg:flex-nowrap flex-wrap md:gap-3 gap-10 m-4 mb-12">
         <div class="flex w-full h-fit items-center justify-start flex-col rounded-md bg-gray-50 dark:bg-gray-800 shadow-md">
             <div class="text-center rounded bg-teal-400 w-full p-4 flex">

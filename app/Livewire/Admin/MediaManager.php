@@ -34,8 +34,13 @@ class MediaManager extends Component
             $this->statsAction= $action;
         } else if($action === 'edit') {
             try{
-                $media = Media::findOrFail($id);
-                //dd($id,$action,$this->statsAction, $user);
+                $media = Media::find($id);
+                
+                if(!$media){
+                    session()->flash('error', 'Media tidak ditemukan.');
+                    return;
+                }
+
                 $this->mediaId = $id;
                 $this->title = $media->title;
                 $this->sumber = $media->sumber;
@@ -130,7 +135,15 @@ class MediaManager extends Component
         try{
             $this->validate();
 
-            $media = Media::findOrFail($this->mediaId);
+            $media = Media::find($this->mediaId);
+
+            if (!$media) {
+                $this->reset();
+                $this->resetValidation(); // Reset validasi setelah penyimpanan
+                $this->isModalOpen = false;
+                session()->flash('error', 'Media tidak ditemukan.');
+                return;
+            }
 
             $safeTitle = Purifier::clean($this->title);
             $safeSumber = Purifier::clean($this->sumber);
@@ -198,18 +211,24 @@ class MediaManager extends Component
         if (strtolower($this->confirmDelete)=== 'hapus media') {
             try{
                 $media = Media::find($this->mediaId);
-                if ($media) {
-                    File::delete(public_path($media->file_path));
-                    $media->delete();
-
+                if (!$media) {
                     $this->reset();
-                    $this->resetValidation(); // Reset validasi setelah penyimpanan
+                    $this->resetValidation();
                     $this->isModalOpen = false;
-
-                    session()->flash('success', 'Media berhasil dihapus.');
-                } else {
                     session()->flash('error', 'Media tidak ditemukan.');
+                    return;
+
                 }
+
+                File::delete(public_path($media->file_path));
+                $media->delete();
+                session()->flash('success', 'Media berhasil dihapus.');
+
+                //cek lagi
+                $this->reset();
+                $this->resetValidation();
+                $this->isModalOpen = false;
+
             }catch(\Exception $e){
                 session()->flash('error', 'gagal hapus media');
             }

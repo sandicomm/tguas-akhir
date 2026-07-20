@@ -78,6 +78,8 @@ Route::get('/admin/webpage/{params}', WebPage::class)->middleware(['auth', 'veri
 
 Route::post('/admin/webpage/store', [WebPage::class, 'store'])->middleware(['auth', 'verified'])->name('admin.webpage.store');
 Route::post('/admin/webpage/clear', [WebPage::class, 'clearImagePage'])->middleware(['auth', 'verified'])->name('admin.webpage.clearImage');
+Route::post('/admin/webpage/cek', [WebPage::class, 'cekStatus'])->middleware(['auth', 'verified'])->name('admin.webpage.cek');
+Route::post('/admin/webpage/update-visit', [WebPage::class, 'updateVisit'])->middleware(['auth', 'verified'])->name('admin.webpage.updateVisit');
 
 //------------------ Website interaktif --------------
 Route::middleware([CheckPreTestCompleted::class])->group(function () {

@@ -15,6 +15,7 @@ import { initFlowbite } from 'flowbite';
 
 let webpageDb=  globals.webpageDb
 let editorFieldSelect=globals.editorFieldSelect
+const webpage = document.getElementById('webpage')
 
 function modalTypeStyling(){
   document.getElementById('modal-type').addEventListener('change', function(){
@@ -48,7 +49,7 @@ function modalTypeStyling(){
       try {
           initFlowbite();
       } catch (error) {
-          console.error('❌ Gagal menginisialisasi Modal');
+          console.error('Gagal menginisialisasi Modal');
       }
     }, 100);  
   })
@@ -222,8 +223,7 @@ const addModal = (event)=>{
     idAppend = `editor-container-section-${idParts[4]}`;
     const section = getEl(idAppend)
 
-    if(!section) return
-    
+    if(!section) return 
 
     fieldNumber = handleElementCount(section,section.dataset.elementCount);
     section.dataset.elementCount = fieldNumber
@@ -250,13 +250,12 @@ const addModal = (event)=>{
   if(!webpageSection)return
 
   webpageSection.insertAdjacentHTML('beforeend', bodyDropdown)
-  webpageSection.insertAdjacentHTML('beforeend', createBodyModalHTML(idPrefix))
+  document.getElementById('modal-body-wrapper').insertAdjacentHTML('beforeend', createBodyModalHTML(idPrefix))
+  
 
   const appendBtnModal = getEl(idAppend)
   if(!appendBtnModal)return
   appendBtnModal.insertAdjacentHTML('beforeend',createBtnModalHTML(idPrefix, fieldNumber));
-
-  dropdownInitialized('multi',`${idPrefix}`)
 
   webpageDb.push({
     id: `${idPrefix}`,
@@ -302,14 +301,16 @@ const addModal = (event)=>{
   globals.isFormDirty = true
   globals.webpageDb=webpageDb
 
+  dropdownInitialized('multi', idPrefix)
+
   setTimeout(() => {
     try {
         const modalElement = getEl(idPrefix);
         if (modalElement) {
             new Modal(modalElement);
-            //('✅ Modal berhasil diinisialisasi:', modalElement.id);
+            //('Modal berhasil diinisialisasi:', modalElement.id);
         } else {
-          console.warn('⚠️ Elemen Modal tidak ditemukan setelah appendChild');
+          console.warn('Elemen Modal tidak ditemukan setelah appendChild');
         }
 
         // Panggil initFlowbite setelah inisialisasi accordion spesifik ini
@@ -317,7 +318,7 @@ const addModal = (event)=>{
         initFlowbite();
 
     } catch (error) {
-        console.error('❌ Gagal menginisialisasi Modal');
+        console.error('Gagal menginisialisasi Modal');
     }
   }, 100);  
 }
@@ -392,8 +393,9 @@ const copyModal = (idModal, mode = 'full', newId, oldId) => {
     }
 
     // =============================
-    // 📌 MODE: body only
+    // MODE: body only
     // =============================
+    console.log('ada',modalEl,mode)
     if (mode === 'body') {
       const modalCopy = modalEl.cloneNode(true);
       const oldModalId = modalEl.id;
@@ -403,18 +405,13 @@ const copyModal = (idModal, mode = 'full', newId, oldId) => {
 
       updateModalAttributes(modalCopy, oldModalId, newModalId);
 
-      // Append ke section terkait
-      const sectionNum = (btnModal.id.split('-').find(part => !isNaN(part)) || null);
-      const sectionContainer = sectionNum
-        ? getEl(`webpage-section-${sectionNum}`)
-        : null;
-
-      if (!sectionContainer) return
+      // Append ke sebelah elemen modal target
       
-      if (sectionContainer) sectionContainer.appendChild(modalCopy);
-      else document.body.appendChild(modalCopy);
+      if (!modalEl) return
+      if (modalEl) modalEl.after(modalCopy);
+      else document.getElementById('modal-body-wrapper').appendChild(modalCopy);
 
-      // 🔁 Duplikat data terkait modal lama di database
+      // Duplikat data terkait modal lama di database
       const relatedObjects = webpageDb.filter(obj => arraySubsequenceMatch(obj.id.split('-'), oldModalId.split('-')));
       relatedObjects.forEach(originalObj => {
         const clonedObj = deepClone(originalObj);
@@ -434,6 +431,8 @@ const copyModal = (idModal, mode = 'full', newId, oldId) => {
         webpageDb.push(clonedObj);
       });
 
+      dropdownInitialized('multi', newModalId)
+
       setTimeout(() => {
         try {
             // Ganti 'newModalId' dengan ID elemen modal Anda
@@ -447,7 +446,7 @@ const copyModal = (idModal, mode = 'full', newId, oldId) => {
             }
             
         } catch (error) {
-            console.error('❌ Gagal inisialisasi modal');
+            console.error('Gagal inisialisasi modal');
         }
     }, 100);
     }
@@ -511,16 +510,14 @@ const copyModal = (idModal, mode = 'full', newId, oldId) => {
 
       // Sisipkan tombol & modal baru ke DOM
       btnModal.insertAdjacentElement('afterend', btnCopy);
-      const sectionNum = (btnModal.id.split('-').find(part => !isNaN(part)) || null);
-      const sectionContainer = sectionNum
-        ? getEl(`webpage-section-${sectionNum}`)
-        : null;
 
-      if (!sectionContainer) return
+      if (!modalEl) return
       
-      if (sectionContainer) sectionContainer.appendChild(modalCopy);
-      else document.body.appendChild(modalCopy);
+      if (modalEl) modalEl.after(modalCopy);
+      else document.getElementById('modal-body-wrapper').appendChild(modalCopy);
 
+      dropdownInitialized('multi', modalCopy.id.split('-').slice(1).join('-'))
+      
       modalCopy.removeAttribute('data-listener-added')
       modalCopy
         .querySelectorAll('[data-listener-added]')
@@ -547,7 +544,7 @@ const copyModal = (idModal, mode = 'full', newId, oldId) => {
         bodyDropdown.className = 'w-25 z-40 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700';
       })
 
-      // 🔁 Duplikat semua elemen di webpageDb yang terkait dengan oldBtnId
+      // Duplikat semua elemen di webpageDb yang terkait dengan oldBtnId
       const relatedObjects = webpageDb.filter(obj => arraySubsequenceMatch(obj.id.split('-'), oldBtnId.split('-')));
       relatedObjects.forEach(originalObj => {
         const clonedObj = deepClone(originalObj);
@@ -573,12 +570,12 @@ const copyModal = (idModal, mode = 'full', newId, oldId) => {
       copyDropdown.forEach(dropdown=>{
         let bodyDropdown = getEl(dropdown.dataset.dropdownToggle)
         if(!bodyDropdown)return
-
+        
         bodyDropdown.className = 'w-25 z-40 hidden bg-white divide-y divide-blue-100 rounded-lg shadow-sm dark:bg-gray-700';
       })
 
     // =============================
-    // 🔄 Update data count container
+    // Update data count container
     // =============================
     const updateContainerField = (targetId) => {
       const field = webpageDb.find(f => f.id === targetId);
@@ -601,7 +598,7 @@ const copyModal = (idModal, mode = 'full', newId, oldId) => {
     return true;
 
   } catch (e) {
-    console.error('❌ copyModal error');
+    console.error('copyModal error',e);
     return false;
   }
 };

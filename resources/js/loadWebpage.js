@@ -4,6 +4,8 @@ import { initFlowbite } from 'flowbite';
 // ======== GLOBALS =========
 import { globals } from './page/globals.js';
 
+import { dropdownInitialized } from './page/utils/dropdownInit.js';
+
 // ======== COMPONENTS =========
 import { 
   createItemAccordion, 
@@ -35,9 +37,11 @@ let webpageDb = globals.webpageDb,
   webpageDbRaw = globals.webpageDbRaw,
   webpageDbParentSection = globals.webpageDbParentSection
 
+const originalSizes = globals.originalSizes;
+
 export function initWebpage(edit) {
   document.getElementById('loading-overlay')?.classList.remove('hidden');
-  //console.log('hello load')
+
   webpageDbRaw = JSON.parse(JSON.stringify(webpageJs));
   globals.webpageDbRaw = webpageDbRaw
   
@@ -47,20 +51,24 @@ export function initWebpage(edit) {
   webpageDbParentSection = webpageDbRaw.filter(page => page.type == 'parent-section')
   globals.webpageDbParentSection = webpageDbParentSection
 
-  const typePage = window.typePage; // Ambil dari variabel global
-  if(typePage == 'image'){
+  const typePage = window.typePage; //variabel global dari blade
 
+  // cetak elemen interaktif
+  if(typePage == 'image' || typePage == 'video'){
+    // jika ke halaman poster/video
     loadWebpage(edit, true)
-    ////console.log(typePage)
-    
-  }else{
 
+  }else{
     param = JSON.parse(JSON.stringify(paramJs))
     globals.param = param
+
     let indicatorPage
+
     if(param === 'prolog'){
       indicatorPage = 'Prolog Webpage'
     } 
+
+    // tunggu browser selesai load yang lain dlu baru cetak elemen
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         loadWebpage(edit)
@@ -70,9 +78,7 @@ export function initWebpage(edit) {
   }
 }
 
-const indexBySection = {};
-const indexById = {};
-
+//=========== RESIZE FONT ==================
 const FONT_SIZE_MAP = {
   1: "x-small",
   2: "small",
@@ -89,21 +95,20 @@ const FONT_SIZE_REVERSE_MAP = {
   "medium": 3,
   "large": 4,
   "x-large": 5,
-  "xx-large": 6,   // fallback browser
+  "xx-large": 6,
   "xxx-large": 7,
 };
 
 function normalizeFontSizeToNumber(value) {
   if (!value) return null;
 
-  // font size="7"
+  // pembatasan nilai jika angka
   if (!isNaN(value)) {
     return Math.min(7, Math.max(1, parseInt(value)));
   }
 
   value = value.toLowerCase();
 
-  // keyword: x-large, xxx-large
   if (FONT_SIZE_REVERSE_MAP[value]) {
     return FONT_SIZE_REVERSE_MAP[value];
   }
@@ -123,39 +128,42 @@ function normalizeFontSizeToNumber(value) {
   return null;
 }
 
-const originalSizes = {};
 let originalCaptured = false;
 
-function storeOriginalSize(el) {
-  if (!el.id) return;
+export function storeOriginalSize() {
+  document.querySelectorAll("[style]").forEach(el => {
+    if (!el.id || !el.style.width || el.id === 'webpage') return;
 
-  if (!originalSizes[el.id]) {
-    originalSizes[el.id] = {};
-  }
-
-  const ori = originalSizes[el.id];
-
-  if (!ori.width) ori.width = el.style.width || "";
-  if (!ori.height) ori.height = el.style.height || "";
-
-  // ===== FONT via <font size="">
-  const fontEl = el.querySelector("font");
-  if (fontEl && !ori.fontSize) {
-    const size = normalizeFontSizeToNumber(fontEl.getAttribute("size"));
-    if (size) {
-      ori.fontSize = { value: size };
-      return;
+    if (!originalSizes[el.id]) {
+      originalSizes[el.id] = {};
     }
-  }
 
-  // ===== FONT via style="font-size"
-  const styledEl = el.querySelector("[style*='font-size']");
-  if (styledEl && !ori.fontSize) {
-    const size = normalizeFontSizeToNumber(styledEl.style.fontSize);
-    if (size) {
-      ori.fontSize = { value: size };
+    const ori = originalSizes[el.id];
+
+    // ------------ simpan ukuran elemen ------------
+    if (!ori.width) ori.width = el.style.width || "";
+    if (!ori.height) ori.height = el.style.height || "";
+
+    // ------------ simpan ukuran font ----------
+    const fontEl = el.querySelector("font");
+    if (fontEl && !ori.fontSize) {
+      const size = normalizeFontSizeToNumber(fontEl.getAttribute("size"));
+      if (size) {
+        ori.fontSize = { value: size };
+        return;
+      }
     }
-  }
+
+    const styledEl = el.querySelector("[style*='font-size']");
+    if (styledEl && !ori.fontSize) {
+      const size = normalizeFontSizeToNumber(styledEl.style.fontSize);
+      if (size) {
+        ori.fontSize = { value: size };
+      }
+    }
+  })
+
+  originalCaptured =true
 }
 
 function restoreOriginalSize(el) {
@@ -163,82 +171,75 @@ function restoreOriginalSize(el) {
   const ori = originalSizes[el.id];
   if (!ori) return;
 
+  // ------ set ukuran elemen ----------
   el.style.width = ori.width;
   el.style.height = ori.height;
 
+  //----- set ukuran font ---------
   if (!ori.fontSize) return;
 
   const sizeNum = ori.fontSize.value;
   const cssSize = FONT_SIZE_MAP[sizeNum];
 
-  // 1️⃣ Kalau masih ada <font>
   const fontEl = el.querySelector("font");
   if (fontEl) {
     fontEl.setAttribute("size", sizeNum);
     return;
   }
 
-  // 2️⃣ Kalau pakai style
   const styledEl = el.querySelector("[style*='font-size']");
   if (styledEl) {
     styledEl.style.fontSize = cssSize;
     return;
   }
 
-  // 3️⃣ Fallback: apply ke el langsung
   el.style.fontSize = cssSize;
 }
 
-function findParentWidth(el) {
-    let current
-    if(el.id.startsWith('field')){
-      current = el.parentElement.parentElement;
+export function findParentWidth(el) {
+  let element
+  if(!el.id.startsWith('accordion-element') && el.id.includes('accordion')){
+    if(el.id.startsWith('btn-modal') || el.id.startsWith('accordion-in-accordion')){
+      element=getEl(`section-${el.id.split('-').slice(2,-1).join('-')}`)
+      console.log('id parent: ', `section-${el.id.split('-').slice(2,-1).join('-')}`)
     }else{
-      current = el.parentElement;
+      element=getEl(`section-${el.id.split('-').slice(1,-1).join('-')}`)
+      console.log('id parent: ', `section-${el.id.split('-').slice(1,-1).join('-')}`)
     }
-    while (current) {
-        const styleAttr = current.getAttribute("style");
-
-        // Kalau inline width ditemukan, tapi lebih besar dari layar → skip aja (overflow case)
-        if (styleAttr && styleAttr.includes("width:")) {
-            const match = styleAttr.match(/width\s*:\s*(\d+)px/i);
-            if (match) {
-                const w = parseInt(match[1]);
-                if (w <= window.innerWidth) {
-                    return { current: w, status: "style" };
-                }
-            }
-        }
-
-        // Cek visual rect
-        const rect = current.getBoundingClientRect();
-        if (rect.width && rect.width > 0 && rect.width <= window.innerWidth) {
-            return { current: rect.width, status: "rect" };
-        }
-
-        // lanjut ke parent
-        current = current.parentElement;
+  }else{
+    if(el.id.startsWith('btn-modal')){
+      element=getEl(`editor-container-${el.id.split('-').slice(3,-1).join('-')}`)
+      console.log('id parent: ', `editor-container-${el.id.split('-').slice(3,-1).join('-')}`)
+    }else{
+      element=getEl(`editor-container-${el.id.split('-').slice(2,-1).join('-')}`)
+      console.log('id parent: ', `editor-container-${el.id.split('-').slice(2,-1).join('-')}`)
     }
-    return null;
+  }
+
+  //const check = findParentWidth(el);
+  console.log('parent:',el, element)
+  if (!element) return;
+  let styling = window.getComputedStyle(element)
+  let width = parseInt(element.offsetWidth)
+
+  return {element, width, styling}
 }
 
 function applyFontSize(el, newSize) {
   const fontEl = el.querySelector("font");
   const styledEl = el.querySelector("[style*='font-size']");
 
-  // PRIORITAS <font>
+  // set font size 
   if (fontEl) {
     fontEl.setAttribute("size", newSize);
     return;
   }
 
-  // STYLE fallback
   if (styledEl) {
     styledEl.style.fontSize = FONT_SIZE_MAP[newSize] || "medium";
     return;
   }
 
-  // fallback terakhir
   el.style.fontSize = FONT_SIZE_MAP[newSize] || "medium";
 }
 
@@ -249,24 +250,23 @@ function resizeFont(el) {
   const styledEl = el.querySelector("[style*='font-size']");
 
   if (fontEl) {
-    currentValue = fontEl.getAttribute("size"); // bisa "7"
+    currentValue = fontEl.getAttribute("size");
   } else if (styledEl) {
-    currentValue = styledEl.style.fontSize; // bisa "xxx-large"
+    currentValue = styledEl.style.fontSize;
   }
 
-  // 🔑 NORMALISASI YANG BENAR
+  // normalisasi ukuran font ke angka
   const numericSize = normalizeFontSizeToNumber(currentValue);
-
   if (!numericSize) return;
 
-  // MOBILE LOGIC
+  // mobile
   if (window.innerWidth <= 550) {
     let newSize = numericSize;
 
     if (numericSize >= 6) {
-      newSize = 5;                // 6 / 7 → 5
+      newSize = 5;             
     } else if (numericSize > 3 && numericSize < 5) {
-      newSize = numericSize - 1;  // 4 → 3
+      newSize = numericSize - 1;
     }
 
     applyFontSize(el, newSize);
@@ -275,25 +275,30 @@ function resizeFont(el) {
 
 export function resizeElements(edit = false) {
   setTimeout(() => {
-    // 🔒 CAPTURE ORIGINAL SIZE SEKALI SAJA
-    if (!originalCaptured) {
-      document.querySelectorAll("[style]").forEach(el => {
-        if(!el.id.startsWith('dropdown')){
-          storeOriginalSize(el);
-        }
-      });
-
-      originalCaptured = true;
+    // Ambil ukuran elemen
+    if(!originalCaptured){
+      storeOriginalSize()
     }
-    ////console.log('resize')
+   
+    if(Object.keys(originalSizes).length === 0){
+      setTimeout(()=>{
+        storeOriginalSize()
+        console.log('tangkap lagi', originalSizes, originalCaptured)
+      },500)
+    }
+    console.log(originalSizes, originalCaptured)
     const webpage = document.getElementById('webpage')
+    const isMobile = edit ? parseInt(webpage.offsetWidth) <= 850 : window.innerWidth <= 850;
     
-    const isMobile = edit ? parseInt(webpage.style.width) <= 850 : window.innerWidth <= 850;
-    ////console.log(isMobile, edit, webpage.style.width, parseInt(webpage.style.width))
     document.querySelectorAll("[style]").forEach(el => {
+
+      if(!el.id || el.id.startsWith('field-modal') || el.id === 'webpage') return
+
       if(!el.id.startsWith('dropdown')){
 
+        //console.log('restore cek:', isMobile, edit, parseInt(webpage.offsetWidth),parseInt(webpage.style.width) <= 850)
         if (!isMobile) {
+          //console.log('restore uhuy')
           restoreOriginalSize(el);
           return;
         }
@@ -309,16 +314,18 @@ export function resizeElements(edit = false) {
         const styleWidth  = parseInt(el.style.width) || null;
         const styleHeight = parseInt(el.style.height) || null;
   
-        const check = findParentWidth(el);
-        if (!check) return;
+        const parent = findParentWidth(el)
   
-        let parentWidth = check.current;
-        if (!parentWidth) return;
-  
+        //console.log('parent:',el, parent.element, parent)
+        if (Object.keys(parent).length === 0) return;
+        let parentWidth = parseInt(parent.width)
+        
+        //console.log('set width: ',el, styleWidth, parentWidth)
         if (styleWidth && styleWidth >= parentWidth) {
-          const scale = parentWidth / styleWidth;
           el.style.width = (parentWidth - 15) + "px";
-  
+          
+          // set height elemen
+          const scale = parentWidth / styleWidth;
           if (styleHeight) {
             el.style.height = Math.floor(styleHeight * scale) + "px";
           }
@@ -328,11 +335,13 @@ export function resizeElements(edit = false) {
           el.style.width = (parentWidth - 15) + "px";
         }
       }
+      
     });
 
-  }, 200);
-}
-
+  }, 500);
+} 
+ 
+// Responsive resize elemen
 window.addEventListener("resize", ()=>{
   const webpage = document.getElementById('webpage')
   webpage.style.width='100%' 
@@ -344,12 +353,16 @@ window.addEventListener("load", ()=>{
   resizeElements
 });
 
+const indexBySection = {};
+const indexById = {};
 const webpage = document.getElementById('webpage')
 
 export function loadWebpage(edit=false, justFooter=false){
   if(!edit) initFlowbite()
- // //console.log({edit,justFooter})
+
   const webpageNotFooter = webpageDb.filter(file => !file.id.includes('footer'))
+
+  //================= JIKA TIDAK ADA DATA ======================
   if(webpageNotFooter.length == 0 && edit){
     let idPrefix = `section-1`
 
@@ -357,18 +370,18 @@ export function loadWebpage(edit=false, justFooter=false){
       idPrefix = `section-prolog-web-1`
     }
 
+    //----------------- SECTION -------------------------
     webpage.insertAdjacentHTML('beforeend', createSection(idPrefix, '', 0,0, 'min-height:100dvh;position:relative;justify-content:start;align-items:center;'))
     webpage.dataset.elementCount = 1
 
-    //====================== FOOTER =========================
+    //----------------- FOOTER -------------------------
     let sectionsFooter = webpageDb
       .filter(page => page.type === "section" && page.id.includes('footer'))
 
-    // 2. Loop per section
     sectionsFooter.forEach(section => {
       let idPrefix = section.id.split('-').slice(1).join('-');
 
-      // Cetak section
+      // Cetak section footer
       webpage.insertAdjacentHTML(
         'beforeend',
         createSectionFooter(idPrefix, section.element_order, section.element_count, section.style)
@@ -378,6 +391,7 @@ export function loadWebpage(edit=false, justFooter=false){
         return page.type !== "section" && page.id.includes('footer');
       });
 
+      // Cetak elemen field
       childElements.sort((a, b) => a.element_order - b.element_order);
       childElements.forEach(page => {
         let sectionAppend = document.querySelector(`#webpage-section-footer`);
@@ -389,6 +403,7 @@ export function loadWebpage(edit=false, justFooter=false){
       })
     });
 
+    // ------------ PROLOG ---------------
     if(param.includes('prolog')){
       webpageDb.push({
           id: 'webpage-section-prolog-web-1',
@@ -409,6 +424,7 @@ export function loadWebpage(edit=false, justFooter=false){
       globals.webpageDb=webpageDb
     }
 
+  // ================= JIKA ADA DATA ========================
   }else{
     webpageDb.forEach(item => {
       indexById[item.id] = item;
@@ -431,13 +447,15 @@ export function loadWebpage(edit=false, justFooter=false){
     }
 
     let webpageHasPrinted= new Set()
+
     if(!justFooter){
-      // 1. Ambil semua section dan sort berdasarkan element_order
+      //Ambil semua section dan sort berdasarkan element_order
       let sections = webpageDb
         .filter(page => page.type === "section" && !page.id.includes('footer'))
         .sort((a, b) => a.element_order - b.element_order);
       
-      // 2. Loop per section
+      // Loop per section
+      let zIndex=999
       sections.forEach(section => {
         let idPrefix = section.id.split('-').slice(1).join('-');
         const borderWave = webpageDb.filter(page => page.type === 'border-wave' && arraySubsequenceMatch(page.id.split('-'), idPrefix.split('-')))
@@ -446,7 +464,7 @@ export function loadWebpage(edit=false, justFooter=false){
         if(!webpageHasPrinted.has(section.id)){
           webpage.insertAdjacentHTML(
             'beforeend',
-            createSection(idPrefix, borderWave, section.element_order, section.element_count, section.style, edit)
+            createSection(idPrefix, borderWave, section.element_order, section.element_count, section.style, edit, zIndex--)
           );
           webpageHasPrinted.add(section.id)
         }
@@ -487,6 +505,7 @@ export function loadWebpage(edit=false, justFooter=false){
             nestedAccordion: [],
             other: []
           };
+
           let accordionLengthId = countNumbers(id)
           const targetParts = id.split("-");
   
@@ -507,6 +526,7 @@ export function loadWebpage(edit=false, justFooter=false){
             }
           });
   
+          // render head
           grouped.head.sort((a, b) => a.element_order - b.element_order)
             .forEach(head => {
               if(!webpageHasPrinted.has(head.id)){
@@ -548,7 +568,7 @@ export function loadWebpage(edit=false, justFooter=false){
                   const webpageSection = getEl(`webpage-section-${sectionNum}`)
                   if(!webpageSection) return
                   
-                  webpageSection.insertAdjacentHTML('beforeend', createBodyModal(field, fieldHead,edit))
+                  document.getElementById('modal-body-wrapper').insertAdjacentHTML('beforeend', createBodyModal(field, fieldHead,edit))
   
                   if(edit)webpageSection.insertAdjacentHTML('beforeend', createDropdownModal(field.id))
   
@@ -610,7 +630,7 @@ export function loadWebpage(edit=false, justFooter=false){
               element = createField(page,edit);
               if(edit) dropdown = createDropdownField(page.id);
   
-              appendTo(`#body-${page.id.split('-').slice(1, -1).join('-')}`, element, sectionAppend);
+              appendTo(`#body-${page.id.split('-').slice(1, -1).join('-')}`, element, webpage.parentElement);
               if (edit) document.querySelector(`#parent-${page.id.split('-').slice(1,-1).join('-')}`).insertAdjacentHTML('afterbegin', dropdown)
   
               webpageHasPrinted.add(page.id)
@@ -641,7 +661,7 @@ export function loadWebpage(edit=false, justFooter=false){
           'body-modal'(page, sectionAppend, editorContainer) {
             if(!webpageHasPrinted.has(page.id)){
               const fieldHead = webpageDb.find(field => field.id === `field-head-${page.id.split('-').slice(1).join('-')}`)
-              sectionAppend.insertAdjacentHTML('beforeend', createBodyModal(page, fieldHead,edit))
+              document.getElementById('modal-body-wrapper').insertAdjacentHTML('beforeend', createBodyModal(page, fieldHead,edit))
   
               if(edit) sectionAppend.insertAdjacentHTML('beforeend', createDropdownModal(page.id))
   
@@ -698,24 +718,28 @@ export function loadWebpage(edit=false, justFooter=false){
           // urutkan berdasarkan element_order biasa
           return a.element_order - b.element_order;
         });
-        //console.log(childElements)
+      
         childElements.forEach(page => {
           if(!page.id.includes('footer')){
             let sectionAppend=''
   
             if(param.includes('prolog')){
-              sectionAppend = document.querySelector(`#webpage-section-prolog-web-${sectionNum}`);
-              
+              sectionAppend = document.querySelector(`#webpage-section-prolog-web-${sectionNum}`);              
             }else{
-              sectionAppend = document.querySelector(`#webpage-section-${sectionNum}`);
-    
+              sectionAppend = document.querySelector(`#webpage-section-${sectionNum}`);    
             }
+
             const editorContainer = sectionAppend.querySelector('[id^="editor-container-"]');
-            //console.log(page.type)
+           
             const renderer = renderers[page.type];
-            if (!renderer) return; // skip kalau gak ada handler
-            
-            
+          
+            const cekObject = (v) => Object.prototype.toString.call(v) === '[object Object]';
+            if(cekObject(renderer)){
+              if (Object.keys(originalSizes).length === 0) return;
+            }else{
+              if (!renderer) return;
+            }
+          
             const result = renderer(page, sectionAppend, editorContainer, webpageDb);
             if (result === true) return; // sudah di-handle sepenuhnya di dalam renderer
             
@@ -775,12 +799,14 @@ export function loadWebpage(edit=false, justFooter=false){
         !webpageHasPrinted.has(obj.id)
       );
   }
-
+  if(edit){
+    dropdownInitialized('all')
+  }
   setTimeout(() => {
       try {
         initFlowbite();
       } catch (error) {
-          console.error('❌ Gagal menginisialisasi Modal:', error);
+          console.error('Gagal menginisialisasi Modal:', error);
       }
     }, 100); 
 }

@@ -6,8 +6,10 @@ use App\Models\Form;
 use App\Models\Answers;
 use Livewire\Component;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\View;
 use App\Models\Responses as Response;
 use App\Models\Responden as Responden;
+use App\Models\WebpageVisited as WebpageVisited;
 
 use App\Exports\FormResponseSingleExport;
 use Maatwebsite\Excel\Facades\Excel;
@@ -179,7 +181,7 @@ class Dashboard extends Component
         ->get();
 
         if ($data->isEmpty()) {
-            dd('uhuy', $formId, $data, $this->selectedForm);
+            session()->flash('error', 'Data tidak ada.');
             return;
         }
 

@@ -3,7 +3,7 @@ function parseStyleObj(styleStr) {
    let clean = styleStr
     return JSON.parse(clean);
   } catch (e) {
-    // console.log("❌ Gagal parse styleObj:", styleStr, e);
+    // console.log("Gagal parse styleObj:", styleStr, e);
     return {};
   }
 }

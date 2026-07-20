@@ -182,6 +182,7 @@
                 </div>
                 </div>
             </div>
+            <div id="modal-body-wrapper"></div>
         </div>
     </div>
 </div>

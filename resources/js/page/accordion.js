@@ -59,7 +59,7 @@ function accordionStyling(){
                 try {
                     initFlowbite();
                 } catch (error) {
-                    console.error('❌ Gagal menginisialisasi Accordion:');
+                    console.error('Gagal menginisialisasi Accordion:');
                 }
             }, 50);  
           }
@@ -141,7 +141,7 @@ function accordionStyling(){
           // dan setelah ada sedikit penundaan
           initFlowbite();
       } catch (error) {
-          console.error('❌ Gagal menginisialisasi Modal:');
+          console.error(' Gagal menginisialisasi Modal:');
       }
     }, 100);  
   })
@@ -593,6 +593,9 @@ const addAccordion=(event)=>{
     if (!webpageSection) return false;
 
     webpageSection.insertAdjacentHTML('beforeend',createItemBodyDropdownHTML(idPrefix,idParts,lastNumberId))
+    dropdownInitialized('multi', idPrefix)
+    console.log(idPrefix)
+
     webpageDb.forEach(page =>{
       if(page.id === idParts.slice(3, idParts.length).join('-')){
         page.element_count = itemCount
@@ -639,6 +642,8 @@ const addAccordion=(event)=>{
     webpageSection.insertAdjacentHTML('beforeend', createBodyDropdownHTML(idPrefix,idParts))
     appendAccordion.insertAdjacentHTML('beforeend',createAccordionHTML(idPrefix,fieldNumber,accordionWidth));
 
+    dropdownInitialized('multi', idPrefix)
+    console.log(idPrefix)
     webpageDb.forEach(item=>{
       if(item.id === `webpage-section-${idParts.find(part => !isNaN(part))}` && idParts.filter(part => !isNaN(part)).length == 1){
         item.element_count++
@@ -668,9 +673,9 @@ const addAccordion=(event)=>{
                   activeClasses: 'bg-gray-100 text-gray-900',
                   inactiveClasses: 'text-gray-500'
               });
-              //console.log('✅ Accordion berhasil diinisialisasi:', accordionElement.id);
+              //console.log(' Accordion berhasil diinisialisasi:', accordionElement.id);
           } else {
-              // console.warn('⚠️ Elemen Accordion tidak ditemukan setelah appendChild');
+              // console.warn(' Elemen Accordion tidak ditemukan setelah appendChild');
           }
 
           // Panggil initFlowbite setelah inisialisasi accordion spesifik ini
@@ -678,10 +683,9 @@ const addAccordion=(event)=>{
           initFlowbite();
 
       } catch (error) {
-          console.error('❌ Gagal menginisialisasi Accordion:');
+          console.error('Gagal menginisialisasi Accordion:');
       }
   }, 100);  
-  dropdownInitialized('multi', idPrefix)
 
   globals.webpageDb=webpageDb
 }
@@ -721,26 +725,26 @@ const copyAccordion=(idAccordion, mode="all")=>{
 
         // Ambil semua elemen di dalam modal yang disalin
         accordionCopyElement.querySelectorAll('*').forEach(el => {
-          // 1️⃣ Cek setiap atribut
+          // Cek setiap atribut
           for (const attr of el.getAttributeNames()) {
             const val = el.getAttribute(attr);
             if (!val || typeof val !== 'string') continue;
 
-            // 2️⃣ Kalau value mengandung ID lama, ganti jadi ID baru
+            // Kalau value mengandung ID lama, ganti jadi ID baru
             if (arraySubsequenceMatch(val.split('-'), oldSuffix.split('-'))) {
               const newVal = replaceIdSuffix(val, oldSuffix, newSuffix);
               el.setAttribute(attr, newVal);
             }
           }
 
-          // 3️⃣ Kalau ID-nya sendiri mengandung substring lama, ganti juga
+          // Kalau ID-nya sendiri mengandung substring lama, ganti juga
           if (el.id && arraySubsequenceMatch(el.id.split('-'), oldSuffix.split('-'))) {
             const newId = replaceIdSuffix(el.id, oldSuffix, newSuffix);;
 
             // Update id di DOM
             el.id = newId;
 
-            // 4️⃣ Update juga di database (webpageDb)
+            // Update juga di database (webpageDb)
             const originalField = webpageDb.find(f => f.id === el.id);
             if (originalField) {
               const cloned = structuredClone(originalField);
@@ -805,7 +809,7 @@ const copyAccordion=(idAccordion, mode="all")=>{
           
         updateAccordionAttributes(accordionCopy, oldAccId, newAccId)
 
-        // ✅ Duplikasi semua elemen di webpageDb yang terkait dengan oldBtnId
+        // Duplikasi semua elemen di webpageDb yang terkait dengan oldBtnId
         const relatedObjects = webpageDb.filter(obj => arraySubsequenceMatch(obj.id.split('-'), oldAccId.split('-')));
 
         relatedObjects.forEach(originalObj => {
@@ -897,12 +901,12 @@ const copyAccordion=(idAccordion, mode="all")=>{
               activeClasses: 'bg-gray-100 text-gray-900',
               inactiveClasses: 'text-gray-500'
             });
-            //console.log('✅ Accordion berhasil diinisialisasi:', newAccId);
+            //console.log('Accordion berhasil diinisialisasi:', newAccId);
           }
           initFlowbite();
         } catch (error) {
           
-          console.error('❌ Gagal inisialisasi accordion');
+          console.error('Gagal inisialisasi accordion');
         }
       }, 100);
       let webpageDbParentSection = globals.webpageDbParentSection
@@ -952,12 +956,12 @@ const copyHeadAccordion=(idHeadAcc, mode="all")=>{
 
         // Ambil semua elemen di dalam modal yang disalin
         headAccordionCopyElement.querySelectorAll('*').forEach(el => {
-          // 1️⃣ Cek setiap atribut
+          // Cek setiap atribut
           for (const attr of el.getAttributeNames()) {
             const val = el.getAttribute(attr);
             if (!val || typeof val !== 'string') continue;
 
-            // 2️⃣ Kalau value mengandung ID lama, ganti jadi ID baru
+            //  Kalau value mengandung ID lama, ganti jadi ID baru
             if (arraySubsequenceMatch(val.split('-'), oldSuffix.split('-'))) {
          
               const newVal = replaceIdSuffix(val, oldSuffix, newSuffix);
@@ -1042,7 +1046,7 @@ const copyHeadAccordion=(idHeadAcc, mode="all")=>{
         .querySelectorAll('[data-listener-mouse-added]')
         .forEach(el => el.removeAttribute('data-listener-mouse-added'));
 
-      // ✅ Duplikasi semua elemen di webpageDb yang terkait dengan oldBtnId
+      // Duplikasi semua elemen di webpageDb yang terkait dengan oldBtnId
       const relatedObjects = webpageDb.filter(obj => arraySubsequenceMatch(obj.id.split('-'), oldHeadAccId.split('-')));
 
       relatedObjects.forEach(originalObj => {
@@ -1115,11 +1119,11 @@ const copyHeadAccordion=(idHeadAcc, mode="all")=>{
               activeClasses: 'bg-gray-100 text-gray-900',
               inactiveClasses: 'text-gray-500'
             });
-            //console.log('✅ Accordion berhasil diinisialisasi:', newHeadAccId.split('-').slice(0,-1).join('-'));
+            //console.log(' Accordion berhasil diinisialisasi:', newHeadAccId.split('-').slice(0,-1).join('-'));
           }
           initFlowbite();
         } catch (error) {
-          // console.error('❌ Gagal inisialisasi accordion', error);
+          // console.error(' Gagal inisialisasi accordion', error);
         }
       }, 100);
 

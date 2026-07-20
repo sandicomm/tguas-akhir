@@ -307,13 +307,13 @@ const addCarousel = (event)=>{
           if (carouselElement) {
             new Carousel(carouselElement);
           } else {
-            //console.warn('⚠️ Elemen Crousel tidak ditemukan setelah appendChild');
+            //console.warn('Elemen Crousel tidak ditemukan setelah appendChild');
           }
 
           initFlowbite();
 
       } catch (error) {
-          console.error('❌ Gagal menginisialisasi Carousel');
+          console.error('Gagal menginisialisasi Carousel');
       }
     }, 100);  
 
@@ -357,26 +357,26 @@ const copyCarousel=(idCarousel, mode="all")=>{
  
         // Ambil semua elemen di dalam modal yang disalin
         carouselCopyElement.querySelectorAll('*').forEach(el => {
-          // 1️⃣ Cek setiap atribut
+          // Cek setiap atribut
           for (const attr of el.getAttributeNames()) {
             const val = el.getAttribute(attr);
             if (!val || typeof val !== 'string') continue;
 
-            // 2️⃣ Kalau value mengandung ID lama, ganti jadi ID baru
+            // Kalau value mengandung ID lama, ganti jadi ID baru
             if (arraySubsequenceMatch(val.split('-'), oldSuffix.split('-'))) {
               const newVal = replaceIdSuffix(val,oldSuffix, newSuffix);
               el.setAttribute(attr, newVal);
             }
           }
 
-          // 3️⃣ Kalau ID-nya sendiri mengandung substring lama, ganti juga
+          // Kalau ID-nya sendiri mengandung substring lama, ganti juga
           if (el.id && arraySubsequenceMatch(el.id.split('-'), oldSuffix.split('-'))) {
             const newId = replaceIdSuffix(el.id,oldSuffix, newSuffix);
 
             // Update id di DOM
             el.id = newId;
 
-            // 4️⃣ Update juga di database (webpageDb)
+            //  Update juga di database (webpageDb)
             const originalField = webpageDb.find(f => f.id === el.id);
             if (originalField) {
               const cloned = structuredClone(originalField);
@@ -425,7 +425,7 @@ const copyCarousel=(idCarousel, mode="all")=>{
 
         updateCarouselAttributes(carouselCopy, oldCarId, newCarId)
 
-        // ✅ Duplikasi semua elemen di webpageDb yang terkait dengan oldCarId
+        // Duplikasi semua elemen di webpageDb yang terkait dengan oldCarId
         const relatedObjects = webpageDb.filter(obj => arraySubsequenceMatch(obj.id.split('-'), oldCarId.split('-')));
 
         relatedObjects.forEach(originalObj => {
@@ -523,7 +523,7 @@ const copyCarousel=(idCarousel, mode="all")=>{
         try {
           initFlowbite();
         } catch (error) {
-          console.error('❌ Gagal inisialisasi carousel');
+          console.error(' Gagal inisialisasi carousel');
         }
       }, 100);
 
@@ -581,7 +581,7 @@ function addItemCarousel(event){
   if(carouselSelect.dataset.text === "true"){
     if(carouselSelect.dataset.textPosition === "on-image"){
       itemContent = `
-      <div id="field-${newItemId}" class="border border-b-1 border-gray-500 p-1 max-w-[100%] scroll-hidden overflow-scroll" style="" contenteditable="true"></div>
+      <div id="field-${newItemId}" class="border border-b-1 border-gray-500 p-1 max-w-[100%] scroll-hidden overflow-scroll" style="" contenteditable="true">Type Here</div>
       `
       style = `padding:25px;background-image: linear-gradient(rgba(${rgba})), url(/assets/img/almond1DefaultImageCarousel.jpg); background-size: cover; background-position: center;`
       styleItem=style
@@ -591,7 +591,7 @@ function addItemCarousel(event){
       copyItem.querySelector('img').setAttribute('src', '/assets/img/almond1DefaultImageCarousel.jpg')
 
       copyItem.children[1].innerHTML = `
-      <div id="field-${newItemId}" class="border border-b-1 border-gray-500 p-1 max-w-[100%] scroll-hidden overflow-scroll" style="" contenteditable="true"></div>
+      <div id="field-${newItemId}" class="border border-b-1 border-gray-500 p-1 max-w-[100%] scroll-hidden overflow-scroll" style="" contenteditable="true">Type Here</div>
       `
       itemContent= copyItem.innerHTML
       classList = copyItem.classList
@@ -611,6 +611,7 @@ function addItemCarousel(event){
     webpageDb.push({
       id:`field-${newItemId}`,
       type:'field',
+      content:'Type Here',
       action:'new-add'
     })
   }else{
@@ -653,7 +654,7 @@ function addItemCarousel(event){
     try {
       initFlowbite();
     } catch (error) {
-      console.error('❌ Gagal menginisialisasi Carousel');
+      console.error('Gagal menginisialisasi Carousel');
     }
   }, 100);
 }
@@ -704,26 +705,26 @@ const copyItemCarousel=(idItemCarousel, mode="all")=>{
 
         // Ambil semua elemen di dalam modal yang disalin
         itemCarouselCopyElement.querySelectorAll('*').forEach(el => {
-          // 1️⃣ Cek setiap atribut
+          //  Cek setiap atribut
           for (const attr of el.getAttributeNames()) {
             const val = el.getAttribute(attr);
             if (!val || typeof val !== 'string') continue;
 
-            // 2️⃣ Kalau value mengandung ID lama, ganti jadi ID baru
+            //  Kalau value mengandung ID lama, ganti jadi ID baru
             if (arraySubsequenceMatch(val.split('-'), oldSuffix.split('-'))) {
               const newVal = replaceIdSuffix(val, oldSuffix, newSuffix);
               el.setAttribute(attr, newVal);
             }
           }
 
-          // 3️⃣ Kalau ID-nya sendiri mengandung substring lama, ganti juga
+          // Kalau ID-nya sendiri mengandung substring lama, ganti juga
           if (el.id && arraySubsequenceMatch(el.id.split('-'), oldSuffix.split('-'))) {
             const newId = replaceIdSuffix(el.id, oldSuffix, newSuffix);
 
             // Update id di DOM
             el.id = newId;
 
-            // 4️⃣ Update juga di database (webpageDb)
+            // Update juga di database (webpageDb)
             const originalField = webpageDb.find(f => f.id === el.id);
             if (originalField) {
               const cloned = structuredClone(originalField);
@@ -793,7 +794,7 @@ const copyItemCarousel=(idItemCarousel, mode="all")=>{
 
       slideIndicator.insertAdjacentElement('afterbegin', newIndicator)
 
-      // ✅ Duplikasi semua elemen di webpageDb yang terkait dengan oldItemCarId
+      // Duplikasi semua elemen di webpageDb yang terkait dengan oldItemCarId
       const relatedObjects = webpageDb.filter(obj => arraySubsequenceMatch(obj.id.split('-'), oldItemCarId.split('-')));
 
       relatedObjects.forEach(originalObj => {
@@ -888,7 +889,7 @@ const copyItemCarousel=(idItemCarousel, mode="all")=>{
         try {
           initFlowbite();
         } catch (error) {
-          console.error('❌ Gagal inisialisasi carousel');
+          console.error(' Gagal inisialisasi carousel');
         }
       }, 100);
 

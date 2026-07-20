@@ -150,12 +150,12 @@ class FormDetail extends Component
                        // === MODE EDIT ===
                        
                         $form = Form::find($request->form_id);
-                        $this->formDetailStatusRaw = 'form edit update';
+                        $this->formDetailStatusRaw = 'form edit';
             
                         if (!$form) {
-                            $this->formDetailStatusRaw = 'form tidak ditemukan update';
+                            $this->formDetailStatusRaw = 'form tidak ditemukan';
 
-                            $this->msg = 'Form Tidak Ditemukan, Mungkin Sudah Dihapus.';
+                            $this->msg = 'Form Tidak Ditemukan.';
                             $this->status = false;
                             $this->redirect = route('admin.forms');
 

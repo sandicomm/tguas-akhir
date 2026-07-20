@@ -93,7 +93,7 @@ function serializeForm(form) {
     let object = {};
 
     formData.forEach((value, key) => {
-        // Convert "sections[0][questions][2][answer][1]" → nested object
+        // Convert "sections[0][questions][2][answer][1]" ke nested object
         const keys = key.replace(/\]/g, "").split("[");
         keys.reduce((acc, k, i) => {
             if (i == keys.length - 1) {
@@ -127,7 +127,7 @@ function validateBeforeSubmit(fullData) {
      document.getElementById('jsLoader')?.classList.remove('hidden');
   const sections = fullData.sections;
 
-  // ✅ Form wajib punya minimal 1 section aktif
+  // Form wajib punya minimal 1 section aktif
   const activeSections = Object.values(sections || {}).filter(
     s => s.changeContent != 'delete'
   );
@@ -146,7 +146,7 @@ function validateBeforeSubmit(fullData) {
         q => q.changeContent != 'delete'
     );
 
-    // ✅ Section aktif wajib punya question
+    // Section aktif wajib punya question
     if (!isSectionDeleted && questions.length == 0) {
 
         window.dispatchEvent(new CustomEvent('notif-pesan', { 
@@ -159,7 +159,7 @@ function validateBeforeSubmit(fullData) {
     for (const question of questions) {
       const isQuestionDeleted = question.changeContent == 'delete';
 
-      // ✅ Jika aktif & pilgan, answer wajib ada
+      // Jika aktif & pilgan, answer wajib ada
       if (!isQuestionDeleted) {
         const answers = Object.values(question.answer || {}).filter(
             a => a.changeContent != 'delete'
@@ -222,11 +222,11 @@ function normalizeSectionsToKeyedObject(formCopy, sectionsCopy) {
       name: sec.name,
       description: sec.description ?? '',
       status: '',
-      changeContent: sec.changeContent,   // atau 'add' sesuai kebutuhan
-      questions: {}              // nanti diisi
+      changeContent: sec.changeContent, 
+      questions: {}              
     };
 
-    // ✅ JIKA QUESTIONS SUDAH ADA DI sec
+    // JIKA QUESTIONS SUDAH ADA DI sec
     if (sec.questions && Array.isArray(sec.questions)) {
       sec.questions.forEach(q => {
         const qid = String(q.id);
@@ -241,7 +241,7 @@ function normalizeSectionsToKeyedObject(formCopy, sectionsCopy) {
           answer: {}
         };
 
-        // ✅ JIKA ADA ANSWER
+        // JIKA ADA ANSWER
         if (q.answers && Array.isArray(q.answers)) {
           q.answers.forEach(a => {
             const aid = String(a.id);
@@ -289,7 +289,7 @@ async function submitInBatch(form, isAutosave = false) {
 
     let fullData = filterChangedData(form);
 
-    // ✅ WAJIB: object → array
+    //  object ke array
     fullData.sections = Object.values(fullData.sections || {});
 
     let baseData = {

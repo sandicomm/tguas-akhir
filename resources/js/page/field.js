@@ -229,7 +229,7 @@ const addField=(event)=>{
     type: 'field',
     style: '',
     action:'new-add',
-    content:'Field Text',
+    content:'Type Here',
     element_order: fieldNumber
   });
 
@@ -253,7 +253,7 @@ const addField=(event)=>{
 }
 const copyField = (idParts) => {
   webpageDb=  globals.webpageDb
-  // --- 1️⃣ Ambil elemen sumber ---
+  // --- Ambil elemen sumber ---
   const element = getEl(idParts.slice(1).join('-'));
   if (!element)return;
   
@@ -267,13 +267,13 @@ const copyField = (idParts) => {
   const countNumber = (parseInt(container.dataset.elementCount || '0', 10)) + 1;
   container.dataset.elementCount = countNumber;
 
-  // --- 2️⃣ Buat ID baru dan clone node ---
+  // --- Buat ID baru dan clone node ---
   const newId = generateUniqueId(oldId, container);
   const copyElement = parent.cloneNode(true);
 
   copyElement.dataset.elementOrder = String(parseInt(copyElement.dataset.elementOrder || '0', 10) + 1);
 
-  // --- 3️⃣ Update element order di level yang sama ---
+  // --- Update element order di level yang sama ---
   const newOrderBase = parseInt(copyElement.dataset.elementOrder, 10);
   Array.from(container.children).forEach(el => {
     const order = parseInt(el.dataset.elementOrder || '0', 10);
@@ -299,7 +299,7 @@ const copyField = (idParts) => {
     }
   });
 
-  // --- 4️⃣ Fungsi bantu untuk update semua atribut yang mengandung ID lama ---
+  // --- Fungsi bantu untuk update semua atribut yang mengandung ID lama ---
   function updateFieldAttributes(rootEl, oldSuffix, newSuffix) {
     rootEl.querySelectorAll('*').forEach(el => {
       for (const attr of el.getAttributeNames()) {
@@ -331,7 +331,7 @@ const copyField = (idParts) => {
   const newSuffix = newId.split('-').slice(1).join('-');
   updateFieldAttributes(copyElement, oldSuffix, newSuffix);
 
-  // --- 6️⃣ Sisipkan hasil duplikasi ke DOM ---
+  // --- Sisipkan hasil duplikasi ke DOM ---
   parent.insertAdjacentElement('afterend', copyElement);
 
   copyElement.removeAttribute('data-listener-added')
@@ -343,7 +343,7 @@ const copyField = (idParts) => {
       .querySelectorAll('[data-listener-mouse-added]')
       .forEach(el => el.removeAttribute('data-listener-mouse-added'));
 
-  // --- 5️⃣ Duplikasi dropdown body-nya ---
+  // --- Duplikasi dropdown body-nya ---
   
     const bodyDropdown = getEl(`dropdown-${idParts.slice(1).join('-')}`);
     if(!bodyDropdown)return
@@ -360,9 +360,8 @@ const copyField = (idParts) => {
       bodyDropdown.insertAdjacentElement('afterend', copyBodyDropdown)
 
     }
-  
 
-  // --- 8️⃣ Update element_count di DB container ---
+  // --- Update element_count di DB container ---
   if (container.id.startsWith('wrapper-section-accordion')) {
     const containerField = webpageDb.find(f => f.id === container.id.split('-').slice(1).join('-'));
     if (containerField){
@@ -383,7 +382,7 @@ const copyField = (idParts) => {
     }
   }
 
-  // --- 9️⃣ Duplikat entri utama ke database ---
+  // --- Duplikat entri utama ke database ---
   const originalField = webpageDb.find(f => f.id === oldId);
   if (originalField) {
     const clonedField = structuredClone(originalField);
@@ -396,6 +395,7 @@ const copyField = (idParts) => {
     webpageDb.push(clonedField);
   }
   dropdownInitialized('', `dropdown-${newId}`);
+  console.log(`dropdown-${newId}`)
 
   globals.isFormDirty = true
   

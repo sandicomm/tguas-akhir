@@ -156,7 +156,7 @@
                                 
                                 <div class="mb-4">
                                     <label>Link Sumber</label>
-                                    <input type="text" wire:model="link" 
+                                    <input type="text" wire:model="link"
                                         placeholder="Ketik Link Sumber Media disini..."
                                         class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
                                     @error('link') 
@@ -166,7 +166,7 @@
 
                                 <div class="mb-4">
                                     <label>File</label>
-                                    <input type="file" wire:model="file" 
+                                    <input type="file" wire:model="file" accept="image/jpeg, image/png, video/mp4, video/quicktime, video/x-msvideo"
                                         class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
 
                                     <div wire:loading.delay wire:target="file,store">
@@ -223,7 +223,8 @@
 
                                 <div class="mb-4">
                                     <label>File</label>
-                                    <input type="file" wire:model="file" 
+                                    <span class="text-blue-500 text-sm">Maksimal 20 Mb</span>
+                                    <input type="file" wire:model="file" accept="image/jpeg, image/png, video/mp4, video/quicktime, video/x-msvideo"
                                         class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
                                         
                                     <div wire:loading.delay wire:target="file,store">
