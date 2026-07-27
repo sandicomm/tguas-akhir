@@ -4,8 +4,11 @@ namespace App\Livewire\Admin;
 
 use Livewire\Component;
 use App\Models\Responden as RespondenModel;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
+
+use App\Models\EditFormVisited;
+use Illuminate\Support\Facades\Auth;
+use App\Models\WebpageVisited;
 
 class Responden extends Component
 {
@@ -16,6 +19,17 @@ class Responden extends Component
 
     public bool $isModalOpen = false;
 
+    public function mount()
+    {
+        try{
+            $userId = Auth::id();
+            EditFormVisited::where('user_id', $userId)->delete();
+            WebpageVisited::where('user_id', $userId)->delete();
+        }catch(\Exception $e){
+            session()->flash('error', 'error muat halaman');
+        }
+    }
+    
     public function setStatsAction($id, $action)
     {
         $this->reset(['userId', 'email', 'confirmDelete']); // Reset semua state sebelum diisi
@@ -37,7 +51,7 @@ class Responden extends Component
                 // Tangani error validasi secara eksplisit
                 $this->addError('email', $e->validator->errors()->first('email'));
             }catch(\Exception $e){
-                session()->flash('error', $e->getMessage());
+                session()->flash('error', 'error action');
             }
 
         } else if($action === 'delete') {
@@ -70,7 +84,7 @@ class Responden extends Component
                 $this->reset();
                 session()->flash('success', 'Responden berhasil dihapus!');
             } catch (\Exception $e) {
-                session()->flash('error', $e->getMessage());
+                session()->flash('error', 'error delete responden');
             }
         } else {
             session()->flash('error', 'Isi dengan benar');

@@ -1,0 +1,18 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class EditFormVisited extends Model
+{
+    //
+    protected $fillable = ['user_id','form_id','expires_at'];
+
+    public function user(){
+        return $this->belongsTo(User::class);
+    }
+    public function form(){
+        return $this->belongsTo(Form::class);
+    }
+}

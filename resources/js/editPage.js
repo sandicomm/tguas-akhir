@@ -789,13 +789,20 @@ async function cekStatus(){
 async function perbaruiMasaAktifDiServer() {
   try {
     const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-    await fetch('/admin/webpage/update-visit', {
+    const clearResponse= await fetch('/admin/webpage/update-visit', {
         method: "POST",
         headers: {
             "Accept": "application/json",
             "X-CSRF-TOKEN": csrfToken
         }
     });
+
+    const clearData = await clearResponse.json();
+    //console.log(clearData.success, clearData.redirect)
+
+    if(clearData.success && clearData.redirect){
+      window.location.href = clearData.redirect
+    }
 
   } catch (err) {
     console.error("Gagal memperbarui sesi aktif ke server", err);
@@ -812,6 +819,7 @@ let userAktif = false;
     }, { passive: true }); // passive: true bagus untuk performa scroll di shared hosting
 });
 
+// ============== Autosave =================
 setInterval(async () => {
     if (globals.isFormDirty) {
         try {
@@ -824,8 +832,9 @@ setInterval(async () => {
             console.error("Autosave gagal");
         }
     }
-},0.5 * 60 *1000); // Cek setiap 5 menit
+},0.8 * 60 *1000);
 
+// ============== cek status visit ==================
 setInterval(async () => {
     try {
         if (userAktif) {

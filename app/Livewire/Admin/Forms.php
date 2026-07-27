@@ -4,10 +4,13 @@ namespace App\Livewire\Admin;
 
 use Livewire\Component;
 use App\Models\Form as FormModel;
-use App\Models\Sections;
-use App\Models\Questions;
-use App\Models\Responses;
+
+use App\Models\EditFormVisited;
+use Illuminate\Support\Facades\Auth;
+use App\Models\WebpageVisited;
+
 use App\Models\Responden;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class Forms extends Component
@@ -18,16 +21,41 @@ class Forms extends Component
 
     public bool $isModalOpen = false;
 
+    public $editFormVisitedUser;
+
     public function mount()
     {
-        $this->forms = FormModel::all();
+        try{
+            $userId = Auth::id();
+            EditFormVisited::where('user_id', $userId)->delete();
+            WebpageVisited::where('user_id', $userId)->delete();
+            
+            $this->editFormVisitedUser = EditFormVisited::where('expires_at', '>', Carbon::now())->with('user')->get();
+            $this->forms = FormModel::all();
+        }catch(\Exception $e){
+            session()->flash('error', 'error muat halaman');
+        }
     }
 
     public function setStatsAction($id)
     {
-        $this->reset(['formId', 'confirmDelete']);
-        $this->formId = $id;
-        $this->isModalOpen = true;
+        try{
+            $userId = Auth::id();
+    
+            $visitedUser = EditFormVisited::where('form_id',$id)->where('expires_at', '>' ,Carbon::now())->with('user')->first();
+            if($visitedUser){
+                if($visitedUser->user_id != $userId){
+                    $namaUser = $visitedUser->user ? $visitedUser->user->name : 'User Lain';
+                    return redirect()->route('admin.forms')->with('error', "Form ini sedang diakses oleh {$namaUser}.");
+                }
+            }
+    
+            $this->reset(['formId', 'confirmDelete']);
+            $this->formId = $id;
+            $this->isModalOpen = true;
+        }catch(\Exception $e){
+            session()->flash('error', 'error action');
+        }
     }
 
     public function copy($id)
@@ -72,7 +100,7 @@ class Forms extends Component
             session()->flash('message', 'Form berhasil disalin.');
             $this->forms = FormModel::all();
         }catch(\Exception $e){
-            session()->flash('error', $e->getMessage());
+            session()->flash('error', 'error duplikat Form');
         }
     }
 
@@ -83,8 +111,18 @@ class Forms extends Component
 
     public function delete()
     {
-        if (strtolower($this->confirmDelete) === 'hapus form') {
-            try {
+        try {
+            $userId = Auth::id();
+
+            $visitedUser = EditFormVisited::where('form_id',$this->formId)->where('expires_at', '<' ,Carbon::now())->with('user')->first();
+            if($visitedUser){
+                if($visitedUser->user_id != $userId){
+                    $namaUser = $visitedUser->user ? $visitedUser->user->name : 'User Lain';
+                    return redirect()->route('admin.forms')->with('error', "Form ini sedang diakses oleh {$namaUser}.");
+                }
+            }
+
+            if (strtolower($this->confirmDelete) === 'hapus form') {
                 $findForm = FormModel::find($this->formId);
 
                 if (!$findForm) {
@@ -112,12 +150,11 @@ class Forms extends Component
                 $this->forms = FormModel::all();
                 $this->reset(['formId', 'confirmDelete', 'isModalOpen']);
                 session()->flash('success', 'Form berhasil dihapus!');
-
-            } catch (\Exception $e) {
-                session()->flash('error', 'Gagal menghapus: ' . $e->getMessage());
+            } else {
+                session()->flash('error', 'Konfirmasi hapus salah.');
             }
-        } else {
-            session()->flash('error', 'Konfirmasi hapus salah.');
+        } catch (\Exception $e) {
+            session()->flash('error', 'Gagal menghapus Form');
         }
     }
 

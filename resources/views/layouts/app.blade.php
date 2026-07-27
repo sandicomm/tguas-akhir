@@ -12,7 +12,7 @@
         <!-- Open Graph -->
         <meta property="og:title" content="Admin Smart Health Diabetes">
         <meta property="og:description" content="Website Admin Kelola Kontent Smart Health diabetes">
-        <meta property="og:url" content="https://shd-admin.smartdiabetes.my.id/">
+        <meta property="og:url" content="https://smartdiabetes.my.id/">
         <meta property="og:type" content="website">
 
         <title>{{ $title ?? config('app.name') }}</title>
@@ -57,7 +57,7 @@
             <header class="bg-white dark:bg-slate-700 shadow-md p-3 sm:ml-64">
                 <div class="flex justify-between">
                     <div class="max-w-7xl sm:px-6 lg:px-8">
-                        <h1 class="font-extrabold text-xl text-black dark:text-white">Adm Smart Health Diabetes</h1>
+                        <h1 class="font-extrabold text-xl text-black dark:text-white">Admin Smart Health Diabetes</h1>
                     </div>
                 </div>
             </header>

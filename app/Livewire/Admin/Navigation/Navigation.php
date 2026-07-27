@@ -15,7 +15,7 @@ class Navigation extends Component
             $webpageVisit = WebpageVisited::with('user')->first();
             $this->webpageVisitedUser = $webpageVisit?->user?->name ?? null;
         }catch(\Exception $e){
-            session()->flash('error', $e->getMessage());
+            session()->flash('error muat navigation');
         }
     }
 

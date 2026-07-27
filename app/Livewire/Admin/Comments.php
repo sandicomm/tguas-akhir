@@ -7,6 +7,10 @@ use App\Models\Comments as CommentModel;
 
 use Mews\Purifier\Facades\Purifier;
 
+use Illuminate\Support\Facades\Auth;
+use App\Models\EditFormVisited;
+use App\Models\WebpageVisited;
+
 class Comments extends Component
 {
     public $parent_id = null;
@@ -21,6 +25,17 @@ class Comments extends Component
         'comment' => 'required|string|max:255',
     ];
 
+    public function mount()
+    {
+        try{
+            $userId = Auth::id();
+            EditFormVisited::where('user_id', $userId)->delete();
+            WebpageVisited::where('user_id', $userId)->delete();
+        }catch(\Exception $e){
+            session()->flash('error','error muat halaman.');
+        }
+    }
+
     public function setStatsAction($id, $action)
     {
         $this->commentId = $id;
@@ -31,68 +46,79 @@ class Comments extends Component
 
     public function store()
     {
-        $this->validate();
-
-        $safeComment = Purifier::clean($this->comment);
-        // Admin selalu memakai nama Admin dan is_admin true
-        CommentModel::create([
-            'name' => "Admin",
-            'comment' => $safeComment,
-            'parent_id' => $this->parent_id,
-            'is_admin' => true,
-        ]);
-
-        $this->reset(['comment', 'parent_id', 'editingId', 'state']);
-        session()->flash('success', 'Balasan Admin berhasil dikirim!');
+        try{
+            $this->validate();
+    
+            $safeComment = Purifier::clean($this->comment);
+            // Admin selalu memakai nama Admin dan is_admin true
+            CommentModel::create([
+                'name' => "Admin",
+                'comment' => $safeComment,
+                'parent_id' => $this->parent_id,
+                'is_admin' => true,
+            ]);
+    
+            $this->reset(['comment', 'parent_id', 'editingId', 'state']);
+            session()->flash('success', 'Balasan Admin berhasil dikirim!');
+        }catch(\Exception $e){  
+            session()->flash('error', 'error tambah data');
+        }
     }
 
     public function update()
     {
-        $this->validate();
-
-        $commentFind = CommentModel::find($this->editingId);
-
-        if (!$commentFind) {
-            $this->reset(['comment', 'parent_id', 'editingId', 'state']);
-            session()->flash('error', 'Comment sepertinya sudah tidak ada atau telah dihapus oleh pengguna lain!');
-            return;
+        try{
+            $this->validate();
+    
+            $commentDb = CommentModel::find($this->editingId);
+    
+            if (!$commentDb) {
+                $this->reset(['comment', 'parent_id', 'editingId', 'state']);
+                session()->flash('error', 'Comment sepertinya sudah tidak ada atau telah dihapus oleh pengguna lain!');
+                return;
+            }
+    
+            $safeComment = Purifier::clean($this->comment);
+            // Proteksi tambahan: hanya bisa edit jika itu milik admin
+            if ($commentDb->is_admin) {
+                $commentDb->update([
+                    'comment' => $safeComment,
+                ]);
+                session()->flash('success', 'Komentar berhasil diperbarui!');
+            }
+    
+            $this->reset(['comment', 'editingId', 'state']);
+        }catch(\Exception $e){  
+            session()->flash('error', 'error update data');
         }
-
-        $comment = CommentModel::findOrFail($this->editingId);
-        $safeComment = Purifier::clean($this->comment);
-        // Proteksi tambahan: hanya bisa edit jika itu milik admin
-        if ($comment->is_admin) {
-            $comment->update([
-                'comment' => $safeComment,
-            ]);
-            session()->flash('success', 'Komentar berhasil diperbarui!');
-        }
-
-        $this->reset(['comment', 'editingId', 'state']);
     }
 
     public function delete($id)
     {
-        $commentFind = CommentModel::find($id);
-
-        if (!$commentFind) {
-            $this->reset(['comment', 'parent_id', 'editingId', 'state']);
+        try{
+            $commentDb = CommentModel::find($id);
+    
+            if (!$commentDb) {
+                $this->reset(['comment', 'parent_id', 'editingId', 'state']);
+                $this->isModalOpen = false;
+                session()->flash('error', 'Comment tidak ditemukan.');
+                return;
+            }
+    
+            $commentDb->delete();
             $this->isModalOpen = false;
-            session()->flash('error', 'Comment tidak ditemukan.');
-            return;
+            session()->flash('success', 'Komentar berhasil dihapus!');
+        }catch(\Exception $e){
+            session()->flash('error', 'error delete data');
         }
-
-        $commentFind->delete();
-        $this->isModalOpen = false;
-        session()->flash('success', 'Komentar berhasil dihapus!');
     }
 
     // Fungsi untuk memicu form balasan (Reply)
     public function setReply($id)
     {
-        $comment = CommentModel::find($id);
+        $commentDb = CommentModel::find($id);
 
-        if(!$comment){
+        if(!$commentDb){
             session()->flash('error', 'Comment tidak ditemukan.');
             return;
         }
@@ -106,17 +132,17 @@ class Comments extends Component
     // Fungsi untuk memicu form edit (Edit tulisan admin)
     public function setEdit($id)
     {
-        $comment = CommentModel::find($id);
+        $commentDb = CommentModel::find($id);
 
-        if(!$comment){
+        if(!$commentDb){
             session()->flash('error', 'Comment tidak ditemukan.');
             return;
         }
 
-        if($comment->is_admin) {
+        if($commentDb->is_admin) {
             $this->state = 'edit';
             $this->editingId = $id;
-            $this->comment = $comment->comment;
+            $this->comment = $commentDb->comment;
             $this->parent_id = null; // Reset parent_id karena ini edit, bukan reply
         }
     }

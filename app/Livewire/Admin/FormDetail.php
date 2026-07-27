@@ -8,11 +8,13 @@ use Livewire\Component;
 use App\Models\Sections;
 use App\Models\Questions;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use App\Models\EditFormVisited;
+use App\Models\WebpageVisited;
 
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Carbon;
 
 class FormDetail extends Component
 {
@@ -34,6 +36,42 @@ class FormDetail extends Component
     public function mount($id)
     {
         try{
+            // ======================= CEK VISITOR =========================
+            $userId = Auth::id();
+            WebpageVisited::where('user_id', $userId)->delete();
+
+            // 1. Bersihkan semua data kunci yang SUDAH EXPIRED di seluruh sistem
+            EditFormVisited::where('expires_at', '<', Carbon::now())->delete();
+
+            // 2. Cek apakah FORM INI sedang diakses oleh USER LAIN yang MASIH AKTIF
+            $visited = EditFormVisited::where('form_id', $id)
+                ->where('expires_at', '>', Carbon::now())
+                ->with('user')
+                ->first();
+
+            if ($visited && $visited->user_id != $userId) {
+                $namaUser = $visited->user ? $visited->user->name : 'User Lain';
+                return redirect()->route('admin.forms')
+                    ->with('error', "Form ini sedang diakses oleh {$namaUser}.");
+            }
+
+            // 3. EFISIEN: Hapus semua akses form LAIN milik user ini dalam 1 query saja
+            EditFormVisited::where('user_id', $userId)
+                ->where('form_id', '!=', $id)
+                ->delete();
+
+            // 4. Daftarkan/Perbarui akses user ini untuk FORM INI (+1 menit)
+            EditFormVisited::updateOrCreate(
+                [
+                    'user_id' => $userId,
+                    'form_id' => $id,
+                ],
+                [
+                    'expires_at' => Carbon::now()->addMinutes(1),
+                ]
+            );
+            //==============================================================
+
             $this->formPlacement = Form::pluck('placement')->unique();
 
             $this->sectionMaxID = Sections::max('id');
@@ -93,6 +131,7 @@ class FormDetail extends Component
                 ];
             }
         }catch(\Throwable $e){
+            session()->flash('error', 'error muat halaman');
             return redirect()->route('admin.forms');
             /*
             return response()->json([
@@ -298,9 +337,20 @@ class FormDetail extends Component
                 if ($answerDelete)
                     Answers::whereIn('id', $answerDelete)->delete();
 
-                $this->msg='Form berhasil diperbarui';
+                EditFormVisited::updateOrCreate(
+                    [
+                        'user_id' => Auth::id(),
+                        'form_id' => $this->form->id,
+                    ],
+                    [
+                        'expires_at' => Carbon::now()->addMinutes(1),
+                    ]
+                );
+
                 $this->status = true;
+                $this->msg='Form berhasil diperbarui';
                 $this->redirect = route('admin.form.detail', $this->form ? $this->form->id : 2);
+                
             });
             return response()->json([
                 'success' => $this->status,
@@ -312,7 +362,7 @@ class FormDetail extends Component
             
             return response()->json([
                 'success' => false,
-                'message' => 'gagal update form ',
+                'message' => 'gagal update form',
                 //'test'=> $this->formDetailStatusRaw,
                 //'line'=> $e->getLine(),
             ]);
@@ -331,14 +381,71 @@ class FormDetail extends Component
 
             $form->delete();
 
+            EditFormVisited::updateOrCreate(
+                [
+                    'user_id' => Auth::id(),
+                    'form_id' => $this->form->id,
+                ],
+                [
+                    'expires_at' => Carbon::now()->addMinutes(1),
+                ]
+            );
+
             session()->flash('success', 'Form berhasil dihapus.');
             return redirect()->route('admin.forms');
         }catch(\Throwable $e){
-            session()->flash('error', $e->getMessage());
+            session()->flash('error', 'error hapus data');
              return response()->json([
                 'success' => false,
                 'message' => 'gagal delete data',
             ], 500);
+        }
+    }
+
+    public function cekStatus($id){
+        try{
+            $cekExpires = EditFormVisited::where('user_id', Auth::user()->id)->where('form_id', $id)->where('expires_at', '<', Carbon::now())->first();
+            if($cekExpires){
+                $cekExpires->delete();
+                session()->flash('error', 'Anda terdeteksi tidak aktif maka anda dikeluarkan dari menu.');
+                return response()->json([
+                    'success' => true,
+                    'redirect' => route('admin.forms'),
+                    'message' => "Anda terdeteksi tidak aktif maka anda dikeluarkan dari menu."
+                ]);
+            }
+
+            return response()->json([
+                'success' => false,
+                'message' => "cek",
+            ]);
+        }catch(\Throwable $e){
+            return response()->json([
+                'success' => false,
+                'message' => 'error cek status aktif',
+                'file'=>$id
+            ], 500);
+        }
+            
+    }
+
+    public function updateVisit($id)
+    {
+        try{
+            $update = EditFormVisited::where('user_id', Auth::id())->where('form_id',$id)
+                ->update(['expires_at' => Carbon::now()->addMinutes(1)]);
+    
+            if($update === 0){
+                session()->flash('error', 'Anda terdeteksi tidak aktif maka anda dikeluarkan dari menu.');
+                return response()->json([
+                        'success' => true,
+                        'message' => "Anda terdeteksi tidak aktif maka anda dikeluarkan dari menu.",
+                        'redirect' => route('admin.forms')
+                    ]);
+            }
+            return response()->json(['success' => false]);
+        }catch(\Exception $e){
+            session()->flash('error', 'error update visit');
         }
     }
 

@@ -64,6 +64,8 @@ Route::get('/admin/forms', Forms::class)->middleware(['auth', 'verified'])->name
 Route::get('/admin/forms/{id}', FormDetail::class)->middleware(['auth', 'verified'])->name('admin.form.detail');
 Route::delete('/admin/forms/{id}', [FormDetail::class, 'delete'])->middleware(['auth', 'verified'])->name('admin.form.delete');
 Route::post('/admin/forms/{id}/copy', [FormDetail::class, 'copy'])->middleware(['auth', 'verified'])->name('admin.form.copy');
+Route::post('/admin/forms/cek/{id}', [FormDetail::class, 'cekStatus'])->middleware(['auth', 'verified'])->name('admin.form.cek');
+Route::post('/admin/forms/update-visit/{id}', [FormDetail::class, 'updateVisit'])->middleware(['auth', 'verified'])->name('admin.form.updateVisit');
 
 Route::post('/admin/form/update', [FormDetail::class, 'updateForm'])->middleware(['auth', 'verified'])->name('admin.form.update');
 

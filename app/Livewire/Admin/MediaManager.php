@@ -4,13 +4,16 @@ namespace App\Livewire\Admin;
 
 use Livewire\Component;
 use Livewire\WithFileUploads;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\File;
 use App\Models\Media;
 
 use Illuminate\Validation\ValidationException;
 
 use Mews\Purifier\Facades\Purifier;
+
+use App\Models\EditFormVisited;
+use Illuminate\Support\Facades\Auth;
+use App\Models\WebpageVisited;
 
 class MediaManager extends Component
 {
@@ -26,6 +29,16 @@ class MediaManager extends Component
 
     protected $listeners = ['refreshList' => '$refresh'];
 
+    public function mount()
+    {
+        try{
+            $userId = Auth::id();
+            EditFormVisited::where('user_id', $userId)->delete();
+            WebpageVisited::where('user_id', $userId)->delete();
+        }catch(\Exception $e){
+            session()->flash('error', 'error muat halaman');
+        }
+    }
     public function setStatsAction($id, $action)
     {
         $this->reset(['mediaId', 'title', 'sumber', 'link', 'file', 'confirmDelete' ]); // Reset semua state sebelum diisi
@@ -53,7 +66,7 @@ class MediaManager extends Component
                 $this->addError('sumber', $e->validator->errors()->first('sumber'));
                 $this->addError('link', $e->validator->errors()->first('link'));
             }catch(\Exception $e){
-                session()->flash('error', $e->getMessage());
+                session()->flash('error', 'error action');
             }
 
         } else if($action === 'delete') {
@@ -71,9 +84,14 @@ class MediaManager extends Component
 
     public function getMediaListProperty()
     {
-        return Media::when($this->filter !== 'all', function ($query) {
-            return $query->where('type', $this->filter);
-        })->get();
+        try{
+            return Media::when($this->filter !== 'all', function ($query) {
+                return $query->where('type', $this->filter);
+            })->get();
+
+        }catch(\Exception $e){
+            session()->flash('error', 'error media list');
+        }
     }
 
     protected $rules = [
@@ -85,50 +103,54 @@ class MediaManager extends Component
 
     public function store()
     {
-        $this->validate();
-
-        // pastikan folder ada
-        if (!file_exists(public_path('media'))) {
-            mkdir(public_path('media'), 0755, true);
+        try{
+            $this->validate();
+    
+            // pastikan folder ada
+            if (!file_exists(public_path('media'))) {
+                mkdir(public_path('media'), 0755, true);
+            }
+    
+            // ambil nama asli
+            $ext = $this->file->getClientOriginalExtension();
+    
+            // pastikan judul aman dijadikan filename
+           // $safeTitle = preg_replace('/[^A-Za-z0-9_\-]/', '_', $this->title);
+            //$safeSumber = preg_replace('/[^A-Za-z0-9_\-]/', '_', $this->sumber);
+    
+            $safeTitle = Purifier::clean($this->title);
+            $safeSumber = Purifier::clean($this->sumber);
+            $safeLink = $this->link;
+         
+            // final filename
+            $filename = $safeTitle . '_' . time() . '.' . $ext;
+    
+            // pindahkan dari tmp livewire ke PUBLIC/media
+            $this->file->storeAs('/', $filename, [
+                'disk' => 'public_uploads'
+            ]);
+    
+            // deteksi tipe file (image/video)
+            $isImage = @exif_imagetype(public_path('media/' . $filename));
+            $type = $isImage ? 'image' : 'video';
+    
+            Media::create([
+                'title'     => $safeTitle,
+                'sumber'     => $safeSumber,
+                'link'     => $safeLink,
+                'file_path' => 'media/' . $filename,
+                'type'      => $type,
+            ]);
+    
+            // reset
+            $this->reset();
+            $this->resetValidation();
+            $this->dispatch('resetForm');
+    
+            session()->flash('success', 'Media berhasil ditambahkan!');
+        }catch(\Exception $e){
+            session()->flash('error', 'error tambah media');
         }
-
-        // ambil nama asli
-        $ext = $this->file->getClientOriginalExtension();
-
-        // pastikan judul aman dijadikan filename
-       // $safeTitle = preg_replace('/[^A-Za-z0-9_\-]/', '_', $this->title);
-        //$safeSumber = preg_replace('/[^A-Za-z0-9_\-]/', '_', $this->sumber);
-
-        $safeTitle = Purifier::clean($this->title);
-        $safeSumber = Purifier::clean($this->sumber);
-        $safeLink = $this->link;
-     
-        // final filename
-        $filename = $safeTitle . '_' . time() . '.' . $ext;
-
-        // pindahkan dari tmp livewire ke PUBLIC/media
-        $this->file->storeAs('/', $filename, [
-            'disk' => 'public_uploads'
-        ]);
-
-        // deteksi tipe file (image/video)
-        $isImage = @exif_imagetype(public_path('media/' . $filename));
-        $type = $isImage ? 'image' : 'video';
-
-        Media::create([
-            'title'     => $safeTitle,
-            'sumber'     => $safeSumber,
-            'link'     => $safeLink,
-            'file_path' => 'media/' . $filename,
-            'type'      => $type,
-        ]);
-
-        // reset
-        $this->reset();
-        $this->resetValidation();
-        $this->dispatch('resetForm');
-
-        session()->flash('success', 'Media berhasil ditambahkan!');
     }
 
     public function update(){
@@ -202,7 +224,7 @@ class MediaManager extends Component
             $this->addError('file', $e->validator->errors()->first('file'));
         
         }catch(\Exception $e){
-            session()->flash('error', $e->getMessage());
+            session()->flash('error', 'error update media');
         }
     }
 

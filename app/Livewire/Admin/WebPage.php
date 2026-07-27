@@ -4,21 +4,20 @@ namespace App\Livewire\Admin;
 
 use Livewire\Component;
 use Livewire\WithFileUploads;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 use App\Models\Webpage as Page;
-use App\Models\WebpageVisited as WebpageVisited;
 use App\Models\File as FileMedia;
-use Illuminate\Support\ItemNotFoundException;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Auth;
 
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Mews\Purifier\Facades\Purifier;
-use PhpOffice\PhpSpreadsheet\Calculation\Web;
+
+use App\Models\EditFormVisited;
+use Illuminate\Support\Facades\Auth;
+use App\Models\WebpageVisited;
 
 class WebPage extends Component
 {
@@ -33,33 +32,36 @@ class WebPage extends Component
 
     public function mount($params)
     {
-        $userId = Auth::id();
-
-        WebpageVisited::where('expires_at', '<', Carbon::now())->delete();
-        $visited = WebpageVisited::with('user')->first();
-        
-        if($visited){
-            if($visited->user_id != $userId){
+        try{
+            $userId = Auth::id();
+    
+            EditFormVisited::where('user_id', $userId)->delete();
+    
+            WebpageVisited::where('expires_at', '<', Carbon::now())->delete();
+            $visited = WebpageVisited::with('user')->first();
+            
+            if($visited && $visited->user_id != $userId){
                 $namaUser = $visited->user ? $visited->user->name : 'User Lain';
                 return redirect()->route('admin.dashboard')->with('error', "Menu ini sedang diakses oleh {$namaUser}.");
             }
-        }else{
+    
+            WebpageVisited::updateOrCreate(
+                ['user_id' => $userId],
+                ['expires_at' => Carbon::now()->addMinutes(1)]
+            );
+    
+            $this->param = $params;
             
-            WebpageVisited::create([
-                'user_id'=> $userId,
-                'expires_at'=> Carbon::now()->addMinutes(1)
-            ]);
-        }
-
-        $this->param = $params;
-        
-        $this->file = FileMedia::whereNot('id', 'like', 'form-%')->get();
-        if ($params === 'prolog') {
-            $this->webpage = Page::where('id', 'like', '%prolog-web%')->get();
-        } else if ($params === 'prolog-emodul') {
-            $this->webpage = Page::where('id', 'like', '%prolog-emodul%')->get();
-        } else {
-            $this->webpage = Page::where('id', 'not like', '%prolog%')->get();
+            $this->file = FileMedia::whereNot('id', 'like', 'form-%')->get();
+            if ($params === 'prolog') {
+                $this->webpage = Page::where('id', 'like', '%prolog-web%')->get();
+            } else if ($params === 'prolog-emodul') {
+                $this->webpage = Page::where('id', 'like', '%prolog-emodul%')->get();
+            } else {
+                $this->webpage = Page::where('id', 'not like', '%prolog%')->get();
+            }
+        }catch(\Exception $e){
+            session()->flash('error','error muat halaman');
         }
     }
 
@@ -90,7 +92,7 @@ class WebPage extends Component
                     $filename = Str::uuid() . '_' . $original . '.' . $file->getClientOriginalExtension();
                     $file->move(public_path('media'), $filename);
 
-                    $urlMap[$item['id']] = asset('public/media/' . $filename);
+                    $urlMap[$item['id']] = asset('media/' . $filename);
 
                     \App\Models\File::updateOrCreate(
                         ['id' => $filename],
@@ -169,74 +171,98 @@ class WebPage extends Component
             DB::commit();
             session(['urlMap' => $urlMap]);
 
-            WebpageVisited::where('user_id', Auth::user()->id)->update(['expires_at'=>Carbon::now()->addMinutes(1)]);
+            WebpageVisited::updateOrCreate(
+                ['user_id' => Auth::id()],
+                ['expires_at' => Carbon::now()->addMinutes(1)]
+            );
 
             return response()->json(['success' => true, 'message' => 'Data berhasil diperbarui', 'datano'=>$this->dataStyle, 'datapuri'=>$this->dataStylePuri,'datacontent'=>$this->dataContent]);
 
         } catch (\Throwable $e) {
             DB::rollBack();
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+            return response()->json(['success' => false, 'message' => 'error tambah data'], 500);
         }
     }
 
     public function clearImagePage() {
-        // Gunakan cursor atau chunk agar tidak makan RAM besar jika ribuan baris
-        $allPages = Page::select('style', 'content')->get();
-        
-        // Satukan semua teks untuk pengecekan cepat
-        $megaContent = $allPages->pluck('style')->implode(' ') . ' ' . $allPages->pluck('content')->implode(' ');
-
-        // Ambil semua file dari DB
-        $fileDbRecords = FileMedia::where('id', 'not like', "form-%")->get();
-        $deletedCount = 0;
-
-        foreach ($fileDbRecords as $fileRecord) {
-            $filename = $fileRecord->id;
+        try{
+            // Gunakan cursor atau chunk agar tidak makan RAM besar jika ribuan baris
+            $allPages = Page::select('style', 'content')->get();
             
-            // Pastikan filename tidak kosong dan cek keberadaannya
-            if ($filename && !str_contains($megaContent, $filename)) {
-                $filePath = public_path('public/media/' . $filename);
+            // Satukan semua teks untuk pengecekan cepat
+            $megaContent = $allPages->pluck('style')->implode(' ') . ' ' . $allPages->pluck('content')->implode(' ');
+    
+            // Ambil semua file dari DB
+            $fileDbRecords = FileMedia::where('id', 'not like', "form-%")->get();
+            $deletedCount = 0;
+    
+            foreach ($fileDbRecords as $fileRecord) {
+                $filename = $fileRecord->id;
                 
-                // Hapus fisik
-                if (File::exists($filePath)) {
-                    File::delete($filePath);
+                // Pastikan filename tidak kosong dan cek keberadaannya
+                if ($filename && !str_contains($megaContent, $filename)) {
+                    $filePath = public_path('media/' . $filename);
+                    
+                    // Hapus fisik
+                    if (File::exists($filePath)) {
+                        File::delete($filePath);
+                    }
+                    
+                    // Hapus record DB
+                    $fileRecord->delete();
+                    $deletedCount++;
                 }
-                
-                // Hapus record DB
-                $fileRecord->delete();
-                $deletedCount++;
             }
-        }
-
-        return response()->json([
-            'success' => true,
-            'message' => "$deletedCount file tidak terpakai telah dibersihkan."
-        ]);
-    }
-
-    public function cekStatus(){
-        $cekExpires = WebpageVisited::where('user_id', Auth::user()->id)->where('expires_at', '<', Carbon::now())->first();
-        if($cekExpires){
-            $cekExpires->delete();
     
             return response()->json([
                 'success' => true,
-                'redirect' => route('admin.dashboard'),
-                'message' => "Anda Afk dan dikeluarkan dari menu."
+                'message' => "$deletedCount file tidak terpakai telah dibersihkan."
             ]);
+        }catch(\Exception $e){
+            session()->flash('error', 'error clear image');
         }
-        return response()->json([
-            'success' => false,
-            'message' => "cek"
-        ]);
+    }
+
+    public function cekStatus(){
+        try{
+            $cekExpires = WebpageVisited::where('user_id', Auth::user()->id)->where('expires_at', '<', Carbon::now())->first();
+            if($cekExpires){
+                $cekExpires->delete();
+        
+                return response()->json([
+                    'success' => true,
+                    'redirect' => route('admin.dashboard'),
+                    'message' => "Anda Afk dan dikeluarkan dari menu."
+                ]);
+            }
+    
+            return response()->json([
+                'success' => false,
+                'message' => "cek"
+            ]);
+        }catch(\Exception $e){
+            session()->flash('error', 'error cek status visited');
+        }
     }
 
     public function updateVisit()
     {
-        WebpageVisited::where('user_id', Auth::id())
-            ->update(['expires_at' => Carbon::now()->addMinutes(1)]);
-
-        return response()->json(['success' => true]);
+        try{
+            $update = WebpageVisited::where('user_id', Auth::id())
+                ->update(['expires_at' => Carbon::now()->addMinutes(1)]);
+    
+            if($update === 0){
+                return response()->json([
+                        'success' => true,
+                        'message' => "Anda terdeteksi tidak aktif maka anda dikeluarkan dari menu.",
+                        'redirect' => route('admin.dashboard')
+                    ]);
+            }
+    
+            return response()->json(['success' => true]);
+        }catch(\Exception $e){
+            session()->flash('error', 'error update visit status');
+        }
     }
 
     public function render()

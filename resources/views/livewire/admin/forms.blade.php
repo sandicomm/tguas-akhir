@@ -37,9 +37,28 @@
                 <a href="{{ route('admin.form.detail', 'add') }}" class="bg-green-600 px-5 py-2 rounded shadow-sm text-white inline-block lg:text-xl">Tambah</a>
             </div>
             @foreach($forms as $index => $form)
-            <a href="{{ route('admin.form.detail', $form->id) }}" id="btn-form-{{ $form->id }}" class="w-full">
-                <div class="bg-gradient-to-r to-green-400 from-blue-600 dark:from-violet-600 dark:to-gray-800 p-4 rounded shadow-sm text-white w-full flex">
+                @php
+                    $userVisited = $editFormVisitedUser->where('form_id', $form->id)->first();
+                    $userId = $editFormVisitedUser->where('form_id', $form->id)->where('user_id', Auth::id())->first();
+                    
+                    $linkVisibility = true;
+                    if ($userVisited) {
+                        $linkVisibility = $userId ? true : false;
+                    }
+                @endphp
+
+            <a 
+                href="{{ $linkVisibility ? route('admin.form.detail', $form->id) : 'javascript:void(0)' }}" 
+                id="btn-form-{{ $form->id }}" 
+                class="w-full block transition-all {{ $linkVisibility ? 'cursor-pointer opacity-100' : 'pointer-events-none opacity-50 select-none' }}"
+            >
+                <div class="bg-gradient-to-r {{ $userVisited ? 'opacity-50':'' }} to-green-400 from-blue-600 dark:from-violet-600 dark:to-gray-800 p-4 rounded shadow-sm text-white w-full flex">
                     <div class="w-full">
+                        @if($userVisited && $userVisited->user)
+                            <div class="text-sm py-1 px-2 bg-white text-black rounded inline-flex">
+                                Sedang Diakses oleh {{ $userVisited->user->name }}
+                            </div>
+                        @endif
                         <div class="title">
                             <h1 class="lg:text-4xl text-xl font-bold">{{ $form->form_name }}</h1>
                         </div>

@@ -9,6 +9,10 @@ use Illuminate\Validation\ValidationException;
 
 use Mews\Purifier\Facades\Purifier;
 
+use App\Models\EditFormVisited;
+use Illuminate\Support\Facades\Auth;
+use App\Models\WebpageVisited;
+
 class User extends Component
 {
     public $name, $email, $password;
@@ -18,6 +22,17 @@ class User extends Component
 
     public bool $isModalOpen = false;
 
+    public function mount()
+    {
+        try{
+            $userId = Auth::id();
+            EditFormVisited::where('user_id', $userId)->delete();
+            WebpageVisited::where('user_id', $userId)->delete();
+        }catch(\Exception $e){
+            session()->flash('error', 'error muat halaman');
+        }
+    }
+    
     public function store(){
         try{
             $this->validate([
@@ -47,7 +62,7 @@ class User extends Component
             $this->addError('password', $e->validator->errors()->first('password'));
         } catch (\Exception $e) {
             // Tangani error umum
-            session()->flash('error', $e->getMessage());
+            session()->flash('error', 'error tambah user');
         }
     }
 
@@ -76,7 +91,7 @@ class User extends Component
                 $this->addError('email', $e->validator->errors()->first('email'));
                 $this->addError('password', $e->validator->errors()->first('password'));
             }catch(\Exception $e){
-                session()->flash('error', $e->getMessage());
+                session()->flash('error', 'error action');
             }
 
         } else if($action === 'delete') {
@@ -146,7 +161,7 @@ class User extends Component
             $this->addError('email', $e->validator->errors()->first('email'));
             $this->addError('password', $e->validator->errors()->first('password'));
         }catch(\Exception $e){
-            session()->flash('error', $e->getMessage());
+            session()->flash('error','error update user');
         }
     }
 
@@ -164,7 +179,7 @@ class User extends Component
                 $this->reset();
                 session()->flash('success', 'User berhasil dihapus!');
             } catch (\Exception $e) {
-                session()->flash('error', $e->getMessage());
+                session()->flash('error', 'error delete user');
             }
         } else {
             session()->flash('error', 'Isi dengan benar');

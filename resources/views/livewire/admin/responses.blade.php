@@ -44,7 +44,7 @@
                 </div>
                 
                 @if($userAttempts->isEmpty())
-                    <div class="flex flex-col items-center justify-center my-2 mx-3 p-5 bg-slate-800 rounded border border-dashed border-slate-600 text-slate-400">
+                    <div class="flex flex-col items-center justify-center my-2 mx-3 p-5 dark:bg-slate-800 rounded border border-dashed border-slate-600 text-slate-400">
                         <svg class="w-12 h-12 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                         <p>Form tidak ada response</p>
                     </div>

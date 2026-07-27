@@ -10,6 +10,10 @@ use Illuminate\Support\Facades\File;
 
 use Mews\Purifier\Facades\Purifier;
 
+use Illuminate\Support\Facades\Auth;
+use App\Models\EditFormVisited;
+use App\Models\WebpageVisited;
+
 class Emodul extends Component
 {
     use WithFileUploads;
@@ -21,6 +25,17 @@ class Emodul extends Component
 
     public bool $isModalOpen = false;
 
+    public function mount()
+    {
+        try{
+            $userId = Auth::id();
+            EditFormVisited::where('user_id', $userId)->delete();
+            WebpageVisited::where('user_id', $userId)->delete();
+        }catch(\Exception $e){
+            session()->flash('error', 'error muat halaman');
+        }
+    }
+    
     public function store(){
         try{
             $this->validate([
@@ -68,7 +83,7 @@ class Emodul extends Component
             $this->addError('penyusun', $e->validator->errors()->first('penyusun'));
             $this->addError('file', $e->validator->errors()->first('file'));
         }catch(\Exception $e){
-            session()->flash('error', $e->getMessage());
+            session()->flash('error', 'error tambah data emodul');
         }  
     }
 
@@ -138,7 +153,7 @@ class Emodul extends Component
             $this->addError('file', $e->validator->errors()->first('file'));
         
         }catch(\Exception $e){
-            session()->flash('error', $e->getMessage());
+            session()->flash('error', 'error update emodul');
         }
     }
 
@@ -195,7 +210,7 @@ class Emodul extends Component
                 $this->addError('file', $e->validator->errors()->first('file'));
             
             }catch(\Exception $e){
-                session()->flash('error', $e->getMessage());
+                session()->flash('error', 'error action');
             }
 
         } else if($action === 'delete') {

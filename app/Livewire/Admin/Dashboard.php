@@ -3,16 +3,16 @@
 namespace App\Livewire\Admin;
 
 use App\Models\Form;
-use App\Models\Answers;
 use Livewire\Component;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\View;
 use App\Models\Responses as Response;
 use App\Models\Responden as Responden;
-use App\Models\WebpageVisited as WebpageVisited;
 
 use App\Exports\FormResponseSingleExport;
 use Maatwebsite\Excel\Facades\Excel;
+
+use Illuminate\Support\Facades\Auth;
+use App\Models\EditFormVisited;
+use App\Models\WebpageVisited;
 
 class Dashboard extends Component
 {
@@ -49,56 +49,65 @@ class Dashboard extends Component
     public function mount()
     {
         try{
+            $userId = Auth::id();
+
+            EditFormVisited::where('user_id', $userId)->delete();
+            WebpageVisited::where('user_id', $userId)->delete();
+
             $this->responden = Responden::count();
             $this->forms = Form::pluck('id','form_name');
 
             $this->loadData();
         }catch(\Exception $e){
-            session()->flash('error', $e->getMessage());
+            session()->flash('error', 'error muat halaman');
         }
     }
 
     //---------------------- SINGLE FORM ------------------------------
     public function ResponseForSingleForm($responses)
     {
-        $this->groupedResponsesForSingleForm = collect($responses)
-            ->groupBy(fn ($r) => $r->question_id);
-        
-        $this->columns = collect($responses)
-            ->map(function ($r) {
-                $keyBase = $r->email
-                    ? 'email:' . $r->email
-                    : 'uuid:' . $r->uuid;
-
-                return [
-                    'email'      => $r->email,
-                    'responden_id' => $r->responden_id,
-                    'uuid'       => $r->uuid,
-                    'attempt'    => $r->attempt,
-                    'created_at' => $r->created_at,
-                    'key'        => $keyBase . '-attempt:' . $r->attempt,
-                ];
-            })
-            ->groupBy(fn ($c) => $c['email'] ?? $c['uuid'])
-            ->map(fn ($group) => $group->sortBy('attempt'))
-            ->flatten(1)
-            ->unique('key')
-            ->sortBy(fn ($c) => $c['email'] ? 0 : 1) // email dulu, uuid belakang
-            ->values();
-
-        $this->cellMatrix = collect($responses)
+        try{
+            $this->groupedResponsesForSingleForm = collect($responses)
+                ->groupBy(fn ($r) => $r->question_id);
+            
+            $this->columns = collect($responses)
+                ->map(function ($r) {
+                    $keyBase = $r->email
+                        ? 'email:' . $r->email
+                        : 'uuid:' . $r->uuid;
+    
+                    return [
+                        'email'      => $r->email,
+                        'responden_id' => $r->responden_id,
+                        'uuid'       => $r->uuid,
+                        'attempt'    => $r->attempt,
+                        'created_at' => $r->created_at,
+                        'key'        => $keyBase . '-attempt:' . $r->attempt,
+                    ];
+                })
+                ->groupBy(fn ($c) => $c['email'] ?? $c['uuid'])
+                ->map(fn ($group) => $group->sortBy('attempt'))
+                ->flatten(1)
+                ->unique('key')
+                ->sortBy(fn ($c) => $c['email'] ? 0 : 1) // email dulu, uuid belakang
+                ->values();
+    
+            $this->cellMatrix = collect($responses)
             ->groupBy(fn ($r) => $r->question_id)
             ->map(function ($responsesPerQuestion) {
-
+    
                 return $responsesPerQuestion
                     ->groupBy(function ($r) {
                         $keyBase = $r->email
                             ? 'email:' . $r->email
                             : 'uuid:' . $r->uuid;
-
+    
                         return $keyBase . '-attempt:' . $r->attempt;
                     });
             });
+        }catch(\Exception $e){
+            session()->flash('error', 'error response single');
+        }
     }
     // -------------------------------------------------------------------------------------------
 
@@ -165,33 +174,37 @@ class Dashboard extends Component
             $this->ResponseForSingleForm($responses);
         
         } catch (\Throwable $e) {
-            session()->flash('error', $e->getMessage());
+            session()->flash('error', 'error load data dashboard');
             $this->responseData = null;
         }
     }
     
     public function export($formId)
     {   
-        // Gunakan where('form_id') langsung lebih cepat daripada whereHas
-        $data = Response::with([
-            'responden',
-            'answer.question.section.form'
-        ])
-        ->where('form_id', $formId)
-        ->get();
-
-        if ($data->isEmpty()) {
-            session()->flash('error', 'Data tidak ada.');
-            return;
+        try{
+            // Gunakan where('form_id') langsung lebih cepat daripada whereHas
+            $data = Response::with([
+                'responden',
+                'answer.question.section.form'
+            ])
+            ->where('form_id', $formId)
+            ->get();
+    
+            if ($data->isEmpty()) {
+                session()->flash('error', 'Data tidak ada.');
+                return;
+            }
+    
+            $formName = $data->first()->answer->question->section->form->form_name ?? 'Form';
+            $fileName = "Rekap_Response_" . \Str::slug($formName) . ".xlsx";
+    
+            return Excel::download(
+                new FormResponseSingleExport($data, $formName),
+                $fileName
+            );
+        }catch(\Exception $e){
+            session()->flash('error', 'error export.');
         }
-
-        $formName = $data->first()->answer->question->section->form->form_name ?? 'Form';
-        $fileName = "Rekap_Response_" . \Str::slug($formName) . ".xlsx";
-
-        return Excel::download(
-            new FormResponseSingleExport($data, $formName),
-            $fileName
-        );
     }
 
     public function render()

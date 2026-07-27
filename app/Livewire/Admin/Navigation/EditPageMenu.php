@@ -10,8 +10,12 @@ class EditPageMenu extends Component
 {
 
     public function resetVisited(){
-        WebpageVisited::where('user_id', Auth::user()->id)->delete();
-        return redirect()->route('admin.dashboard');
+        try{
+            WebpageVisited::where('user_id', Auth::user()->id)->delete();
+            return redirect()->route('admin.dashboard');
+        }catch(\Exception $e){
+            session()->flash('error', 'error reset visited');
+        }
     }
 
     public function render()

@@ -73,7 +73,7 @@
                 </div>
 
                 <li class="flex justify-center items-center rounded text-black dark:text-white bg-blue-300 dark:bg-blue-500 hover:bg-blue-400 hover:text-white dark:hover:bg-blue-400 dark:hover:text-black cursor-pointer">
-                    <a wire:click="resetVisited" class="flex items-center p-2">
+                    <a href="{{ route('admin.dashboard') }}" class="flex items-center p-2">
                         <span class="ms-3">Dashboard</span>
                     </a>
                 </li>

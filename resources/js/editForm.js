@@ -22,7 +22,6 @@ document.addEventListener('DOMContentLoaded', function(){
     
     loadForm()
 })
-
 function getEl(id ,name = "Elemen") {
    const el = document.getElementById(id);
     
@@ -35,7 +34,81 @@ function getEl(id ,name = "Elemen") {
     }
     return el;
 }
+let cekCount=0;
+async function cekStatus(){
+  try{
+    document.getElementById('loading-overlay')?.classList.remove('hidden');
 
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    const clearResponse = await fetch(`/admin/forms/cek/${formCopy.id}`, {
+        method: "POST",
+        headers: {
+            "Accept": "application/json",
+            "X-CSRF-TOKEN": csrfToken
+        }
+    });
+    cekCount+1
+    const clearData = await clearResponse.json();
+
+    if(clearData.success && clearData.redirect){
+        allowUnload = true;
+        window.location.href = clearData.redirect
+        // window.dispatchEvent(new CustomEvent('redirect-modal', { 
+        //     detail: { pesan: `${clearData.message}`, url: clearData.redirect, status:true } 
+        // }));
+    }
+
+    setTimeout(()=>{
+      document.getElementById('loading-overlay')?.classList.add('hidden');
+    },2000)
+  }catch(err) {
+
+    document.getElementById('loading-overlay')?.classList.add('hidden');
+    showToast(`Gagal cek status ${err}`);
+    // window.dispatchEvent(new CustomEvent('notif-pesan', { 
+    //     detail: { pesan: `Gagal cek status.${err}`, status: false } 
+    // }));
+
+  }
+}
+
+async function perbaruiMasaAktifDiServer() {
+  try {
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    const clearResponse=await fetch(`/admin/forms/update-visit/${formCopy.id}`, {
+        method: "POST",
+        headers: {
+            "Accept": "application/json",
+            "X-CSRF-TOKEN": csrfToken
+        }
+    });
+
+    const clearData = await clearResponse.json();
+
+    if(clearData.success && clearData.redirect){
+        allowUnload = true;
+        window.location.href = clearData.redirect
+    //   window.dispatchEvent(new CustomEvent('redirect-modal', { 
+    //       detail: { pesan: `${clearData.message}`, url: clearData.redirect, status:true } 
+    //   }));
+    }
+
+  } catch (err) {
+    console.error("Gagal memperbarui sesi aktif ke server", err);
+  }
+}
+
+let userAktif = false;
+
+// 1. Kumpulkan semua event interaksi user
+['mousemove', 'mousedown', 'click', 'scroll', 'keypress', 'touchstart'].forEach(eventName => {
+    document.addEventListener(eventName, () => {
+        console.log('gak afk')
+        userAktif = true; 
+    }, { passive: true }); // passive: true bagus untuk performa scroll di shared hosting
+});
+
+// ================== AUTOSAVE ==================
 setInterval(async () => {
     if (isFormDirty) {
         // Ambil data terbaru dari form/state
@@ -47,7 +120,34 @@ setInterval(async () => {
         // Reset status dirty setelah berhasil save
         isFormDirty = false; 
     }
-},5 * 60 * 1000); // Cek setiap 5 menit
+},0.8 * 60 * 1000); // Cek setiap 5 menit
+
+// ================= CEK STATUS VISIT ================
+setInterval(async () => {
+    try {
+        if (userAktif) {
+            await perbaruiMasaAktifDiServer();
+            userAktif = false;
+            
+            console.log("User aktif berinteraksi. Sesi diperpanjang otomatis.");
+        } else {
+            document.getElementById('loading-overlay')?.classList.remove('hidden');
+  
+            await cekStatus();
+            setTimeout(()=>{
+              document.getElementById('loading-overlay')?.classList.add('hidden');
+            },2000)
+        }
+    } catch (error) {
+        console.error("Sistem pemantau eror:", error);
+
+        document.getElementById('loading-overlay')?.classList.add('hidden');
+        showToast(`Gagal cek status.${error}`);
+        // window.dispatchEvent(new CustomEvent('notif-pesan', { 
+        //     detail: { pesan: `Gagal cek status.${error}`, status: false } 
+        // }));
+    }
+}, 0.2 * 60 * 1000);
 
 
 function loadBtnSubmit(){
@@ -1370,14 +1470,12 @@ const generateSingleSection = (section, questionSection, yellowStats)=>{
                 <div id="wrapper-section-${section.id}" 
                     class="bg-white dark:bg-slate-700 rounded w-full p-4 dark:border-white border-8 border-black" 
                     style="${yellowStats ? 'border-color:rgba(255, 141, 62, 1);border-width:4px;':''}">
-                    <div class="flex justify-between">
-                        <div class="flex items-center bg-gray-100 dark:bg-slate-600 rounded p-2 w-full mb-3">
-                            <p class="text-gray-500 dark:text-white font-bold">Section ${section.order}</p>
-                        </div>
-                        <div>
+                    
+                    <div class="flex justify-between gap-1 mb-2">
+                        <div class="flex items-center gap-2 flex-col rounded-md">
                             <a data-popover-target="popover-up-section-${section.id}" id="form-order-up-section-${section.id}" 
-                                class="pointer-events-auto cursor-pointer  hover:bg-slate-400">
-                                <svg class="lg:w-6 lg:h-6 dark:text-white text-black" aria-hidden="true" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                class="pointer-events-auto cursor-pointer">
+                                <svg class="lg:w-6 lg:h-6 text-white bg-blue-500 rounded" aria-hidden="true" width="24" height="24" fill="none" viewBox="0 0 24 24">
                                 <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m16 14-4-4-4 4"/>
                                 </svg>
                             </a>
@@ -1388,8 +1486,8 @@ const generateSingleSection = (section, questionSection, yellowStats)=>{
                                 <div data-popper-arrow></div>
                             </div>
                             <a data-popover-target="popover-down-section-${section.id}" id="form-order-down-section-${section.id}" 
-                                class="pointer-events-auto cursor-pointer dark:hover:bg-slate-700">
-                                <svg class="lg:w-6 lg:h-6 dark:text-white text-black" aria-hidden="true" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                class="pointer-events-auto cursor-pointer">
+                                <svg class="lg:w-6 lg:h-6 text-white bg-blue-500 rounded" aria-hidden="true" width="24" height="24" fill="none" viewBox="0 0 24 24">
                                 <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m8 10 4 4 4-4"/>
                                 </svg>
                             </a>
@@ -1399,6 +1497,9 @@ const generateSingleSection = (section, questionSection, yellowStats)=>{
                                 </div>
                                 <div data-popper-arrow></div>
                             </div>
+                        </div>
+                        <div class="flex items-center bg-gray-100 dark:bg-slate-600 rounded p-2 w-full m-1">
+                            <p class="text-gray-500 dark:text-white font-bold">Section</p>
                         </div>
                     </div>
 
@@ -1484,7 +1585,7 @@ const generatorQuestion=(section,question, yellowStats)=>{
                         
                         <div class="flex items-center gap-2 flex-col rounded-md p-1">
                             <a data-popover-target="popover-up-question-${question.id}-${section.id}" id="form-order-up-question-${question.id}-section-${section.id}" data-question-id=${question.id} data-section-id=${section.id} class="pointer-events-auto cursor-pointer">
-                                <svg class="lg:w-6 lg:h-6 dark:text-white text-black" aria-hidden="true" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                <svg class="lg:w-6 lg:h-6 text-white bg-green-500 border-2 border-slate-200 rounded" aria-hidden="true" width="24" height="24" fill="none" viewBox="0 0 24 24">
                                 <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m16 14-4-4-4 4"/>
                                 </svg>
                             </a>
@@ -1496,7 +1597,7 @@ const generatorQuestion=(section,question, yellowStats)=>{
                             </div>
 
                             <a data-popover-target="popover-down-question-${question.id}-${section.id}" id="form-order-down-question-${question.id}-section-${section.id}" data-question-id=${question.id} data-section-id=${section.id} class="pointer-events-auto cursor-pointer ">
-                                <svg class="lg:w-6 lg:h-6 dark:text-white text-black" aria-hidden="true" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                <svg class="lg:w-6 lg:h-6 text-white bg-green-500 border-2 border-slate-200 rounded" aria-hidden="true" width="24" height="24" fill="none" viewBox="0 0 24 24">
                                 <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m8 10 4 4 4-4"/>
                                 </svg>
                             </a>
