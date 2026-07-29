@@ -146,16 +146,23 @@ class MediaManager extends Component
             $this->reset();
             $this->resetValidation();
             $this->dispatch('resetForm');
-    
-            session()->flash('success', 'Media berhasil ditambahkan!');
+            session()->flash('success', 'Berhasil Tambah data');
+        } catch (ValidationException $e) {
+            // Biarkan Livewire menangani error validasi seperti biasa
+            throw $e;
+        
         }catch(\Exception $e){
             session()->flash('error', 'error tambah media');
         }
     }
 
     public function update(){
-        try{
-            $this->validate();
+        $rules = $this->rules;
+        $rules['file'] = 'nullable|mimes:jpg,jpeg,png,mp4,mov,avi|max:20048';
+
+        try {
+            // Validasi menggunakan $rules yang baru
+            $validatedData = $this->validate($rules);
 
             $media = Media::find($this->mediaId);
 
@@ -213,15 +220,11 @@ class MediaManager extends Component
             $this->reset();
             $this->resetValidation(); // Reset validasi setelah penyimpanan
             $this->isModalOpen = false;
-            
-            session()->flash('success', 'Media Berhasil Diupdate.');
-        
+         
+           session()->flash('success', 'Berhasil perbarui data');
         } catch (ValidationException $e) {
-            // Tangani error validasi secara eksplisit
-            $this->addError('title', $e->validator->errors()->first('title'));
-            $this->addError('sumber', $e->validator->errors()->first('sumber'));
-            $this->addError('link', $e->validator->errors()->first('link'));
-            $this->addError('file', $e->validator->errors()->first('file'));
+            // Biarkan Livewire menangani error validasi seperti biasa
+            throw $e;
         
         }catch(\Exception $e){
             session()->flash('error', 'error update media');

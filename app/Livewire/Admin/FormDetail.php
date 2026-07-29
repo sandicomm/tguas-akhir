@@ -402,31 +402,39 @@ class FormDetail extends Component
         }
     }
 
-    public function cekStatus($id){
-        try{
-            $cekExpires = EditFormVisited::where('user_id', Auth::user()->id)->where('form_id', $id)->where('expires_at', '<', Carbon::now())->first();
-            if($cekExpires){
-                $cekExpires->delete();
-                session()->flash('error', 'Anda terdeteksi tidak aktif maka anda dikeluarkan dari menu.');
+    public function cekStatus($id)
+    {
+        try {
+
+            $visit = EditFormVisited::where('user_id', Auth::id())
+                ->where('form_id', $id)
+                ->first();
+    
+            if (!$visit || $visit->expires_at < now()) {
+                
+                if ($visit) {
+                    $visit->delete();
+                }
+                session()->flash('error', 'Sesi akses menu telah berakhir atau di-reset dari sesi lain.');
                 return response()->json([
-                    'success' => true,
+                    'success'  => true,
                     'redirect' => route('admin.forms'),
-                    'message' => "Anda terdeteksi tidak aktif maka anda dikeluarkan dari menu."
+                    'message'  => 'Sesi akses menu telah berakhir atau di-reset dari sesi lain.'
                 ]);
             }
-
+    
             return response()->json([
                 'success' => false,
-                'message' => "cek",
+                'message' => 'Sesi masih aktif.'
             ]);
-        }catch(\Throwable $e){
+    
+        } catch (\Throwable $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'error cek status aktif',
-                'file'=>$id
+                'message' => 'Error cek status aktif',
+                'file'    => $id
             ], 500);
         }
-            
     }
 
     public function updateVisit($id)
@@ -436,16 +444,17 @@ class FormDetail extends Component
                 ->update(['expires_at' => Carbon::now()->addMinutes(1)]);
     
             if($update === 0){
-                session()->flash('error', 'Anda terdeteksi tidak aktif maka anda dikeluarkan dari menu.');
+                session()->flash('error', 'Sesi akses menu telah berakhir atau di-reset dari sesi lain.');
                 return response()->json([
                         'success' => true,
-                        'message' => "Anda terdeteksi tidak aktif maka anda dikeluarkan dari menu.",
+                        'message' => "Sesi akses menu telah berakhir atau di-reset dari sesi lain.",
                         'redirect' => route('admin.forms')
                     ]);
             }
             return response()->json(['success' => false]);
         }catch(\Exception $e){
-            session()->flash('error', 'error update visit');
+            session()->flash('error', 'error update sesi');
+            return response()->json(['success' => false, 'message'=> 'error update sesi']);
         }
     }
 

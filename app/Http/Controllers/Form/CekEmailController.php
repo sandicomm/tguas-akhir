@@ -4,15 +4,13 @@ namespace App\Http\Controllers\Form;
 
 use Log;
 use App\Models\Form;
-use App\Models\Answers;
-use App\Models\Responden;
 use App\Models\Responses;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use App\Models\PreTestToken;
 
-use App\Mail\FormTestLinkMail;
-use Illuminate\Support\Facades\Mail;
+use App\Notifications\SendFormLinkNotification;
+use Illuminate\Support\Facades\Notification;
 
 class CekEmailController extends  \App\Http\Controllers\Controller
 {
@@ -42,9 +40,7 @@ class CekEmailController extends  \App\Http\Controllers\Controller
                 ->where('expired_at', '<', now())
                 ->delete();
                 
-            // =========================
-            // ✅ GENERATE TOKEN
-            // =========================
+            // ========= GENERATE TOKEN ==============
             $token = Str::uuid();
 
             PreTestToken::create([
@@ -54,14 +50,12 @@ class CekEmailController extends  \App\Http\Controllers\Controller
                 'expired_at'=> now()->addMinutes(30),
             ]);
 
-            // =========================
-            // 📧 KIRIM EMAIL
-            // =========================
-            Mail::to($request->responden_email)
-                ->send(new FormTestLinkMail($token,  $request['placement']));
+            // =============== KIRIM NOTIFIKASI EMAIL==================
+            Notification::route('mail', $request->responden_email)
+                ->notify(new SendFormLinkNotification($token, $request['placement']));
 
             return redirect()->route('cek-email.email', $request['placement'])
-                ->with('success', 'Link verifikasi telah dikirim ke email Anda.');
+                ->with('success', 'Link verifikasi telah dikirim ke email Anda, Cek folder spam jika tidak ada.');
 
         } catch (\Illuminate\Validation\ValidationException $e) {
             return redirect()->back()->with('error', $e->getMessage());

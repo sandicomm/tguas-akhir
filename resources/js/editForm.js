@@ -1499,7 +1499,7 @@ const generateSingleSection = (section, questionSection, yellowStats)=>{
                             </div>
                         </div>
                         <div class="flex items-center bg-gray-100 dark:bg-slate-600 rounded p-2 w-full m-1">
-                            <p class="text-gray-500 dark:text-white font-bold">Section</p>
+                            <p class="text-gray-500 dark:text-white font-bold">Section ${section.order}</p>
                         </div>
                     </div>
 
@@ -1579,7 +1579,7 @@ const generatorQuestion=(section,question, yellowStats)=>{
             <div id="wrapper-question-${question.id}" class="border dark:border-gray-400 border-gray-600 rounded p-1 w-full"
                 style="${yellowStats ? 'border-color:rgba(255, 141, 62, 1);border-width:4px;':''}">
                 <div class="flex items-center gap-2 dark:bg-indigo-400/80 bg-blue-300/80 rounded-md flex-col p-2 mb-1">
-                    <h3 class="text-white py-1 px-3 text-lg font-bold bg-blue-700 rounded-md w-full">Question</h3>
+                    <h3 class="text-white py-1 px-3 text-lg font-bold bg-blue-700 rounded-md w-full">Question ${question.order}</h3>
 
                     <div class="flex items-center w-full">
                         

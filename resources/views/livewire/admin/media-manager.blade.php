@@ -55,21 +55,22 @@
                     <div wire:key="media-{{ $media->id }}" data-type="{{ $media->type }}" class="item-media-{{$media->type}} flex justify-between items-center border rounded-md dark:border-slate-500 border-slate-800 p-2 mt-2 h-64 flex-col">
                         @if ($media->type === 'image')
                             <div class="overflow-hidden relative"
-                                data-modal-target="modalMedia" 
-                                data-modal-toggle="modalMedia"
-                                onclick="openModal('{{ asset($media->file_path) }}', '{{ $media->type }}')"
+                                @click="$dispatch('open-media-preview', { url: '{{ asset($media->file_path) }}', type: '{{ $media->type }}' })"
                             >
-                                <div class="cursor-pointer absolute z-2 bg-blue-300/40 w-full h-full flex items-center justify-center opacity-0 hover:opacity-100 transition "><b>Preview</b></div>
-                                <img src="{{asset($media->file_path)}}" alt="{{ $media->title }}" class="w-full object-cover">
+                                <div class="cursor-pointer absolute z-2 bg-blue-300/40 w-full h-full flex items-center justify-center opacity-0 hover:opacity-100 transition">
+                                    <b>Preview</b>
+                                </div>
+                                <img src="{{ asset($media->file_path) }}" alt="{{ $media->title }}" class="w-full object-cover">
                             </div>
                         @else
+
                             <div class="overflow-hidden relative"
-                                data-modal-target="modalMedia" 
-                                data-modal-toggle="modalMedia"
-                                onclick="openModal('{{ asset($media->file_path) }}', '{{ $media->type }}')"
+                                @click="$dispatch('open-media-preview', { url: '{{ asset($media->file_path) }}', type: '{{ $media->type }}' })"
                             >
-                                <div class="cursor-pointer absolute z-2 bg-blue-300/40 w-full h-full flex items-center justify-center opacity-0 hover:opacity-100 transition "><b>Preview</b></div>
-                                <video src="{{asset($media->file_path)}}" class="w-full object-cover"></video>
+                                <div class="cursor-pointer absolute z-2 bg-blue-300/40 w-full h-full flex items-center justify-center opacity-0 hover:opacity-100 transition">
+                                    <b>Preview</b>
+                                </div>
+                                <video src="{{ asset($media->file_path) }}" class="w-full object-cover"></video>
                             </div>
                         @endif
                         <div class="text-center my-1 flex flex-col">
@@ -86,28 +87,52 @@
                 @endforeach
 
                 <!-- Modal -->
-                <div id="modalMedia" tabindex="-1" aria-hidden="true" class="fixed top-0 left-0 right-0 z-50 hidden w-full p-4 overflow-x-hidden overflow-y-auto md:inset-0 h-[calc(100%-1rem)] max-h-full">
-                    <div class="relative w-full max-w-5xl max-h-full">
-                        <div class="relative bg-white rounded-lg shadow dark:bg-gray-700">
+                <div 
+                    x-data="{ openPreview: false, mediaUrl: '', mediaType: '' }"
+                    x-on:open-media-preview.window="openPreview = true; mediaUrl = $event.detail.url; mediaType = $event.detail.type"
+                >
+                    <!-- Modal Backdrop & Wrapper -->
+                    <div 
+                        x-show="openPreview" 
+                        x-transition 
+                        x-cloak 
+                        class="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-[9999] p-4 overflow-y-auto"
+                    >
+                        <div class="relative w-full max-w-5xl max-h-[90vh] bg-white rounded-lg shadow dark:bg-gray-700 flex flex-col">
+                            
+                            <!-- Header Modal -->
                             <div class="flex items-center justify-between p-4 border-b rounded-t dark:border-gray-600">
                                 <h3 class="text-xl font-semibold text-gray-900 dark:text-white">
                                     Media Preview
                                 </h3>
-                                <button type="button" class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white" data-modal-hide="modalMedia">
+                                <button 
+                                    type="button" 
+                                    @click="openPreview = false; mediaUrl = ''" 
+                                    class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white"
+                                >
                                     <svg class="w-3 h-3" aria-hidden="true" fill="none" viewBox="0 0 14 14">
                                         <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/>
                                     </svg>
                                     <span class="sr-only">Close modal</span>
                                 </button>
                             </div>
-                            <div class="p-6 text-center">
-                                <img id="modalImage" class="h-[100vh] mx-auto rounded-lg shadow-md hidden" src="" alt="Poster Detail">
-                                <video id="modalVideo" class="hidden" src="" controls>
+
+                            <!-- Body Modal -->
+                            <div class="p-6 text-center overflow-auto flex justify-center items-center">
+                                <!-- Image Preview -->
+                                <template x-if="mediaType === 'image'">
+                                    <img :src="mediaUrl" class="max-h-[75vh] w-auto mx-auto rounded-lg shadow-md object-contain" alt="Poster Detail">
+                                </template>
+
+                                <!-- Video Preview -->
+                                <template x-if="mediaType === 'video'">
+                                    <video :src="mediaUrl" class="max-h-[75vh] w-full rounded-lg shadow-md" controls></video>
+                                </template>
                             </div>
+
                         </div>
                     </div>
                 </div>
-            </div>
 
             <!-- MODAL -->
             <div x-show="open" x-transition x-cloak class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-[999] dark:text-white text-black">
@@ -165,13 +190,30 @@
                                 </div>
 
                                 <div class="mb-4">
-                                    <label>File</label>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">File</label>
+                                    
+                                    <!-- Input File Utama -->
                                     <input type="file" wire:model="file" accept="image/jpeg, image/png, video/mp4, video/quicktime, video/x-msvideo"
                                         class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
 
-                                    <div wire:loading.delay wire:target="file,store">
-                                        <x-loading />
+                                    <!-- Loading Indicator -->
+                                    <div wire:loading.delay wire:target="file,store" class="mt-2 text-sm text-blue-500">
+                                        <x-loading /> Sedang memproses file...
                                     </div>
+
+                                    <!-- 🟢 KONTROL UI: Indikator File yang Terpilih di Livewire -->
+                                    @if ($file)
+                                        <div class="mt-2 p-2 bg-blue-50 dark:bg-gray-800 rounded-lg flex items-center justify-between border border-blue-200 dark:border-gray-700">
+                                            <span class="text-xs text-blue-800 dark:text-blue-300 truncate max-w-xs">
+                                                📄 File siap diunggah: <strong>{{ $file->getClientOriginalName() }}</strong>
+                                            </span>
+                                            <!-- Tombol untuk mereset file dari Livewire -->
+                                            <button type="button" wire:click="$set('file', null)" class="text-xs text-red-500 hover:underline">
+                                                Batal / Hapus File
+                                            </button>
+                                        </div>
+                                    @endif
+
                                     @error('file') 
                                         <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
                                     @enderror
@@ -280,25 +322,6 @@
      </div>
      
      <script>
-        function openModal(mediaUrl, type) {
-            let modalImage = document.getElementById('modalImage')
-            let modalVideo = document.getElementById('modalVideo')
-
-            modalImage.src = ''
-            modalImage.classList.add('hidden')
-
-            modalVideo.src = ''
-            modalVideo.classList.add('hidden')
-
-            if(type == 'image'){
-                modalImage.src = mediaUrl
-                modalImage.classList.remove('hidden')
-            }else if(type == 'video'){
-                modalVideo.src = mediaUrl
-                modalVideo.classList.remove('hidden')
-            }
-        }
-
         function filterSet(param){
             let filterSemua = document.getElementById('semua')
             let filterGambar = document.getElementById('gambar')
