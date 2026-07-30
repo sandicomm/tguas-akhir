@@ -1,13 +1,8 @@
 <div class="p-4 sm:ml-64 flex justify-center items-center flex-col gap-2" x-data="{ open: @entangle('isModalOpen') }">
-    <div class="hidden" id='jsLoader'>
+    <div class="" id='jsLoader'>
         <x-loading />
     </div>
-    <script>
-        document.getElementById('jsLoader').classList.remove('hidden');
-        setTimeout(()=>{
-            document.getElementById('jsLoader').classList.add('hidden');
-        },2750)
-    </script> 
+
     @if(session('success'))
         <div class="fixed top-5 left-1/2 transform -translate-x-1/2 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded shadow-lg z-50">
             <div class="flex items-center justify-between gap-4">
@@ -339,7 +334,7 @@
         </div>
      </div>
      
-     <script>
+    <script>
         function filterSet(param){
             let filterSemua = document.getElementById('semua')
             let filterGambar = document.getElementById('gambar')
@@ -392,3 +387,13 @@
         });
     </script>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(() => {
+            requestAnimationFrame(() => {
+                document.getElementById('jsLoader')?.classList.add('hidden');
+            });
+        }, 1000);
+    });
+</script>

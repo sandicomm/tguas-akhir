@@ -1,18 +1,10 @@
 <div>
     <div class="p-4 sm:ml-64" x-data="{ open: @entangle('isModalOpen') }">
         <x-loading wire:loading.flex />
-        <div class="hidden" id='jsLoader'>
+        <div class="" id='jsLoader'>
             <x-loading />
         </div>
-        <script>
-            let forms = @js($forms);
-            let formsData = JSON.parse(JSON.stringify(forms))
 
-            document.getElementById('jsLoader').classList.remove('hidden');
-            setTimeout(()=>{
-                document.getElementById('jsLoader').classList.add('hidden');
-            },2750)
-        </script>
         <div class="flex items-center justify-center flex-col gap-3 rounded bg-slate-200 dark:bg-gray-600 py-10 px-4">
             <div class="relative overflow-hidden sm:rounded-lg w-full shadow-md dark:bg-slate-800 bg-white">
                 <h1 class="text-3xl font-bold bg-cyan-600 rounded p-3 mb-1 text-center text-white">Response Terekam</h1>
@@ -258,4 +250,14 @@
         </script>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(() => {
+            requestAnimationFrame(() => {
+                document.getElementById('jsLoader')?.classList.add('hidden');
+            });
+        }, 1000);
+    });
+</script>
 

@@ -1,14 +1,8 @@
 <div class="p-4 sm:ml-64 flex justify-center items-center flex-col" x-data="{ open: @entangle('isModalOpen') }">
         <x-loading wire:loading.flex />
-        <div class="hidden" id='jsLoader'>
+        <div class="" id='jsLoader'>
             <x-loading />
         </div>
-        <script>
-            document.getElementById('jsLoader').classList.remove('hidden');
-            setTimeout(()=>{
-                document.getElementById('jsLoader').classList.add('hidden');
-            },3750)
-        </script>
 
         <h1 class="text-4xl font-bold dark:text-white text-black">Daftar Form</h1>
         <div class="flex flex-wrap m-6 p-5 bg-slate-200 dark:bg-slate-700 w-full rounded gap-3">
@@ -133,3 +127,13 @@
             </div>
         </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(() => {
+            requestAnimationFrame(() => {
+                document.getElementById('jsLoader')?.classList.add('hidden');
+            });
+        }, 1000);
+    });
+</script>

@@ -1,7 +1,9 @@
 <div class="sm:ml-64 p-4" x-data="{ openModal: @entangle('isModalOpen') }">
-    
     <div class="w-full flex items-center justify-center flex-col gap-3 rounded  dark:bg-gray-600 py-10 px-4">
         <div class="relative overflow-hidden sm:rounded-lg w-full shadow-md dark:bg-slate-800 bg-white">
+            <div wire:loading class="" id='jsLoader'>
+                <x-loading />
+            </div>
             <h1 class="text-3xl font-bold bg-cyan-600 rounded p-3 text-center text-white mb-4">Comments</h1>
             @if(session('success'))
                 <div class="fixed top-5 left-1/2 transform -translate-x-1/2 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded shadow-lg z-50">
@@ -140,3 +142,13 @@
         </div>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(() => {
+            requestAnimationFrame(() => {
+                document.getElementById('jsLoader')?.classList.add('hidden');
+            });
+        }, 1000);
+    });
+</script>

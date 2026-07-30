@@ -51,8 +51,6 @@ let webpageDb = globals.webpageDb,
   accordionSelect = globals.accordionSelect
 
 document.addEventListener('DOMContentLoaded', function(){
-  document.getElementById('loading-overlay')?.classList.remove('hidden');
-
   // inisialisasi ke variabel globals
   webpageDbRaw = JSON.parse(JSON.stringify(webpageJs));
   globals.webpageDbRaw = webpageDbRaw
@@ -93,13 +91,15 @@ document.addEventListener('DOMContentLoaded', function(){
   if(!indicatorPageEl) return
   
   indicatorPageEl.innerHTML=indicatorPage        
-  
-  requestAnimationFrame(() => {
+
+  setTimeout(()=>{
     requestAnimationFrame(() => {
-      initWebpage(true)
-      document.getElementById('loading-overlay')?.classList.add('hidden');
+      requestAnimationFrame(() => {
+        initWebpage(true)
+        document.getElementById('loading-overlay')?.classList.add('hidden');
+      });
     });
-  });
+  },1000)
 })
 
 window.addEventListener("resize", resizeElements);
@@ -814,7 +814,7 @@ let userAktif = false;
 // 1. Kumpulkan semua event interaksi user
 ['mousemove', 'mousedown', 'click', 'scroll', 'keypress', 'touchstart'].forEach(eventName => {
     document.addEventListener(eventName, () => {
-        console.log('gak afk')
+        //console.log('gak afk')
         userAktif = true; 
     }, { passive: true }); // passive: true bagus untuk performa scroll di shared hosting
 });

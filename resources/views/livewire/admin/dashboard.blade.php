@@ -1,13 +1,7 @@
 <div class="sm:ml-64 pt-4">
-    <div wire:loading class="hidden" id='jsLoader'>
+    <div wire:loading class="" id='jsLoader'>
         <x-loading />
     </div>
-    <script>
-        document.getElementById('jsLoader').classList.remove('hidden');
-        setTimeout(()=>{
-            document.getElementById('jsLoader').classList.add('hidden');
-        },2750)
-    </script>
     <div>
  
         <!-- ----------------------------- TOTAL RESPONDEN -------------------------------------- -->
@@ -27,3 +21,13 @@
         </div>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(() => {
+            requestAnimationFrame(() => {
+                document.getElementById('jsLoader')?.classList.add('hidden');
+            });
+        }, 1000);
+    });
+</script>

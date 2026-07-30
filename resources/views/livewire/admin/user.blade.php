@@ -1,15 +1,10 @@
 <div>
     <div class="p-4 sm:ml-64" x-data="{ open: @entangle('isModalOpen') }">
     <x-loading wire:loading.flex />
-        <div class="hidden" id='jsLoader'>
+        <div class="" id='jsLoader'>
             <x-loading />
         </div>
-        <script>
-            document.getElementById('jsLoader').classList.remove('hidden');
-            setTimeout(()=>{
-                document.getElementById('jsLoader').classList.add('hidden');
-            },2750)
-        </script>
+
         <div>
             @if(session('success'))
                 <div class="fixed top-5 left-1/2 transform -translate-x-1/2 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded shadow-lg z-50">
@@ -225,3 +220,13 @@
         </div>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(() => {
+            requestAnimationFrame(() => {
+                document.getElementById('jsLoader')?.classList.add('hidden');
+            });
+        }, 1000);
+    });
+</script>

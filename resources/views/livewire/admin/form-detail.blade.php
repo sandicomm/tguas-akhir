@@ -10,15 +10,9 @@
  
 <div class="p-4 sm:ml-64 flex justify-center items-center">
     @vite(['resources/js/editForm.js'])
-        <div class="hidden" id='jsLoader'>
-            <x-loading />
-        </div>
-        <script>
-            document.getElementById('jsLoader').classList.remove('hidden');
-            setTimeout(()=>{
-                document.getElementById('jsLoader').classList.add('hidden');
-            },3000)
-        </script>
+    <div class="" id='jsLoader'>
+        <x-loading />
+    </div>
     <section class="lg:w-1/2">
         <!-- Menampilkan detail form -->
         <a href="{{ route('admin.forms') }}" class="bg-gray-700 p-2 rounded shadow text-white mb-4 lg:text-lg text-sm inline-block">

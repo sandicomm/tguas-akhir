@@ -19,8 +19,16 @@ document.addEventListener('DOMContentLoaded', function(){
     QUESTION_MAX_ID = questionMaxID
     ANSWER_MAX_ID = answerMaxID
     sectionsCopy = formCopy.sections
-    
-    loadForm()
+
+     loadForm()
+    setTimeout(()=>{
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                // Sembunyikan loader setelah render selesai
+                document.getElementById('jsLoader')?.classList.add('hidden');
+            });
+        });
+    }, 1000)
 })
 function getEl(id ,name = "Elemen") {
    const el = document.getElementById(id);
