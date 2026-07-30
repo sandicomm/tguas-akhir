@@ -70,7 +70,7 @@
                                 <div class="cursor-pointer absolute z-2 bg-blue-300/40 w-full h-full flex items-center justify-center opacity-0 hover:opacity-100 transition">
                                     <b>Preview</b>
                                 </div>
-                                <video src="{{ asset($media->file_path) }}" class="w-full object-cover"></video>
+                                <video src="{{ asset($media->file_path) }}" class="w-full object-cover" preload="none"></video>
                             </div>
                         @endif
                         <div class="text-center my-1 flex flex-col">
@@ -193,6 +193,7 @@
                                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">File</label>
                                     
                                     <!-- Input File Utama -->
+                                    <span class="text-blue-500 text-sm">Maksimal 20 Mb</span>
                                     <input type="file" wire:model="file" accept="image/jpeg, image/png, video/mp4, video/quicktime, video/x-msvideo"
                                         class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
 
@@ -201,11 +202,11 @@
                                         <x-loading /> Sedang memproses file...
                                     </div>
 
-                                    <!-- 🟢 KONTROL UI: Indikator File yang Terpilih di Livewire -->
+                                    <!-- Indikator File yang Terpilih di Livewire -->
                                     @if ($file)
                                         <div class="mt-2 p-2 bg-blue-50 dark:bg-gray-800 rounded-lg flex items-center justify-between border border-blue-200 dark:border-gray-700">
                                             <span class="text-xs text-blue-800 dark:text-blue-300 truncate max-w-xs">
-                                                📄 File siap diunggah: <strong>{{ $file->getClientOriginalName() }}</strong>
+                                                ðŸ“„ File siap diunggah: <strong>{{ $file->getClientOriginalName() }}</strong>
                                             </span>
                                             <!-- Tombol untuk mereset file dari Livewire -->
                                             <button type="button" wire:click="$set('file', null)" class="text-xs text-red-500 hover:underline">
@@ -263,15 +264,32 @@
                                     @enderror
                                 </div>
 
-                                <div class="mb-4">
-                                    <label>File</label>
+                               <div class="mb-4">
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">File</label>
+                                    
+                                    <!-- Input File Utama -->
                                     <span class="text-blue-500 text-sm">Maksimal 20 Mb</span>
                                     <input type="file" wire:model="file" accept="image/jpeg, image/png, video/mp4, video/quicktime, video/x-msvideo"
                                         class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                                        
-                                    <div wire:loading.delay wire:target="file,store">
-                                        <x-loading />
+
+                                    <!-- Loading Indicator -->
+                                    <div wire:loading.delay wire:target="file,store" class="mt-2 text-sm text-blue-500">
+                                        <x-loading /> Sedang memproses file...
                                     </div>
+
+                                    <!-- Indikator File yang Terpilih di Livewire -->
+                                    @if ($file)
+                                        <div class="mt-2 p-2 bg-blue-50 dark:bg-gray-800 rounded-lg flex items-center justify-between border border-blue-200 dark:border-gray-700">
+                                            <span class="text-xs text-blue-800 dark:text-blue-300 truncate max-w-xs">
+                                                ðŸ“„ File siap diunggah: <strong>{{ $file->getClientOriginalName() }}</strong>
+                                            </span>
+                                            <!-- Tombol untuk mereset file dari Livewire -->
+                                            <button type="button" wire:click="$set('file', null)" class="text-xs text-red-500 hover:underline">
+                                                Batal / Hapus File
+                                            </button>
+                                        </div>
+                                    @endif
+
                                     @error('file') 
                                         <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
                                     @enderror
