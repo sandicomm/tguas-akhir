@@ -17,7 +17,7 @@
             document.getElementById('jsLoader').classList.remove('hidden');
             setTimeout(()=>{
                 document.getElementById('jsLoader').classList.add('hidden');
-            },1000)
+            },3000)
         </script>
     <section class="lg:w-1/2">
         <!-- Menampilkan detail form -->
@@ -43,7 +43,7 @@
                     open = true; 
                     message = $event.detail.pesan; 
                     status = $event.detail.status; 
-                    setTimeout(() => open = false, 5000)
+                    setTimeout(() => open = false, 20000)
                 "
                 x-show="open" 
                 x-transition

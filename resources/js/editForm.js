@@ -103,34 +103,38 @@ let userAktif = false;
 // 1. Kumpulkan semua event interaksi user
 ['mousemove', 'mousedown', 'click', 'scroll', 'keypress', 'touchstart'].forEach(eventName => {
     document.addEventListener(eventName, () => {
-        console.log('gak afk')
+        //console.log('gak afk')
         userAktif = true; 
     }, { passive: true }); // passive: true bagus untuk performa scroll di shared hosting
 });
 
 // ================== AUTOSAVE ==================
 setInterval(async () => {
+
+    console.log('autosave:',isFormDirty)
     if (isFormDirty) {
         // Ambil data terbaru dari form/state
+        isFormDirty = false; 
         let formData = formCopy
         formData.sections = normalizeSectionsToKeyedObject(formData, sectionsCopy);
         // Jalankan save secara silent
         await submitInBatch(formData, true); 
         
-        // Reset status dirty setelah berhasil save
-        isFormDirty = false; 
     }
-},0.8 * 60 * 1000); // Cek setiap 5 menit
+},0.5 * 60 * 1000); // Cek setiap 5 menit
 
 // ================= CEK STATUS VISIT ================
 setInterval(async () => {
     try {
-        if (userAktif) {
+        console.log(formCopy, userAktif && !formCopy.statusAdd, !formCopy.statusAdd, formCopy.statusAdd)
+        if (userAktif && !formCopy.statusAdd) {
+            console.log('perbarui')
             await perbaruiMasaAktifDiServer();
             userAktif = false;
             
             console.log("User aktif berinteraksi. Sesi diperpanjang otomatis.");
-        } else {
+        } else if(!formCopy.statusAdd) {
+            console.log('cek')
             document.getElementById('loading-overlay')?.classList.remove('hidden');
   
             await cekStatus();
@@ -237,6 +241,7 @@ function validateBeforeSubmit(fullData) {
     window.dispatchEvent(new CustomEvent('notif-pesan', { 
         detail: { pesan: 'Form harus memiliki minimal 1 section', status:false} 
     }));
+    isFormDirty=true
     return false;
   }
 
@@ -249,8 +254,10 @@ function validateBeforeSubmit(fullData) {
     // Section aktif wajib punya question
     if (!isSectionDeleted && questions.length == 0) {
 
+        isFormDirty=true
+        console.log(isFormDirty)
         window.dispatchEvent(new CustomEvent('notif-pesan', { 
-            detail: { pesan: `Section "${section.name}" wajib memiliki question`, status:false} 
+            detail: { pesan: `aaSection "${section.name}" wajib memiliki question`, status:false} 
         }));
         //console.log(section, sectionsCopy)
         return false;
@@ -266,6 +273,7 @@ function validateBeforeSubmit(fullData) {
         );
 
         if (answers.length == 0) {
+            isFormDirty=true
             window.dispatchEvent(new CustomEvent('notif-pesan', { 
                 detail: { pesan: `Question "${question.question}" wajib memiliki jawaban`, status:false} 
             }));
@@ -432,8 +440,7 @@ async function submitInBatch(form, isAutosave = false) {
         let json = await response.json();
         
         redirect = json.redirect
-        //console.log('base',json)
-        //console.log('base',baseData)
+        
         msg = json.message
 
         if (!json.success) {
@@ -443,7 +450,7 @@ async function submitInBatch(form, isAutosave = false) {
                 }));
             }else{
                 window.dispatchEvent(new CustomEvent('notif-pesan', { 
-                    detail: { pesan: json.message, status:false } 
+                    detail: { pesan: `${msg}`, status:false } 
                 }));
             }
             return;
@@ -451,7 +458,6 @@ async function submitInBatch(form, isAutosave = false) {
     }
 
     for (let i = 0; i < sectionBatches.length; i++) {
-        //console.log('section')
         const payload = {
             ...baseData,
             batch_number: i,
@@ -471,17 +477,17 @@ async function submitInBatch(form, isAutosave = false) {
         raw2=json
         redirect = json.redirect
         msg=json.message
-        //console.log('section base',json)
-        //console.log('section base',sectionBatches)
+
         if (!json.success) {
-            //console.log(json)
             if(json.redirect){
+
                 window.dispatchEvent(new CustomEvent('redirect-modal', { 
                     detail: { pesan: `${msg}`, url: redirect, status:false } 
                 }));
             }else{
+
                 window.dispatchEvent(new CustomEvent('notif-pesan', { 
-                    detail: { pesan: json.message, status:false } 
+                    detail: { pesan: `${msg}`, status:false } 
                 }));
             }
             return;
@@ -491,18 +497,14 @@ async function submitInBatch(form, isAutosave = false) {
     document.getElementById('jsLoader')?.classList.add('hidden');
     
     if (isAutosave) {
-        ////console.log('Autosave sukses');
         showToast('Form disimpan otomatis'); // Contoh notifikasi kecil
         isFormDirty=false
         allowUnload=true
         window.location.href = redirect
     } else {
-        // Jika manual, jalankan event redirect kamu yang lama
-        //console.log('event')
         window.dispatchEvent(new CustomEvent('redirect-modal', { 
             detail: { pesan: `Data form telah berhasil diperbarui. ${msg}`, url: redirect, status:true } 
         }));
-        isFormDirty=false
     }
   } catch (err) {
 
@@ -514,13 +516,13 @@ async function submitInBatch(form, isAutosave = false) {
 }
 
 async function formSubmit(event) {
-    document.getElementById('jsLoader')?.classList.remove('hidden'); // tampil
+    document.getElementById('jsLoader')?.classList.remove('hidden');
 
     event.preventDefault();
     let formData = formCopy
     formData.sections = normalizeSectionsToKeyedObject(formData, sectionsCopy);
 
-    await submitInBatch(formData); // ✔ wajib tunggu dulu!
+    await submitInBatch(formData); 
 
     document.getElementById('jsLoader')?.classList.add('hidden'); 
     allowUnload = true;

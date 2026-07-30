@@ -4,7 +4,7 @@
     </div>
 
     <div class="flex justify-center items-center mt-10 mb-8">
-        <h1 class="text-3xl font-bold text-gray-900 dark:text-white border-b-4 border-blue-500 pb-2 text-center">
+        <h1 class="text-3xl font-bold text-gray-900 dark:text-white pb-2 text-center">
             Edukasi Diabetes
         </h1>
     </div>

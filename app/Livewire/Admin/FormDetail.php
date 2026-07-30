@@ -43,33 +43,35 @@ class FormDetail extends Component
             // 1. Bersihkan semua data kunci yang SUDAH EXPIRED di seluruh sistem
             EditFormVisited::where('expires_at', '<', Carbon::now())->delete();
 
-            // 2. Cek apakah FORM INI sedang diakses oleh USER LAIN yang MASIH AKTIF
-            $visited = EditFormVisited::where('form_id', $id)
-                ->where('expires_at', '>', Carbon::now())
-                ->with('user')
-                ->first();
+            if (is_numeric($id)) {
+                // 2. Cek apakah FORM INI sedang diakses oleh USER LAIN yang MASIH AKTIF
+                $visited = EditFormVisited::where('form_id', $id)
+                    ->where('expires_at', '>', Carbon::now())
+                    ->with('user')
+                    ->first();
 
-            if ($visited && $visited->user_id != $userId) {
-                $namaUser = $visited->user ? $visited->user->name : 'User Lain';
-                return redirect()->route('admin.forms')
-                    ->with('error', "Form ini sedang diakses oleh {$namaUser}.");
+                if ($visited && $visited->user_id != $userId) {
+                    $namaUser = $visited->user ? $visited->user->name : 'User Lain';
+                    return redirect()->route('admin.forms')
+                        ->with('error', "Form ini sedang diakses oleh {$namaUser}.");
+                }
+
+                // 3. EFISIEN: Hapus semua akses form LAIN milik user ini dalam 1 query saja
+                EditFormVisited::where('user_id', $userId)
+                    ->where('form_id', '!=', $id)
+                    ->delete();
+
+                // 4. Daftarkan/Perbarui akses user ini untuk FORM INI (+1 menit)
+                EditFormVisited::updateOrCreate(
+                    [
+                        'user_id' => $userId,
+                        'form_id' => $id,
+                    ],
+                    [
+                        'expires_at' => Carbon::now()->addMinutes(1),
+                    ]
+                );
             }
-
-            // 3. EFISIEN: Hapus semua akses form LAIN milik user ini dalam 1 query saja
-            EditFormVisited::where('user_id', $userId)
-                ->where('form_id', '!=', $id)
-                ->delete();
-
-            // 4. Daftarkan/Perbarui akses user ini untuk FORM INI (+1 menit)
-            EditFormVisited::updateOrCreate(
-                [
-                    'user_id' => $userId,
-                    'form_id' => $id,
-                ],
-                [
-                    'expires_at' => Carbon::now()->addMinutes(1),
-                ]
-            );
             //==============================================================
 
             $this->formPlacement = Form::pluck('placement')->unique();
@@ -98,6 +100,7 @@ class FormDetail extends Component
                     'collect_email'=>0,
                     'one_attempt'=>0,
                     'must_fill'=>0,
+                    'statusAdd' => true,
                     'changeContent' => 'add',
                     'status' => 'update',
                     'sections' => collect([
@@ -131,7 +134,7 @@ class FormDetail extends Component
                 ];
             }
         }catch(\Throwable $e){
-            session()->flash('error', 'error muat halaman');
+            session()->flash('error', 'error muat halaman' . $e->getMessage() . $e->getLine());
             return redirect()->route('admin.forms');
             /*
             return response()->json([
