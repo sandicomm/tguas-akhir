@@ -1,5 +1,5 @@
 <div class="sm:ml-64 pt-4">
-    <div wire:loading class="" id='jsLoader'>
+    <div wire:loading class="hidden" id='jsLoader'>
         <x-loading />
     </div>
     <div>
@@ -23,6 +23,7 @@
 </div>
 
 <script>
+    document.getElementById('jsLoader')?.classList.remove('hidden');
     document.addEventListener('DOMContentLoaded', function() {
         setTimeout(() => {
             requestAnimationFrame(() => {

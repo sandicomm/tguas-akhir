@@ -1,6 +1,6 @@
 <div class="p-4 sm:ml-64 flex justify-center items-center flex-col" x-data="{ open: @entangle('isModalOpen') }">
         <x-loading wire:loading.flex />
-        <div class="" id='jsLoader'>
+        <div class="hidden" id='jsLoader'>
             <x-loading />
         </div>
 
@@ -129,6 +129,7 @@
 </div>
 
 <script>
+    document.getElementById('jsLoader')?.classList.remove('hidden');
     document.addEventListener('DOMContentLoaded', function() {
         setTimeout(() => {
             requestAnimationFrame(() => {

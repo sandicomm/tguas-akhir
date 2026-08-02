@@ -10,7 +10,7 @@
  
 <div class="p-4 sm:ml-64 flex justify-center items-center">
     @vite(['resources/js/editForm.js'])
-    <div class="" id='jsLoader'>
+    <div class="hidden" id='jsLoader'>
         <x-loading />
     </div>
     <section class="lg:w-1/2">

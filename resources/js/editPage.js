@@ -92,6 +92,7 @@ document.addEventListener('DOMContentLoaded', function(){
   
   indicatorPageEl.innerHTML=indicatorPage        
 
+  document.getElementById('loading-overlay')?.classList.remove('hidden');
   setTimeout(()=>{
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {

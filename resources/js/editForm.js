@@ -20,7 +20,8 @@ document.addEventListener('DOMContentLoaded', function(){
     ANSWER_MAX_ID = answerMaxID
     sectionsCopy = formCopy.sections
 
-     loadForm()
+    loadForm()
+    document.getElementById('jsLoader')?.classList.remove('hidden');
     setTimeout(()=>{
         requestAnimationFrame(() => {
             requestAnimationFrame(() => {

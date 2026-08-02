@@ -1,6 +1,6 @@
 <div>
     <div class="p-4 sm:ml-64" x-data="{ open: @entangle('isModalOpen') }">
-        <div class="" id='jsLoader'>
+        <div class="hidden" id='jsLoader'>
             <x-loading />
         </div>
 
@@ -227,6 +227,7 @@
     </div>
 </div>
 <script>
+    document.getElementById('jsLoader')?.classList.remove('hidden');
     document.addEventListener('DOMContentLoaded', function() {
         setTimeout(() => {
             requestAnimationFrame(() => {

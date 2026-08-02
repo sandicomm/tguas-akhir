@@ -35,7 +35,7 @@
             <!-- <div id="loading-overlay" style="display: none; justify-content:center; align-items:center;position: fixed; top:0; left:0; width:100%; height:100%; background-color: rgba(255,255,255,0.7); z-index:9999; text-align: center;">
                 <h2>⏳ Menyimpan data...</h2>
             </div> -->
-            <div class="" id='loading-overlay'>
+            <div class="hidden" id='loading-overlay'>
                 <x-loading />
             </div>
             <main>

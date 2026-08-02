@@ -97,7 +97,7 @@ class Forms extends Component
                 }
             });
 
-            session()->flash('message', 'Form berhasil disalin.');
+            session()->flash('success', 'Form berhasil disalin.');
             $this->forms = FormModel::all();
         }catch(\Exception $e){
             session()->flash('error', 'error duplikat Form');
