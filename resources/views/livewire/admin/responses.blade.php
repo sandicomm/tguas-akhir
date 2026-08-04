@@ -200,6 +200,7 @@
             </div>
         </div>
         <script>
+            formsData = @js($forms);
             const dropdownPlacement = document.getElementById("response-placement")
 
             let dropdownNamaForm = document.getElementById('form-name')
@@ -234,31 +235,32 @@
                 }  
             }
 
-            setTimeout(()=>{
-                generateDropdownFormName()
-            },2750)
+            // setTimeout(()=>{
+            //     generateDropdownFormName()
+            // },2750)
 
-            dropdownPlacement.addEventListener('change', generateDropdownFormName)
+           
 
-            document.getElementById('form-name').addEventListener('click', ()=>{
-                formId = dropdownNamaForm.value
-            })
+            document.getElementById('jsLoader')?.classList.remove('hidden');
+            document.addEventListener('DOMContentLoaded', function() {
+                setTimeout(() => {
+                    requestAnimationFrame(() => {
+                        generateDropdownFormName()
+                        dropdownPlacement.addEventListener('change', generateDropdownFormName)
 
-            document.getElementById('btn-search-response').addEventListener('click', ()=>{
-                formId = dropdownNamaForm.value
-            })
+                        document.getElementById('form-name').addEventListener('click', ()=>{
+                            formId = dropdownNamaForm.value
+                        })
+
+                        document.getElementById('btn-search-response').addEventListener('click', ()=>{
+                            formId = dropdownNamaForm.value
+                        })
+
+                        document.getElementById('jsLoader')?.classList.add('hidden');
+                    });
+                }, 1000);
+            });
         </script>
     </div>
 </div>
-
-<script>
-    document.getElementById('jsLoader')?.classList.remove('hidden');
-    document.addEventListener('DOMContentLoaded', function() {
-        setTimeout(() => {
-            requestAnimationFrame(() => {
-                document.getElementById('jsLoader')?.classList.add('hidden');
-            });
-        }, 1000);
-    });
-</script>
 

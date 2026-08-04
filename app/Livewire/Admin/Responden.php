@@ -26,7 +26,8 @@ class Responden extends Component
             EditFormVisited::where('user_id', $userId)->delete();
             WebpageVisited::where('user_id', $userId)->delete();
         }catch(\Exception $e){
-            session()->flash('error', 'error muat halaman');
+            //session()->flash('error', 'error muat halaman');
+            $this->dispatch('error-alert', message: 'error muat halaman');
         }
     }
     
@@ -39,7 +40,8 @@ class Responden extends Component
                 $responden = RespondenModel::find($id);
 
                 if(!$responden){
-                    session()->flash('error', 'Responden tidak ditemukan.');
+                    //session()->flash('error', 'Responden tidak ditemukan.');
+                    $this->dispatch('error-alert', message: 'Responden tidak ditemukan.');
                     return;
                 }
 
@@ -51,7 +53,8 @@ class Responden extends Component
                 // Tangani error validasi secara eksplisit
                 $this->addError('email', $e->validator->errors()->first('email'));
             }catch(\Exception $e){
-                session()->flash('error', 'error action');
+                //session()->flash('error', 'error action');
+                $this->dispatch('error-alert', message: 'error action');
             }
 
         } else if($action === 'delete') {
@@ -76,18 +79,22 @@ class Responden extends Component
                     $this->reset();
                     $this->resetValidation(); // Reset validasi setelah penyimpanan
                     $this->isModalOpen = false;
-                    session()->flash('error', 'Responden tidak ditemukan.');
+                    //session()->flash('error', 'Responden tidak ditemukan.');
+                    $this->dispatch('error-alert', message: 'Responden tidak ditemukan.');
                     return;
                 }
 
                 $responden->delete();
                 $this->reset();
-                session()->flash('success', 'Responden berhasil dihapus!');
+                //session()->flash('success', 'Responden berhasil dihapus!');
+                $this->dispatch('success-alert', message: 'Responden berhasil dihapus!');
             } catch (\Exception $e) {
-                session()->flash('error', 'error delete responden');
+                //session()->flash('error', 'error delete responden');
+                $this->dispatch('error-alert', message: 'error delete responden');
             }
         } else {
-            session()->flash('error', 'Isi dengan benar');
+            //session()->flash('error', 'Isi dengan benar');
+            $this->dispatch('error-alert', message: 'Isi dengan benar');
         }
     }
 

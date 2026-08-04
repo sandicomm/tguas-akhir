@@ -6,28 +6,6 @@
         </div>
 
         <div>
-            @if(session('success'))
-                <div class="fixed top-5 left-1/2 transform -translate-x-1/2 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded shadow-lg z-50">
-                    <div class="flex items-center justify-between gap-4">
-                        <span>{{ session('success') }}</span>
-                        <button type="button" class="text-green-700 hover:text-green-900" onclick="this.parentElement.parentElement.remove()">
-                            &times;
-                        </button>
-                    </div>
-                </div>
-            @endif
-
-            @if (session('error'))
-                <div class="fixed top-5 left-1/2 transform -translate-x-1/2 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded shadow-lg z-50">
-                    <div class="flex items-center justify-between gap-4">
-                        <span>{{ session('error') }}</span>
-                        <button type="button" class="text-red-700 hover:text-red-900" onclick="this.parentElement.parentElement.remove()">
-                            &times;
-                        </button>
-                    </div>
-                </div>
-            @endif
-
             <div class="flex items-center justify-center flex-col gap-3 rounded bg-transparent p-4">
                 <div class="relative w-full">
                     <button wire:click="setStatsAction('none', 'add')" class="block text-white bg-green-500 hover:bg-green-400 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-blue-800" type="button">

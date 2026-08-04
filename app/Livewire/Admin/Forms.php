@@ -23,6 +23,8 @@ class Forms extends Component
 
     public $editFormVisitedUser;
 
+    public $successMessage = null;
+
     public function mount()
     {
         try{
@@ -33,7 +35,8 @@ class Forms extends Component
             $this->editFormVisitedUser = EditFormVisited::where('expires_at', '>', Carbon::now())->with('user')->get();
             $this->forms = FormModel::all();
         }catch(\Exception $e){
-            session()->flash('error', 'error muat halaman');
+            //session()->flash('error', 'error muat halaman');
+            $this->dispatch('error-alert', message: 'error muat halaman');
         }
     }
 
@@ -54,7 +57,8 @@ class Forms extends Component
             $this->formId = $id;
             $this->isModalOpen = true;
         }catch(\Exception $e){
-            session()->flash('error', 'error action');
+            //session()->flash('error', 'error action');
+            $this->dispatch('error-alert', message: 'error action');
         }
     }
 
@@ -64,7 +68,8 @@ class Forms extends Component
             $originalForm = FormModel::with('sections.questions.answers')->find($id);
 
             if (!$originalForm) {
-                session()->flash('error', 'Form tidak ditemukan.');
+               //session()->flash('error', 'Form tidak ditemukan.');
+                $this->dispatch('error-alert', message: 'Form tidak ditemukan');
                 return redirect()->route('admin.forms');
             }
 
@@ -97,10 +102,11 @@ class Forms extends Component
                 }
             });
 
-            session()->flash('success', 'Form berhasil disalin.');
             $this->forms = FormModel::all();
+            $this->dispatch('success-alert', message: 'Form berhasil diduplikat.');
         }catch(\Exception $e){
-            session()->flash('error', 'error duplikat Form');
+            $this->dispatch('error-alert', message: 'error duplikat Form');
+            //session()->flash('error', 'error duplikat Form');
         }
     }
 
@@ -128,7 +134,8 @@ class Forms extends Component
                 if (!$findForm) {
                     $this->forms = FormModel::all();
                     $this->reset(['formId', 'confirmDelete', 'isModalOpen']);
-                    session()->flash('error', 'Form tidak ditemukan.');
+                    $this->dispatch('error-alert', message: 'Form tidak ditemukan.');
+                    //session()->flash('error', 'Form tidak ditemukan.');
                     return;
                 }
 
@@ -149,12 +156,15 @@ class Forms extends Component
 
                 $this->forms = FormModel::all();
                 $this->reset(['formId', 'confirmDelete', 'isModalOpen']);
-                session()->flash('success', 'Form berhasil dihapus!');
+                //session()->flash('success', 'Form berhasil dihapus!');
+                $this->dispatch('success-alert', message: 'Form berhasil dihapus!');
             } else {
-                session()->flash('error', 'Konfirmasi hapus salah.');
+                //session()->flash('error', 'Konfirmasi hapus salah.');
+                $this->dispatch('error-alert', message: 'Konfirmasi hapus salah.');
             }
         } catch (\Exception $e) {
-            session()->flash('error', 'Gagal menghapus Form');
+            $this->dispatch('error-alert', message: 'Gagal menghapus Form');
+            //session()->flash('error', 'Gagal menghapus Form');
         }
     }
 

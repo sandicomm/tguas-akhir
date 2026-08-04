@@ -32,7 +32,8 @@ class Emodul extends Component
             EditFormVisited::where('user_id', $userId)->delete();
             WebpageVisited::where('user_id', $userId)->delete();
         }catch(\Exception $e){
-            session()->flash('error', 'error muat halaman');
+            //session()->flash('error', 'error muat halaman');
+            $this->dispatch('error-alert', message: 'error muat halaman');
         }
     }
     
@@ -75,7 +76,8 @@ class Emodul extends Component
 
             $this->reset();
             $this->resetValidation();
-            session()->flash('success', 'Emodul berhasil ditambahkan!');
+            //session()->flash('success', 'Emodul berhasil ditambahkan!');
+            $this->dispatch('success-alert', message: 'Emodul berhasil ditambahkan!');
             
         } catch (ValidationException $e) {
             // Tangani error validasi secara eksplisit
@@ -83,7 +85,8 @@ class Emodul extends Component
             $this->addError('penyusun', $e->validator->errors()->first('penyusun'));
             $this->addError('file', $e->validator->errors()->first('file'));
         }catch(\Exception $e){
-            session()->flash('error', 'error tambah data emodul');
+           // session()->flash('error', 'error tambah data emodul');
+            $this->dispatch('error-alert', message: 'error tambah data emodul');
         }  
     }
 
@@ -101,7 +104,8 @@ class Emodul extends Component
                 $this->reset();
                 $this->resetValidation(); // Reset validasi setelah penyimpanan
                 $this->isModalOpen = false;
-                session()->flash('error', 'Emodul sepertinya sudah tidak ada atau telah dihapus oleh pengguna lain!');
+                //session()->flash('error', 'Emodul sepertinya sudah tidak ada atau telah dihapus oleh pengguna lain!');
+                $this->dispatch('error-alert', message: 'Emodul sepertinya sudah tidak ada atau telah dihapus oleh pengguna lain!');
                 return;
             }
             
@@ -144,7 +148,8 @@ class Emodul extends Component
             $this->resetValidation(); // Reset validasi setelah penyimpanan
             $this->isModalOpen = false;
             
-            session()->flash('success', 'Emodul updated successfully.');
+            //session()->flash('success', 'Emodul updated successfully.');
+            $this->dispatch('success-alert', message: 'Emodul berhasil diperbarui.');
         
         } catch (ValidationException $e) {
             // Tangani error validasi secara eksplisit
@@ -153,7 +158,8 @@ class Emodul extends Component
             $this->addError('file', $e->validator->errors()->first('file'));
         
         }catch(\Exception $e){
-            session()->flash('error', 'error update emodul');
+            //session()->flash('error', 'error update emodul');
+            $this->dispatch('error-alert', message: 'error update emodul');
         }
     }
 
@@ -165,11 +171,11 @@ class Emodul extends Component
                 if ($emodul) {
                     File::delete(public_path($emodul->file_path));
                     $emodul->delete();
-                    session()->flash('success', 'Emodul berhasil dihapus.');
-
+                    //session()->flash('success', 'Emodul berhasil dihapus.');
+                    $this->dispatch('success-alert', message: 'Emodul berhasil dihapus.');
                 } else {
-                
-                    session()->flash('error', 'Emodul tidak ditemukan.');
+                   // session()->flash('error', 'Emodul tidak ditemukan.');
+                    $this->dispatch('error-alert', message: 'Emodul tidak ditemukan.');
                 }
 
                 $this->reset();
@@ -177,10 +183,12 @@ class Emodul extends Component
                 $this->isModalOpen = false;
 
             }catch(\Exception $e){
-                session()->flash('error', 'gagal hapus emodul');
+                //session()->flash('error', 'gagal hapus emodul');
+                $this->dispatch('error-alert', message: 'gagal hapus emodul');
             }
         }else{
-            session()->flash('error', 'ketikan anda salah');
+            //session()->flash('error', 'ketikan anda salah');
+            $this->dispatch('error-alert', message: 'ketikan anda salah');
         }
     }
 
@@ -199,7 +207,8 @@ class Emodul extends Component
                     $this->judul = $emodul->judul;
                     $this->penyusun = $emodul->penyusun;
                 } else {
-                    session()->flash('error', 'Emodul tidak ditemukan.');
+                    //session()->flash('error', 'Emodul tidak ditemukan.');
+                    $this->dispatch('error-alert', message: 'Emodul tidak ditemukan.');
                     return;
                 }
 
@@ -210,7 +219,10 @@ class Emodul extends Component
                 $this->addError('file', $e->validator->errors()->first('file'));
             
             }catch(\Exception $e){
-                session()->flash('error', 'error action');
+                //session()->flash('error', 'error action');
+                $this->dispatch('error-alert', message: 'error action');
+                
+                
             }
 
         } else if($action === 'delete') {

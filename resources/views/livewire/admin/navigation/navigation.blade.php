@@ -52,8 +52,8 @@
             </x-nav-link>
         </li>
         <li>
-            <x-nav-link href="{{ route('admin.webpage', 'web') }}" class="flex-col {{ $webpageVisitedUser ? 'bg-gray-200/30' :''}}">
-               <div class="flex ">
+            <x-nav-link href="{{ $webpageVisitedUser ? 'javascript:void(0)' : route('admin.webpage', 'web') }}" class="flex-col {{ $webpageVisitedUser ? 'bg-gray-200/30 pointer-events-none select-none' :''}}">
+               <div class="flex {{ $webpageVisitedUser ? 'opacity-50' :''}}">
                   <svg class="w-6 h-6 text-white" aria-hidden="true"  width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
                       <path fill-rule="evenodd" d="M12 8a1 1 0 0 0-1 1v10H9a1 1 0 1 0 0 2h11a1 1 0 0 0 1-1V9a1 1 0 0 0-1-1h-8Zm4 10a2 2 0 1 1 0-4 2 2 0 0 1 0 4Z" clip-rule="evenodd"/>
                       <path fill-rule="evenodd" d="M5 3a2 2 0 0 0-2 2v6h6V9a3 3 0 0 1 3-3h8c.35 0 .687.06 1 .17V5a2 2 0 0 0-2-2H5Zm4 10H3v2a2 2 0 0 0 2 2h4v-4Z" clip-rule="evenodd"/>

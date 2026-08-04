@@ -59,7 +59,8 @@ class Dashboard extends Component
 
             $this->loadData();
         }catch(\Exception $e){
-            session()->flash('error', 'error muat halaman');
+            //session()->flash('error', 'error muat halaman');
+            $this->dispatch('error-alert', message: 'error muat halaman');
         }
     }
 
@@ -106,7 +107,8 @@ class Dashboard extends Component
                     });
             });
         }catch(\Exception $e){
-            session()->flash('error', 'error response single');
+            //session()->flash('error', 'error response single');
+            $this->dispatch('error-alert', message: 'error response single');
         }
     }
     // -------------------------------------------------------------------------------------------
@@ -174,7 +176,8 @@ class Dashboard extends Component
             $this->ResponseForSingleForm($responses);
         
         } catch (\Throwable $e) {
-            session()->flash('error', 'error load data dashboard');
+            //session()->flash('error', 'error load data dashboard');
+            $this->dispatch('error-alert', message: 'error load data dashboard');
             $this->responseData = null;
         }
     }
@@ -191,7 +194,8 @@ class Dashboard extends Component
             ->get();
     
             if ($data->isEmpty()) {
-                session()->flash('error', 'Data tidak ada.');
+                //session()->flash('error', 'Data tidak ada.');
+                $this->dispatch('error-alert', message: 'Data tidak ada.');
                 return;
             }
     
@@ -203,7 +207,8 @@ class Dashboard extends Component
                 $fileName
             );
         }catch(\Exception $e){
-            session()->flash('error', 'error export.');
+            //session()->flash('error', 'error export.');
+            $this->dispatch('error-alert', message: 'error export');
         }
     }
 

@@ -29,7 +29,8 @@ class User extends Component
             EditFormVisited::where('user_id', $userId)->delete();
             WebpageVisited::where('user_id', $userId)->delete();
         }catch(\Exception $e){
-            session()->flash('error', 'error muat halaman');
+            //session()->flash('error', 'error muat halaman');
+            $this->dispatch('error-alert', message: 'error muat halaman');
         }
     }
     
@@ -53,7 +54,8 @@ class User extends Component
             
             $this->reset();
             $this->resetValidation();
-            session()->flash('success', 'User berhasil ditambahkan!');
+            //session()->flash('success', 'User berhasil ditambahkan!');
+            $this->dispatch('success-alert', message: 'User berhasil ditambahkan!');
 
         } catch (ValidationException $e) {
             // Tangani error validasi secara eksplisit
@@ -62,7 +64,8 @@ class User extends Component
             $this->addError('password', $e->validator->errors()->first('password'));
         } catch (\Exception $e) {
             // Tangani error umum
-            session()->flash('error', 'error tambah user');
+            //session()->flash('error', 'error tambah user');
+            $this->dispatch('error-alert', message: 'error tambah user');
         }
     }
 
@@ -76,7 +79,8 @@ class User extends Component
                 $user = UserModel::find($id);
 
                 if(!$user){
-                    session()->flash('error', 'User tidak ditemukan.');
+                    //session()->flash('error', 'User tidak ditemukan.');
+                    $this->dispatch('error-alert', message: 'User tidak ditemukan.');
                     return;
                 }
 
@@ -91,7 +95,8 @@ class User extends Component
                 $this->addError('email', $e->validator->errors()->first('email'));
                 $this->addError('password', $e->validator->errors()->first('password'));
             }catch(\Exception $e){
-                session()->flash('error', 'error action');
+                //session()->flash('error', 'error action');
+                 $this->dispatch('error-alert', message: 'error action');
             }
 
         } else if($action === 'delete') {
@@ -127,7 +132,8 @@ class User extends Component
                 $this->resetValidation(); 
                 $this->isModalOpen = false;
 
-                session()->flash('error', 'User tidak ditemukan.');
+                //session()->flash('error', 'User tidak ditemukan.');
+                $this->dispatch('error-alert', message: 'User tidak ditemukan.');
                 return;
             }
 
@@ -153,7 +159,8 @@ class User extends Component
             $this->resetValidation(); 
             $this->isModalOpen = false;
 
-            session()->flash('success', 'User berhasil diperbarui!');
+            //session()->flash('success', 'User berhasil diperbarui!');
+            $this->dispatch('success-alert', message: 'User berhasil diperbarui!');
 
         } catch (ValidationException $e) {
             // Tangani error validasi secara eksplisit
@@ -161,7 +168,8 @@ class User extends Component
             $this->addError('email', $e->validator->errors()->first('email'));
             $this->addError('password', $e->validator->errors()->first('password'));
         }catch(\Exception $e){
-            session()->flash('error','error update user');
+            //session()->flash('error','error update user');
+            $this->dispatch('error-alert', message: 'error update user');
         }
     }
 
@@ -172,17 +180,21 @@ class User extends Component
                 $user=UserModel::find($this->userId);
                 if(!$user){
                     $this->reset();
-                    session()->flash('error', 'User tidak ditemukan.');
+                    //session()->flash('error', 'User tidak ditemukan.');
+                    $this->dispatch('error-alert', message: 'User tidak ditemukan.');
                     return;
                 }
                 $user->delete();
                 $this->reset();
-                session()->flash('success', 'User berhasil dihapus!');
+                //session()->flash('success', 'User berhasil dihapus!');
+                $this->dispatch('success-alert', message: 'User berhasil dihapus!');
             } catch (\Exception $e) {
-                session()->flash('error', 'error delete user');
+                //session()->flash('error', 'error delete user');
+                $this->dispatch('error-alert', message: 'error delete user');
             }
         } else {
-            session()->flash('error', 'Isi dengan benar');
+            //session()->flash('error', 'Isi dengan benar');
+            $this->dispatch('error-alert', message: 'Isi dengan benar');
         }
     }
 

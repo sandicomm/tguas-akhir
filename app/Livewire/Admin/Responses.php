@@ -45,7 +45,8 @@ class Responses extends Component
     
             $this->forms = Form::select('id', 'form_name', 'placement')->get();
         }catch(\Exception $e){
-            session()->flash('error', 'error muat halaman');
+            //session()->flash('error', 'error muat halaman');
+            $this->dispatch('error-alert', message: 'error muat halaman');
         }
     }
 
@@ -148,8 +149,9 @@ class Responses extends Component
                 $fileName
             );
 
-        }catch(\Exception $e){
-            session()->flash('error', 'error export response');
+        } catch (\Exception $e){
+            //session()->flash('error', 'error export response');
+           $this->dispatch('error-alert', message: 'error export response');
         }
     }
 
@@ -190,7 +192,8 @@ class Responses extends Component
                
                 if ($response->isEmpty()) {
                     $this->isDeleteModalOpen = false;
-                    session()->flash('error', 'Response tidak ditemukan.');
+                    //session()->flash('error', 'Response tidak ditemukan.');
+                    $this->dispatch('error-alert', message: 'Response tidak ditemukan.');
                     return $this->redirect(route('admin.responses')); // Langsung hentikan proses di sini
                 }
 
@@ -214,12 +217,14 @@ class Responses extends Component
                 });
 
                 // 6. Update UI Sukses
-                session()->flash('success', 'Response berhasil dihapus.');
+                //session()->flash('success', 'Response berhasil dihapus.');
+                $this->dispatch('success-alert', message: 'Response berhasil dihapus.');
                 $this->isDeleteModalOpen = false;
                 return $this->redirect(route('admin.responses'));
 
             } catch (\Exception $e) {
-                session()->flash('error', 'error hapus response');
+                //session()->flash('error', 'error hapus response');
+                $this->dispatch('error-alert', message: 'error hapus response');
             }
         } else {
             $this->addError('deleteConfirmText', 'Konfirmasi salah. Ketik "hapus response".');
@@ -363,7 +368,8 @@ class Responses extends Component
                 'questions'    => $questions
             ];
         }catch(\Exception $e){
-            session()->flash('error', 'error load response');
+            //session()->flash('error', 'error load response');
+            $this->dispatch('error-alert', message: 'error load response');
         }
     }
 

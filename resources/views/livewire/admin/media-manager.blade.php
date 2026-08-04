@@ -3,28 +3,6 @@
         <x-loading />
     </div>
 
-    @if(session('success'))
-        <div class="fixed top-5 left-1/2 transform -translate-x-1/2 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded shadow-lg z-50">
-            <div class="flex items-center justify-between gap-4">
-                <span>{{ session('success') }}</span>
-                <button type="button" class="text-green-700 hover:text-green-900" onclick="this.parentElement.parentElement.remove()">
-                    &times;
-                </button>
-            </div>
-        </div>
-    @endif
-
-    @if (session('error'))
-        <div class="fixed top-5 left-1/2 transform -translate-x-1/2 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded shadow-lg z-50">
-            <div class="flex items-center justify-between gap-4">
-                <span>{{ session('error') }}</span>
-                <button type="button" class="text-red-700 hover:text-red-900" onclick="this.parentElement.parentElement.remove()">
-                    &times;
-                </button>
-            </div>
-        </div>
-    @endif
-
     <div class="relative overflow-hidden sm:rounded-lg w-full shadow-md dark:bg-slate-800 bg-white">
         <h2 class="text-2xl font-bold bg-cyan-600 rounded p-3 mb-1 text-center text-white">Media</h2>
         <div class="m-3">
@@ -184,37 +162,57 @@
                                     @enderror
                                 </div>
 
-                                <div class="mb-4">
-                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">File</label>
-                                    
-                                    <!-- Input File Utama -->
-                                    <span class="text-blue-500 text-sm">Maksimal 20 Mb</span>
-                                    <input type="file" wire:model="file" accept="image/jpeg, image/png, video/mp4, video/quicktime, video/x-msvideo"
-                                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                                <div class="mb-4" x-data>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                        File Media
+                                    </label>
+                                    <p class="text-xs text-blue-500 mb-2">Kirim File dengan Maksimal Size 20MB</p>
 
-                                    <!-- Loading Indicator -->
-                                    <div wire:loading.delay wire:target="file,store" class="mt-2 text-sm text-blue-500">
-                                        <x-loading /> Sedang memproses file...
+                                    <input type="file" 
+                                        id="mediaInput" 
+                                        wire:model="file" 
+                                        accept="image/jpeg, image/png, video/mp4, video/quicktime, video/x-msvideo" 
+                                        class="hidden" 
+                                        x-ref="fileInput">
+
+                                    @if (!$file)
+                                        <button type="button" 
+                                                @click="$refs.fileInput.click()" 
+                                                class="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all shadow-sm cursor-pointer">
+                                            <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+                                            </svg>
+                                            Pilih File
+                                        </button>
+                                    @endif
+
+                                    <div wire:loading.delay wire:target="file,store" class="mt-2">
+                                        <x-loading />
                                     </div>
 
-                                    <!-- Indikator File yang Terpilih di Livewire -->
                                     @if ($file)
-                                        <div class="mt-2 p-2 bg-blue-50 dark:bg-gray-800 rounded-lg flex items-center justify-between border border-blue-200 dark:border-gray-700">
-                                            <span class="text-xs text-blue-800 dark:text-blue-300 truncate max-w-xs">
-                                                ðŸ“„ File siap diunggah: <strong>{{ $file->getClientOriginalName() }}</strong>
-                                            </span>
-                                            <!-- Tombol untuk mereset file dari Livewire -->
-                                            <button type="button" wire:click="$set('file', null)" class="text-xs text-red-500 hover:underline">
-                                                Batal / Hapus File
+                                        <div class="p-3 bg-blue-50 dark:bg-gray-800 rounded-lg flex items-center justify-between border border-blue-200 dark:border-gray-700 shadow-sm transition-all">
+                                            <div class="flex items-center gap-2 min-w-0">
+                                                <svg class="w-6 h-6 text-red-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"></path>
+                                                </svg>
+                                                <span class="text-xs text-blue-900 dark:text-blue-300 font-medium truncate">
+                                                    {{ $file->getClientOriginalName() }}
+                                                </span>
+                                            </div>
+
+                                            <button type="button" 
+                                                    wire:click="$set('file', null)" 
+                                                    class="ml-2 text-xs text-red-500 hover:text-red-700 font-medium hover:underline flex items-center gap-1 cursor-pointer">
+                                                <span>Hapus</span>
                                             </button>
                                         </div>
                                     @endif
 
                                     @error('file') 
-                                        <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+                                        <p class="text-red-500 text-xs mt-1.5">{{ $message }}</p>
                                     @enderror
                                 </div>
-                            </div>
                             
                             <div class="flex items-center justify-end p-4 border-t border-gray-200 dark:border-gray-600 gap-2">
                                 <button type="button" @click="open = false" class="text-gray-500 bg-white hover:bg-gray-100 focus:ring-4 focus:outline-none focus:ring-blue-300 rounded-lg border border-gray-200 text-sm font-medium px-5 py-2.5 hover:text-gray-900 focus:z-10 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-500 dark:hover:text-white dark:hover:bg-gray-600">
@@ -259,34 +257,55 @@
                                     @enderror
                                 </div>
 
-                               <div class="mb-4">
-                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">File</label>
-                                    
-                                    <!-- Input File Utama -->
-                                    <span class="text-blue-500 text-sm">Maksimal 20 Mb</span>
-                                    <input type="file" wire:model="file" accept="image/jpeg, image/png, video/mp4, video/quicktime, video/x-msvideo"
-                                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                                <div class="mb-4" x-data>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                        File Media
+                                    </label>
+                                    <p class="text-xs text-blue-500 mb-2">Kirim File dengan Maksimal Size 20MB</p>
 
-                                    <!-- Loading Indicator -->
-                                    <div wire:loading.delay wire:target="file,store" class="mt-2 text-sm text-blue-500">
-                                        <x-loading /> Sedang memproses file...
+                                    <input type="file" 
+                                        id="mediaInput" 
+                                        wire:model="file" 
+                                        accept="image/jpeg, image/png, video/mp4, video/quicktime, video/x-msvideo" 
+                                        class="hidden" 
+                                        x-ref="fileInput">
+
+                                    @if (!$file)
+                                        <button type="button" 
+                                                @click="$refs.fileInput.click()" 
+                                                class="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all shadow-sm cursor-pointer">
+                                            <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+                                            </svg>
+                                            Pilih File
+                                        </button>
+                                    @endif
+
+                                    <div wire:loading.delay wire:target="file,store" class="mt-2">
+                                        <x-loading />
                                     </div>
 
-                                    <!-- Indikator File yang Terpilih di Livewire -->
                                     @if ($file)
-                                        <div class="mt-2 p-2 bg-blue-50 dark:bg-gray-800 rounded-lg flex items-center justify-between border border-blue-200 dark:border-gray-700">
-                                            <span class="text-xs text-blue-800 dark:text-blue-300 truncate max-w-xs">
-                                                ðŸ“„ File siap diunggah: <strong>{{ $file->getClientOriginalName() }}</strong>
-                                            </span>
-                                            <!-- Tombol untuk mereset file dari Livewire -->
-                                            <button type="button" wire:click="$set('file', null)" class="text-xs text-red-500 hover:underline">
-                                                Batal / Hapus File
+                                        <div class="p-3 bg-blue-50 dark:bg-gray-800 rounded-lg flex items-center justify-between border border-blue-200 dark:border-gray-700 shadow-sm transition-all">
+                                            <div class="flex items-center gap-2 min-w-0">
+                                                <svg class="w-6 h-6 text-red-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"></path>
+                                                </svg>
+                                                <span class="text-xs text-blue-900 dark:text-blue-300 font-medium truncate">
+                                                    {{ $file->getClientOriginalName() }}
+                                                </span>
+                                            </div>
+
+                                            <button type="button" 
+                                                    wire:click="$set('file', null)" 
+                                                    class="ml-2 text-xs text-red-500 hover:text-red-700 font-medium hover:underline flex items-center gap-1 cursor-pointer">
+                                                <span>Hapus</span>
                                             </button>
                                         </div>
                                     @endif
 
                                     @error('file') 
-                                        <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+                                        <p class="text-red-500 text-xs mt-1.5">{{ $message }}</p>
                                     @enderror
                                 </div>
                             </div>

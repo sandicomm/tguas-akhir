@@ -36,7 +36,8 @@ class MediaManager extends Component
             EditFormVisited::where('user_id', $userId)->delete();
             WebpageVisited::where('user_id', $userId)->delete();
         }catch(\Exception $e){
-            session()->flash('error', 'error muat halaman');
+            //session()->flash('error', 'error muat halaman');
+            $this->dispatch('error-alert', message: 'error muat halaman');
         }
     }
     public function setStatsAction($id, $action)
@@ -50,7 +51,8 @@ class MediaManager extends Component
                 $media = Media::find($id);
                 
                 if(!$media){
-                    session()->flash('error', 'Media tidak ditemukan.');
+                    //session()->flash('error', 'Media tidak ditemukan.');
+                    $this->dispatch('error-alert', message: 'Media tidak ditemukan.');
                     return;
                 }
 
@@ -66,7 +68,8 @@ class MediaManager extends Component
                 $this->addError('sumber', $e->validator->errors()->first('sumber'));
                 $this->addError('link', $e->validator->errors()->first('link'));
             }catch(\Exception $e){
-                session()->flash('error', 'error action');
+                //session()->flash('error', 'error action');
+                $this->dispatch('error-alert', message: 'error action');
             }
 
         } else if($action === 'delete') {
@@ -90,7 +93,8 @@ class MediaManager extends Component
             })->get();
 
         }catch(\Exception $e){
-            session()->flash('error', 'error media list');
+            //session()->flash('error', 'error media list');
+            $this->dispatch('error-alert', message: 'error media list');
         }
     }
 
@@ -146,13 +150,15 @@ class MediaManager extends Component
             $this->reset();
             $this->resetValidation();
             $this->dispatch('resetForm');
-            session()->flash('success', 'Berhasil Tambah data');
+            //session()->flash('success', 'Berhasil Tambah data');
+            $this->dispatch('success-alert', message: 'Berhasil Tambah data');
         } catch (ValidationException $e) {
             // Biarkan Livewire menangani error validasi seperti biasa
             throw $e;
         
         }catch(\Exception $e){
-            session()->flash('error', 'error tambah media');
+            //session()->flash('error', 'error tambah media');
+            $this->dispatch('error-alert', message: 'error tambah media');
         }
     }
 
@@ -170,7 +176,8 @@ class MediaManager extends Component
                 $this->reset();
                 $this->resetValidation(); // Reset validasi setelah penyimpanan
                 $this->isModalOpen = false;
-                session()->flash('error', 'Media tidak ditemukan.');
+                //session()->flash('error', 'Media tidak ditemukan.');
+                $this->dispatch('error-alert', message: 'Media tidak ditemukan.');
                 return;
             }
 
@@ -221,13 +228,15 @@ class MediaManager extends Component
             $this->resetValidation(); // Reset validasi setelah penyimpanan
             $this->isModalOpen = false;
          
-           session()->flash('success', 'Berhasil perbarui data');
+           //session()->flash('success', 'Berhasil perbarui data');
+           $this->dispatch('success-alert', message: 'Berhasil perbarui data');
         } catch (ValidationException $e) {
             // Biarkan Livewire menangani error validasi seperti biasa
             throw $e;
         
         }catch(\Exception $e){
-            session()->flash('error', 'error update media');
+            //session()->flash('error', 'error update media');
+            $this->dispatch('error-alert', message: 'error update media');
         }
     }
 
@@ -240,14 +249,16 @@ class MediaManager extends Component
                     $this->reset();
                     $this->resetValidation();
                     $this->isModalOpen = false;
-                    session()->flash('error', 'Media tidak ditemukan.');
+                   // session()->flash('error', 'Media tidak ditemukan.');
+                    $this->dispatch('error-alert', message: 'Media tidak ditemukan.');
                     return;
 
                 }
 
                 File::delete(public_path($media->file_path));
                 $media->delete();
-                session()->flash('success', 'Media berhasil dihapus.');
+                //session()->flash('success', 'Media berhasil dihapus.');
+                $this->dispatch('success-alert', message: 'Media berhasil dihapus.');
 
                 //cek lagi
                 $this->reset();
@@ -255,10 +266,12 @@ class MediaManager extends Component
                 $this->isModalOpen = false;
 
             }catch(\Exception $e){
-                session()->flash('error', 'gagal hapus media');
+                //session()->flash('error', 'gagal hapus media');
+                $this->dispatch('error-alert', message: 'gagal hapus media');
             }
         }else{
-            session()->flash('error', 'ketikan anda salah');
+            //session()->flash('error', 'ketikan anda salah');
+            $this->dispatch('error-alert', message: 'ketikan anda salah');
         }
     }
 

@@ -32,7 +32,8 @@ class Comments extends Component
             EditFormVisited::where('user_id', $userId)->delete();
             WebpageVisited::where('user_id', $userId)->delete();
         }catch(\Exception $e){
-            session()->flash('error','error muat halaman.');
+            //session()->flash('error','error muat halaman.');
+            $this->dispatch('error-alert', message: 'error muat halaman.');
         }
     }
 
@@ -59,9 +60,11 @@ class Comments extends Component
             ]);
     
             $this->reset(['comment', 'parent_id', 'editingId', 'state']);
-            session()->flash('success', 'Balasan Admin berhasil dikirim!');
+            //session()->flash('success', 'Balasan Admin berhasil dikirim!');
+            $this->dispatch('success-alert', message: 'Balasan Admin berhasil dikirim!');
         }catch(\Exception $e){  
-            session()->flash('error', 'error tambah data');
+            //session()->flash('error', 'error tambah data');
+            $this->dispatch('error-alert', message: 'error tambah data');
         }
     }
 
@@ -74,7 +77,8 @@ class Comments extends Component
     
             if (!$commentDb) {
                 $this->reset(['comment', 'parent_id', 'editingId', 'state']);
-                session()->flash('error', 'Comment sepertinya sudah tidak ada atau telah dihapus oleh pengguna lain!');
+                //session()->flash('error', 'Comment sepertinya sudah tidak ada atau telah dihapus oleh pengguna lain!');
+                $this->dispatch('error-alert', message: 'Comment sepertinya sudah tidak ada atau telah dihapus oleh pengguna lain!');
                 return;
             }
     
@@ -84,12 +88,14 @@ class Comments extends Component
                 $commentDb->update([
                     'comment' => $safeComment,
                 ]);
-                session()->flash('success', 'Komentar berhasil diperbarui!');
+                //session()->flash('success', 'Komentar berhasil diperbarui!');
+                $this->dispatch('success-alert', message: 'Komentar berhasil diperbarui!');
             }
     
             $this->reset(['comment', 'editingId', 'state']);
         }catch(\Exception $e){  
-            session()->flash('error', 'error update data');
+            //session()->flash('error', 'error update data');
+            $this->dispatch('error-alert', message: 'error update data');
         }
     }
 
@@ -101,15 +107,18 @@ class Comments extends Component
             if (!$commentDb) {
                 $this->reset(['comment', 'parent_id', 'editingId', 'state']);
                 $this->isModalOpen = false;
-                session()->flash('error', 'Comment tidak ditemukan.');
+                //session()->flash('error', 'Comment tidak ditemukan.');
+                $this->dispatch('error-alert', message: 'Comment tidak ditemukan.');
                 return;
             }
     
             $commentDb->delete();
             $this->isModalOpen = false;
-            session()->flash('success', 'Komentar berhasil dihapus!');
+            //session()->flash('success', 'Komentar berhasil dihapus!');
+            $this->dispatch('success-alert', message: 'Komentar berhasil dihapus!');
         }catch(\Exception $e){
-            session()->flash('error', 'error delete data');
+            //session()->flash('error', 'error delete data');
+            $this->dispatch('error-alert', message: 'error delete data');
         }
     }
 
@@ -119,7 +128,8 @@ class Comments extends Component
         $commentDb = CommentModel::find($id);
 
         if(!$commentDb){
-            session()->flash('error', 'Comment tidak ditemukan.');
+            //session()->flash('error', 'Comment tidak ditemukan.');
+            $this->dispatch('error-alert', message: 'Comment tidak ditemukan.');
             return;
         }
         
@@ -135,7 +145,8 @@ class Comments extends Component
         $commentDb = CommentModel::find($id);
 
         if(!$commentDb){
-            session()->flash('error', 'Comment tidak ditemukan.');
+            //session()->flash('error', 'Comment tidak ditemukan.');
+            $this->dispatch('error-alert', message: 'Comment tidak ditemukan.');
             return;
         }
 

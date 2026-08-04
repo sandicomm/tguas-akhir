@@ -43,6 +43,22 @@
                 </div>
             @endif
 
+            <div x-data="{ show: false, message: '' }" 
+                x-on:success-alert.window="show = true; message = $event.detail.message; setTimeout(() => show = false, 4000)"
+                x-show="show"
+                x-cloak
+                class="fixed top-5 left-1/2 transform -translate-x-1/2 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded shadow-lg z-50">
+                <span x-text="message"></span>
+            </div>
+
+            <div x-data="{ show: false, message: '' }" 
+                x-on:error-alert.window="show = true; message = $event.detail.message; setTimeout(() => show = false, 4000)"
+                x-show="show"
+                x-cloak
+                class="fixed top-5 left-1/2 transform -translate-x-1/2 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded shadow-lg z-50">
+                <span x-text="message"></span>
+            </div>
+
             @if (session('error'))
                 <div class="fixed top-5 left-1/2 transform -translate-x-1/2 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded shadow-lg z-50">
                     <div class="flex items-center justify-between gap-4">
