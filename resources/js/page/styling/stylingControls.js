@@ -171,6 +171,13 @@ export function updateStylingControls(data, field) {
           'accordion-background-wrapper','bg-image-styling','accordion-padding-wrapper','accordion-margin-wrapper','wrapper-btn-save'
         ]
 
+        if (idParts.join('-').startsWith('field-head-modal')) {
+            // Saring array: simpan elemen yang BUKAN 'font-order-list' dan BUKAN 'font-unorder-list'
+            stylingWebpage = stylingWebpage.filter(item => 
+                item !== 'font-order-list' && item !== 'font-unorder-list'
+            );
+        }
+
         stylingWebpage.forEach(id=>{
           document.getElementById(id).classList.remove('hidden')
         })
@@ -647,7 +654,7 @@ export function updateStylingControls(data, field) {
         'accordion-box-field-wrapper','box-width-field','box-height-field','flex-position','accordion-border-field-wrapper',
         'accordion-background-wrapper','bg-image-styling','accordion-padding-wrapper','accordion-margin-wrapper'
       ]
-      
+      console.log('head')
       stylingWebpage.forEach(id=>{
         document.getElementById(id).classList.add('hidden')
       })

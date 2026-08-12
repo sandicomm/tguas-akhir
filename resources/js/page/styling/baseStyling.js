@@ -152,7 +152,6 @@ function updateStyle(editorFieldSelect, indicator, file, indicatorCarousel, url,
               })
             }
 
-   
             imgTextOnImage.content=uniqueKey
             imgTextOnImage.action=updateActionProperty(imgTextOnImage.action, 'update')
           }
@@ -249,7 +248,6 @@ function updateStyle(editorFieldSelect, indicator, file, indicatorCarousel, url,
             }
 
             item.style = baseStyle;
-    
 
           }else{
             let baseStyle = editorFieldSelect.style.cssText;
@@ -495,12 +493,13 @@ function fontStylingField(){
         sel.addRange(savedSelection);
     
         let range = sel.getRangeAt(0);
-    
+        
         const startInside = fontField.contains(range.startContainer.nodeType === 3 ? range.startContainer.parentNode : range.startContainer);
         const endInside = fontField.contains(range.endContainer.nodeType === 3 ? range.endContainer.parentNode : range.endContainer);
     
         if (startInside && endInside && !range.collapsed) {
           fontField.dataset.fieldFontSize = this.value;
+          globals.originalSizes[editorFieldSelect.id].fontSize.value = this.value
 
           if(!(document.getElementById('heading-text-wrapper').classList.contains('hidden'))){
             editorFieldSelect.dataset.fieldFontSize = this.value;
@@ -517,6 +516,7 @@ function fontStylingField(){
           
           // Terapkan warna ke seluruh teks dalam fontField
           fontField.dataset.fieldFontSize = this.value;
+          globals.originalSizes[editorFieldSelect.id].fontSize.value = this.value
 
           if(!(document.getElementById('heading-text-wrapper').classList.contains('hidden'))){
             editorFieldSelect.dataset.fieldFontSize = this.value;
@@ -978,6 +978,7 @@ function fontStylingField(){
 }
 // -------- Box Field Styling -----------
 let originalSizes = globals.originalSizes
+
 function widthHeightField(){
   document.getElementById('width-field').addEventListener('keyup', function(event){
     editorFieldSelect = globals.editorFieldSelect
@@ -992,6 +993,7 @@ function widthHeightField(){
         if(Object.keys(originalSizes).length === 0){
           storeOriginalSize()
         }
+
         let parent = findParentWidth(accordionSelect)
         if(!parent) return
         //console.log(accordionSelect)
@@ -1010,6 +1012,7 @@ function widthHeightField(){
         let sectionAcc=accordionSelect.querySelectorAll('[id^="section-"]')
   
         accordionSelect.style.width=`${this.value}px`
+        globals.originalSizes[accordionSelect.id].width =`${this.value}px`;
         
         if(sectionAcc){
           sectionAcc.forEach(sec=>{
@@ -1037,13 +1040,14 @@ function widthHeightField(){
               if(parseInt(el.style.width) >= actualWidthAcc){
                 //console.log('kecilin el', el, parseInt(el.style.width), actualWidth, parseInt(el.style.width) >= actualWidthAcc);
                 el.style.width = actualWidthAcc+'px';
+
                 updateStyle(el)
 
               }else if(parseInt(el.style.width) <= actualWidthAcc && parseInt(el.style.width) <= parseInt(originalSizes[el.id]?.width)){
                 //console.log('imbangi el', el, parseInt(el.style.width), actualWidthAcc, originalSizes[el.id].width);
                 if(actualWidthAcc >= parseInt(originalSizes[el.id]?.width)){
-
                   el.style.width = parseInt(originalSizes[el.id]?.width)+'px';
+                  
                 }else{
                   el.style.width = actualWidthAcc+'px';
 
@@ -1072,6 +1076,8 @@ function widthHeightField(){
             console.log(editorFieldSelect.id.split('-').slice(2,-1).join('-'))
             parentElement=getEl(`section-${editorFieldSelect.id.split('-').slice(2,-1).join('-')}`)
 
+          }else if(editorFieldSelect.id.startsWith('field-item-carousel')){
+            parentElement=editorFieldSelect.parentElement
           }else{
             parentElement=getEl(`section-${editorFieldSelect.id.split('-').slice(1,-1).join('-')}`)
 
@@ -1084,7 +1090,7 @@ function widthHeightField(){
           parentElement=getEl(`editor-container-${editorFieldSelect.id.split('-').slice(2,-1).join('-')}`)
 
         }
-
+        console.log(parentElement)
         let styling = window.getComputedStyle(parentElement)
 
         width = parseInt(parentElement.offsetWidth)
@@ -1097,11 +1103,13 @@ function widthHeightField(){
         console.log(parentElement,width, actualWidth)
         
         editorFieldSelect.style.width=`${this.value}px`
+        globals.originalSizes[editorFieldSelect.id].width =`${this.value}px`;
+
         console.log('field: ',editorFieldSelect.id.split('-').slice(1,-1).join('-'))
       }
 
       updateStyle(editorFieldSelect)
-      globals.editorFieldSelect=editorFieldSelect
+
     }else if(carouselSelect){
       if(carouselSelect.id.includes('accordion')){
         parentElement=getEl(`section-${carouselSelect.id.split('-').slice(1,-1).join('-')}`)
@@ -1123,6 +1131,8 @@ function widthHeightField(){
       console.log(parentElement,width, actualWidth)
 
       carouselSelect.style.width=`${this.value}px`
+      globals.originalSizes[carouselSelect.id].width =`${this.value}px`;
+
       updateStyle(carouselSelect)
       globals.carouselSelect=carouselSelect
     }
@@ -1135,8 +1145,10 @@ function widthHeightField(){
     if(editorFieldSelect){
       if(editorFieldSelect.id.startsWith('webpage')){
         editorFieldSelect.style.minHeight=`${this.value}px`
+        globals.originalSizes[editorFieldSelect.id].height =`${this.value}px`;
       }else{
         editorFieldSelect.style.height=`${this.value}px`
+        globals.originalSizes[editorFieldSelect.id].height =`${this.value}px`;
       }
 
       updateStyle(editorFieldSelect)
@@ -1144,6 +1156,7 @@ function widthHeightField(){
 
     }else if(carouselSelect){
       carouselSelect.style.height=`${this.value}px`
+      globals.originalSizes[carouselSelect.id].height =`${this.value}px`;
       updateStyle(carouselSelect)
       globals.carouselSelect=carouselSelect
     }

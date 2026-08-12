@@ -204,6 +204,8 @@ export function findParentWidth(el) {
     if(el.id.startsWith('btn-modal') || el.id.startsWith('accordion-in-accordion')){
       element=getEl(`section-${el.id.split('-').slice(2,-1).join('-')}`)
       //console.log('id parent: ', `section-${el.id.split('-').slice(2,-1).join('-')}`)
+    }else if(el.id.startsWith('field-item-carousel')){
+      element=el.parentElement
     }else{
       element=getEl(`section-${el.id.split('-').slice(1,-1).join('-')}`)
       //console.log('id parent: ', `section-${el.id.split('-').slice(1,-1).join('-')}`)
@@ -212,6 +214,8 @@ export function findParentWidth(el) {
     if(el.id.startsWith('btn-modal')){
       element=getEl(`editor-container-${el.id.split('-').slice(3,-1).join('-')}`)
       //console.log('id parent: ', `editor-container-${el.id.split('-').slice(3,-1).join('-')}`)
+    }else if(el.id.startsWith('field-item-carousel')){
+      element=el.parentElement
     }else{
       element=getEl(`editor-container-${el.id.split('-').slice(2,-1).join('-')}`)
       //console.log('id parent: ', `editor-container-${el.id.split('-').slice(2,-1).join('-')}`)
@@ -222,7 +226,21 @@ export function findParentWidth(el) {
   //console.log('parent:',el, element)
   if (!element) return;
   let styling = window.getComputedStyle(element)
-  let width = parseInt(element.offsetWidth)
+  let width = element.offsetWidth
+  if (!width || width === 0) {
+    let current = element.parentElement;
+    while (current && current.offsetWidth === 0) {
+      current = current.parentElement;
+    }
+    // Kalau ketemu parent yang visible, pakai lebarnya
+    if (current) {
+      width = current.offsetWidth;
+    }
+  }
+
+  if(el.id.startsWith('carousel-accordion-element-section-12-8-1-1-3')){
+    console.log(el,width)
+  }
 
   return {element, width, styling}
 }
@@ -348,13 +366,17 @@ export function resizeElements(edit = false) {
           const styleHeight = parseInt(element.style.height) || null;
   
           const parent = findParentWidth(element)
-  
+          // console.log(element,parent)
           //console.log('parent:', parent.element, parent)
+   
           if (Object.keys(parent).length === 0) return;
           let parentWidth = parseInt(parent.width)
-          
-          if(key === 'accordion-element-section-10-4'){
-            console.log('sesuaikan' ,parseInt(value.width) > parentWidth, value.width, parentWidth, styleWidth)
+          // if(parentWidth == 0){
+          //   console.log('nol parent', key, parent.element)
+          // }
+          if(key === 'carousel-accordion-element-section-12-8-1-1-3'){
+            console.log('sesuaikan' ,parseInt(value.width) > parentWidth, value.width, value.height, parentWidth, styleWidth)
+            console.log('original size:', originalSizes[key].width)
           }
 
           if (styleWidth && parseInt(value.width) > parentWidth) {
@@ -363,6 +385,9 @@ export function resizeElements(edit = false) {
             const scale = parentWidth / styleWidth;
 
             if (styleHeight) {
+              if(key === 'carousel-accordion-element-section-12-8-1-1-3'){
+                console.log('lala' ,Math.floor(styleHeight * scale), scale)
+              }
               element.style.height = Math.floor(styleHeight * scale) + "px";
             }
           }else if(parseInt(value.width) < parentWidth){
