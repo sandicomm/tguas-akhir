@@ -103,6 +103,14 @@ document.addEventListener('DOMContentLoaded', function(){
   },1000)
 })
 
+let allowUnload = false;
+window.addEventListener('beforeunload', function (e) {
+    if (!allowUnload) {
+        e.preventDefault();
+        e.returnValue = '';
+    }
+});
+
 window.addEventListener("resize", resizeElements);
 window.addEventListener("load", resizeElements);
 
@@ -755,23 +763,25 @@ async function submitData(isAutosave=false){
   }
 }
 
+let cekCount=0;
 async function cekStatus(){
   try{
     document.getElementById('loading-overlay')?.classList.remove('hidden');
 
     const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-    const clearResponse = await fetch('/admin/webpage/cek', {
+    const clearResponse = await fetch(`/admin/webpage/cek`, {
         method: "POST",
         headers: {
             "Accept": "application/json",
             "X-CSRF-TOKEN": csrfToken
         }
     });
+    cekCount+1
     const clearData = await clearResponse.json();
-    //console.log(clearData.success, clearData.redirect)
 
     if(clearData.success && clearData.redirect){
-      window.location.href = clearData.redirect
+        allowUnload = true;
+        window.location.href = clearData.redirect
     }
 
     setTimeout(()=>{
@@ -790,7 +800,7 @@ async function cekStatus(){
 async function perbaruiMasaAktifDiServer() {
   try {
     const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-    const clearResponse= await fetch('/admin/webpage/update-visit', {
+    const clearResponse=await fetch(`/admin/webpage/update-visit`, {
         method: "POST",
         headers: {
             "Accept": "application/json",
@@ -799,10 +809,10 @@ async function perbaruiMasaAktifDiServer() {
     });
 
     const clearData = await clearResponse.json();
-    //console.log(clearData.success, clearData.redirect)
 
     if(clearData.success && clearData.redirect){
-      window.location.href = clearData.redirect
+        allowUnload = true;
+        window.location.href = clearData.redirect
     }
 
   } catch (err) {
@@ -836,30 +846,30 @@ setInterval(async () => {
 },0.8 * 60 *1000);
 
 // ============== cek status visit ==================
-setInterval(async () => {
-    try {
-        if (userAktif) {
-            await perbaruiMasaAktifDiServer();
-            userAktif = false;
+// setInterval(async () => {
+//     try {
+//         if (userAktif) {
+//             await perbaruiMasaAktifDiServer();
+//             userAktif = false;
             
-            console.log("User aktif berinteraksi. Sesi diperpanjang otomatis.");
-        } else {
-            document.getElementById('loading-overlay')?.classList.remove('hidden');
+//             console.log("User aktif berinteraksi. Sesi diperpanjang otomatis.");
+//         } else {
+//             document.getElementById('loading-overlay')?.classList.remove('hidden');
   
-            await cekStatus();
-            setTimeout(()=>{
-              document.getElementById('loading-overlay')?.classList.add('hidden');
-            },2000)
-        }
-    } catch (error) {
-        console.error("Sistem pemantau eror:", error);
+//             await cekStatus();
+//             setTimeout(()=>{
+//               document.getElementById('loading-overlay')?.classList.add('hidden');
+//             },2000)
+//         }
+//     } catch (error) {
+//         console.error("Sistem pemantau eror:", error);
 
-        document.getElementById('loading-overlay')?.classList.add('hidden');
-        window.dispatchEvent(new CustomEvent('notif-pesan', { 
-            detail: { pesan: `Gagal cek status.${error}`, status: false } 
-        }));
-    }
-}, 0.2 * 60 * 1000);
+//         document.getElementById('loading-overlay')?.classList.add('hidden');
+//         window.dispatchEvent(new CustomEvent('notif-pesan', { 
+//             detail: { pesan: `Gagal cek status.${error}`, status: false } 
+//         }));
+//     }
+// }, 0.2 * 60 * 1000);
 
 const btnSave = getEl('btn-save')
 btnSave.addEventListener('click', async function() {

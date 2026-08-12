@@ -131,8 +131,10 @@ function normalizeFontSizeToNumber(value) {
 let originalCaptured = false;
 
 export function storeOriginalSize() {
-  document.querySelectorAll("[style]").forEach(el => {
-    if (!el.id || !el.style.width || el.id === 'webpage') return;
+  document.querySelectorAll('[id]:not([id=""])[style]').forEach(el => {
+    if ((!el.id || !el.style.width || el.id === 'webpage') && !el.id.startsWith('field') && !el.id.startsWith('btn-heading')) return;
+    //console.log(el.id)
+    if(originalSizes[el.id]) return
 
     if (!originalSizes[el.id]) {
       originalSizes[el.id] = {};
@@ -201,23 +203,23 @@ export function findParentWidth(el) {
   if(!el.id.startsWith('accordion-element') && el.id.includes('accordion')){
     if(el.id.startsWith('btn-modal') || el.id.startsWith('accordion-in-accordion')){
       element=getEl(`section-${el.id.split('-').slice(2,-1).join('-')}`)
-      console.log('id parent: ', `section-${el.id.split('-').slice(2,-1).join('-')}`)
+      //console.log('id parent: ', `section-${el.id.split('-').slice(2,-1).join('-')}`)
     }else{
       element=getEl(`section-${el.id.split('-').slice(1,-1).join('-')}`)
-      console.log('id parent: ', `section-${el.id.split('-').slice(1,-1).join('-')}`)
+      //console.log('id parent: ', `section-${el.id.split('-').slice(1,-1).join('-')}`)
     }
   }else{
     if(el.id.startsWith('btn-modal')){
       element=getEl(`editor-container-${el.id.split('-').slice(3,-1).join('-')}`)
-      console.log('id parent: ', `editor-container-${el.id.split('-').slice(3,-1).join('-')}`)
+      //console.log('id parent: ', `editor-container-${el.id.split('-').slice(3,-1).join('-')}`)
     }else{
       element=getEl(`editor-container-${el.id.split('-').slice(2,-1).join('-')}`)
-      console.log('id parent: ', `editor-container-${el.id.split('-').slice(2,-1).join('-')}`)
+      //console.log('id parent: ', `editor-container-${el.id.split('-').slice(2,-1).join('-')}`)
     }
   }
 
   //const check = findParentWidth(el);
-  console.log('parent:',el, element)
+  //console.log('parent:',el, element)
   if (!element) return;
   let styling = window.getComputedStyle(element)
   let width = parseInt(element.offsetWidth)
@@ -230,20 +232,32 @@ function applyFontSize(el, newSize) {
   const styledEl = el.querySelector("[style*='font-size']");
 
   // set font size 
+ 
+   // console.log('opop', newSize)
+  
   if (fontEl) {
     fontEl.setAttribute("size", newSize);
+    if(el.id === 'field-element-section-8-1'){
+      //console.log('owo', newSize)
+    }
     return;
   }
-
+  
   if (styledEl) {
     styledEl.style.fontSize = FONT_SIZE_MAP[newSize] || "medium";
+    if(el.id === 'field-element-section-8-1'){
+      //console.log('owi', newSize)
+    }
     return;
   }
 
+  if(el.id === 'field-element-section-8-1'){
+    //console.log('iwi', newSize, FONT_SIZE_MAP[newSize])
+  }
   el.style.fontSize = FONT_SIZE_MAP[newSize] || "medium";
 }
 
-function resizeFont(el) {
+function resizeFont(el, windowWidth, value) {
   let currentValue = null;
 
   const fontEl = el.querySelector("font");
@@ -256,89 +270,112 @@ function resizeFont(el) {
   }
 
   // normalisasi ukuran font ke angka
-  const numericSize = normalizeFontSizeToNumber(currentValue);
+  const numericSize = normalizeFontSizeToNumber(currentValue, el);
   if (!numericSize) return;
 
   // mobile
-  if (window.innerWidth <= 550) {
-    let newSize = numericSize;
-
-    if (numericSize >= 6) {
-      newSize = 5;             
-    } else if (numericSize > 3 && numericSize < 5) {
-      newSize = numericSize - 1;
-    }
-
-    applyFontSize(el, newSize);
+  let newSize = numericSize;
+  if(el.id === 'field-element-section-8-1'){
+    console.log('halo', numericSize, currentValue, el.style)
   }
+
+  if(windowWidth <= 550){
+    if (value.fontSize.value == 7) {    
+      if(el.id.startsWith('btn-heading')){
+        newSize = 5;
+      }else{
+        newSize = 6;
+      }
+    }else if(value.fontSize.value == 6){
+      newSize = 5;
+    }else if(value.fontSize.value == 5){
+      newSize = 4;
+    }else if(value.fontSize.value == 4){
+      newSize = 3;
+    }
+  }else{
+    newSize = value.fontSize.value
+  }
+
+  applyFontSize(el, newSize);
+  
 }
 
 export function resizeElements(edit = false) {
-  setTimeout(() => {
-    // Ambil ukuran elemen
-    if(!originalCaptured){
-      storeOriginalSize()
-    }
-   
-    if(Object.keys(originalSizes).length === 0){
-      setTimeout(()=>{
-        storeOriginalSize()
-        console.log('tangkap lagi', originalSizes, originalCaptured)
-      },500)
-    }
-    console.log(originalSizes, originalCaptured)
-    const webpage = document.getElementById('webpage')
-    const isMobile = edit ? parseInt(webpage.offsetWidth) <= 850 : window.innerWidth <= 850;
-    
-    document.querySelectorAll("[style]").forEach(el => {
+  setTimeout(()=>{
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        //ambil ukuran elemen
+        if(!originalCaptured){
+          storeOriginalSize()
+        }
 
-      if(!el.id || el.id.startsWith('field-modal') || el.id === 'webpage') return
-
-      if(!el.id.startsWith('dropdown')){
-
-        //console.log('restore cek:', isMobile, edit, parseInt(webpage.offsetWidth),parseInt(webpage.style.width) <= 850)
-        if (!isMobile) {
-          //console.log('restore uhuy')
-          restoreOriginalSize(el);
-          return;
+        if(Object.keys(originalSizes).length === 0){
+          setTimeout(()=>{
+            storeOriginalSize()
+            console.log('tangkap lagi', originalSizes, originalCaptured)
+          },500)
         }
   
-        // ===== MOBILE ====
-        resizeFont(el);
+        console.log('original size:',originalSizes, originalCaptured)
+  
+        const webpage = document.getElementById('webpage')
+        const windowWidth = parseInt(window.innerWidth)
         
-        if (el.style.width === "100%") return;
-  
-        const styleAttr = el.getAttribute("style");
-        if (!styleAttr || !styleAttr.includes("width:")) return;
-  
-        const styleWidth  = parseInt(el.style.width) || null;
-        const styleHeight = parseInt(el.style.height) || null;
-  
-        const parent = findParentWidth(el)
-  
-        //console.log('parent:',el, parent.element, parent)
-        if (Object.keys(parent).length === 0) return;
-        let parentWidth = parseInt(parent.width)
-        
-        //console.log('set width: ',el, styleWidth, parentWidth)
-        if (styleWidth && styleWidth >= parentWidth) {
-          el.style.width = (parentWidth - 15) + "px";
+        const widthActive = edit ? parseInt(webpage.offsetWidth) : windowWidth
+        const isMobile = edit ? parseInt(webpage.offsetWidth) <= 700 : windowWidth <= 700;
+        console.log('isMobile:', isMobile, parseInt(webpage.offsetWidth), windowWidth)
+
+        Object.entries(originalSizes).forEach(([key, value]) => {
+          if(key.startsWith('dropdown')) return;
           
-          // set height elemen
-          const scale = parentWidth / styleWidth;
-          if (styleHeight) {
-            el.style.height = Math.floor(styleHeight * scale) + "px";
-          }
-        }
+          const element = document.getElementById(key)
   
-        if (el.offsetWidth > parentWidth) {
-          el.style.width = (parentWidth - 15) + "px";
-        }
-      }
-      
-    });
+          if(!isMobile){
+            //console.log('restore')
+            restoreOriginalSize(element);
+          }
+          
+          resizeFont(element,widthActive, value);
 
-  }, 500);
+          // ===== RESIZE FONT =====
+          if (element.style.width === "100%") return;
+  
+          const styleAttr = element.getAttribute("style");
+          if (!styleAttr || !styleAttr.includes("width:")) return;
+  
+          const styleWidth  = parseInt(element.style.width) || null;
+          const styleHeight = parseInt(element.style.height) || null;
+  
+          const parent = findParentWidth(element)
+  
+          //console.log('parent:', parent.element, parent)
+          if (Object.keys(parent).length === 0) return;
+          let parentWidth = parseInt(parent.width)
+          
+          if(key === 'accordion-element-section-10-4'){
+            console.log('sesuaikan' ,parseInt(value.width) > parentWidth, value.width, parentWidth, styleWidth)
+          }
+
+          if (styleWidth && parseInt(value.width) > parentWidth) {
+            element.style.width = (parentWidth - 15) + "px";
+            // set height elemen
+            const scale = parentWidth / styleWidth;
+
+            if (styleHeight) {
+              element.style.height = Math.floor(styleHeight * scale) + "px";
+            }
+          }else if(parseInt(value.width) < parentWidth){
+            restoreOriginalSize(element)
+          }
+  
+          if (element.offsetWidth > parentWidth) {
+            element.style.width = (parentWidth - 15) + "px";
+          }
+        });
+      });
+    });
+  },1000)
 } 
  
 // Responsive resize elemen

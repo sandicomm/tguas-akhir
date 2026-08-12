@@ -229,6 +229,7 @@ class WebPage extends Component
             if($cekExpires){
                 $cekExpires->delete();
         
+                session()->flash('error', 'Sesi akses menu telah berakhir atau di-reset dari sesi lain.');
                 return response()->json([
                     'success' => true,
                     'redirect' => route('admin.dashboard'),
@@ -242,6 +243,10 @@ class WebPage extends Component
             ]);
         }catch(\Exception $e){
             session()->flash('error', 'error cek status visited');
+            return response()->json([
+                'success' => false,
+                'message' => 'Error cek status aktif',
+            ]);
         }
     }
 
@@ -252,6 +257,7 @@ class WebPage extends Component
                 ->update(['expires_at' => Carbon::now()->addMinutes(1)]);
     
             if($update === 0){
+                session()->flash('error', 'Sesi akses menu telah berakhir atau di-reset dari sesi lain.');
                 return response()->json([
                         'success' => true,
                         'message' => "Anda terdeteksi tidak aktif maka anda dikeluarkan dari menu.",
@@ -262,6 +268,7 @@ class WebPage extends Component
             return response()->json(['success' => true]);
         }catch(\Exception $e){
             session()->flash('error', 'error update visit status');
+            return response()->json(['success' => false, 'message'=> 'error update sesi']);
         }
     }
 
