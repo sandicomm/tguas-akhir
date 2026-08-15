@@ -1048,13 +1048,8 @@ function widthHeightField(){
             globals.originalSizes[id] = {};
         }
 
-        // 2. Jika property fontSize belum ada, buat object-nya
-        if (!globals.originalSizes[id].fontSize) {
-            globals.originalSizes[id].fontSize = {};
-        }
-
         // 3. Set nilainya (Aman tanpa tanda ?.)
-        globals.originalSizes[id].fontSize.value = this.value;
+        globals.originalSizes[id].width = `${this.value}px`;
         
         if(sectionAcc){
           sectionAcc.forEach(sec=>{
@@ -1153,13 +1148,8 @@ function widthHeightField(){
             globals.originalSizes[id] = {};
         }
 
-        // 2. Jika property fontSize belum ada, buat object-nya
-        if (!globals.originalSizes[id].fontSize) {
-            globals.originalSizes[id].fontSize = {};
-        }
-
         // 3. Set nilainya (Aman tanpa tanda ?.)
-        globals.originalSizes[id].fontSize.value = this.value;
+        globals.originalSizes[id].width =`${this.value}px`;
 
         console.log('field: ',editorFieldSelect.id.split('-').slice(1,-1).join('-'))
       }
@@ -1195,13 +1185,8 @@ function widthHeightField(){
           globals.originalSizes[id] = {};
       }
 
-      // 2. Jika property fontSize belum ada, buat object-nya
-      if (!globals.originalSizes[id].fontSize) {
-          globals.originalSizes[id].fontSize = {};
-      }
-
       // 3. Set nilainya (Aman tanpa tanda ?.)
-      globals.originalSizes[id].fontSize.value = this.value;
+      globals.originalSizes[id].width =`${this.value}px`;
 
       updateStyle(carouselSelect)
       globals.carouselSelect=carouselSelect
@@ -1226,13 +1211,8 @@ function widthHeightField(){
           globals.originalSizes[id] = {};
       }
 
-      // 2. Jika property fontSize belum ada, buat object-nya
-      if (!globals.originalSizes[id].fontSize) {
-          globals.originalSizes[id].fontSize = {};
-      }
-
       // 3. Set nilainya (Aman tanpa tanda ?.)
-      globals.originalSizes[id].fontSize.value = this.value;
+      globals.originalSizes[id].height = `${this.value}px`;
 
       updateStyle(editorFieldSelect)
       globals.editorFieldSelect=editorFieldSelect
@@ -1247,13 +1227,8 @@ function widthHeightField(){
           globals.originalSizes[id] = {};
       }
 
-      // 2. Jika property fontSize belum ada, buat object-nya
-      if (!globals.originalSizes[id].fontSize) {
-          globals.originalSizes[id].fontSize = {};
-      }
-
       // 3. Set nilainya (Aman tanpa tanda ?.)
-      globals.originalSizes[id].fontSize.value = this.value;
+      globals.originalSizes[id].height = `${this.value}px`;
       updateStyle(carouselSelect)
       globals.carouselSelect=carouselSelect
     }

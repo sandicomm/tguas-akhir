@@ -370,8 +370,19 @@ export function updateStylingControls(data, field) {
 
       }else if(data.id.startsWith('section-accordion')){
 
-        document.getElementById("heading-text").innerHTML = ''
-        document.getElementById("heading-text").innerHTML = data.parentElement.parentElement.querySelector('[id^="btn-heading-accordion"]').children[0].innerHTML
+        let headingText = document.getElementById("heading-text")
+        headingText.innerHTML = ''
+        headingText.innerHTML = data.parentElement.parentElement.querySelector('[id^="btn-heading-accordion"]').children[0].innerHTML
+
+        let colorFontHeading = findTextColor(headingText) ?? '';
+
+        if(colorFontHeading.includes('rgb')){
+
+          colorFontHeading = rgbToHexFull(colorFontHeading)
+        }
+      
+        let bgColor = isLightColor(colorFontHeading) ? '#000000' : '#ffffff';
+        headingText.style.backgroundColor = bgColor;
 
         let stylingWebpage=['heading-text-wrapper','accordion-head-indicator-wrapper',
           'accordion-font-styling-wrapper','accordion-box-field-wrapper','box-width-field','accordion-accordion-type',

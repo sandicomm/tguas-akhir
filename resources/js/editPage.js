@@ -29,6 +29,8 @@ import { modalTypeStyling, addModal, copyModal } from './page/modal.js';
 import { addField,copyField } from './page/field.js';
 import { addSection,copySection } from './page/section.js';
 
+import { storeOriginalSize } from './loadWebpage.js';
+
 // ======== COPY HANDLERS =========
 import { getTargetElement,handleElementAction } from './page/downUpDelete/action.js'
 
@@ -450,24 +452,25 @@ webpage.addEventListener('click', function (event) {
 
   if (id.startsWith('add-field-')) {
     addField(event)
-
+    storeOriginalSize()
   }
   
     // ======================== MODAL =========================
   if(id.startsWith('add-modal-')) {
     addModal(event)
-
+    storeOriginalSize()
   }
 
   // ======================== ACCORDION ======================
   if(id.startsWith('add-accordion-')) {
     addAccordion(event)
-  
+    storeOriginalSize()
   }
   
   // ======================== CAROUSEL ======================
   if(id.startsWith('add-carousel-')) {
     addCarousel(event)
+    storeOriginalSize()
   }
 
   if(id.startsWith('copy-')){
@@ -491,6 +494,7 @@ webpage.addEventListener('click', function (event) {
     }else if(idParts[1] == "carousel"){
       copyCarousel(idParts.slice(1).join('-'))
     }
+    storeOriginalSize()
   }
 
 // ================================= DOWN UP DELETE ELEMENT =================================
