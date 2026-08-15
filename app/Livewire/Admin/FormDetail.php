@@ -68,7 +68,7 @@ class FormDetail extends Component
                         'form_id' => $id,
                     ],
                     [
-                        'expires_at' => Carbon::now()->addMinutes(1),
+                        'expires_at' => Carbon::now()->addMinutes(7),
                     ]
                 );
             }
@@ -346,7 +346,7 @@ class FormDetail extends Component
                         'form_id' => $this->form->id,
                     ],
                     [
-                        'expires_at' => Carbon::now()->addMinutes(1),
+                        'expires_at' => Carbon::now()->addMinutes(7),
                     ]
                 );
 
@@ -390,7 +390,7 @@ class FormDetail extends Component
                     'form_id' => $this->form->id,
                 ],
                 [
-                    'expires_at' => Carbon::now()->addMinutes(1),
+                    'expires_at' => Carbon::now()->addMinutes(7),
                 ]
             );
 
@@ -444,7 +444,7 @@ class FormDetail extends Component
     {
         try{
             $update = EditFormVisited::where('user_id', Auth::id())->where('form_id',$id)
-                ->update(['expires_at' => Carbon::now()->addMinutes(1)]);
+                ->update(['expires_at' => Carbon::now()->addMinutes(7)]);
     
             if($update === 0){
                 session()->flash('error', 'Sesi akses menu telah berakhir atau di-reset dari sesi lain.');

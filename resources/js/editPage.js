@@ -843,33 +843,33 @@ setInterval(async () => {
             console.error("Autosave gagal");
         }
     }
-},0.8 * 60 *1000);
+},5 * 60 *1000);
 
-// ============== cek status visit ==================
-// setInterval(async () => {
-//     try {
-//         if (userAktif) {
-//             await perbaruiMasaAktifDiServer();
-//             userAktif = false;
+//============== cek status visit ==================
+setInterval(async () => {
+    try {
+        if (userAktif) {
+            await perbaruiMasaAktifDiServer();
+            userAktif = false;
             
-//             console.log("User aktif berinteraksi. Sesi diperpanjang otomatis.");
-//         } else {
-//             document.getElementById('loading-overlay')?.classList.remove('hidden');
+            console.log("User aktif berinteraksi. Sesi diperpanjang otomatis.");
+        } else {
+            document.getElementById('loading-overlay')?.classList.remove('hidden');
   
-//             await cekStatus();
-//             setTimeout(()=>{
-//               document.getElementById('loading-overlay')?.classList.add('hidden');
-//             },2000)
-//         }
-//     } catch (error) {
-//         console.error("Sistem pemantau eror:", error);
+            await cekStatus();
+            setTimeout(()=>{
+              document.getElementById('loading-overlay')?.classList.add('hidden');
+            },2000)
+        }
+    } catch (error) {
+        console.error("Sistem pemantau eror:", error);
 
-//         document.getElementById('loading-overlay')?.classList.add('hidden');
-//         window.dispatchEvent(new CustomEvent('notif-pesan', { 
-//             detail: { pesan: `Gagal cek status.${error}`, status: false } 
-//         }));
-//     }
-// }, 0.2 * 60 * 1000);
+        document.getElementById('loading-overlay')?.classList.add('hidden');
+        window.dispatchEvent(new CustomEvent('notif-pesan', { 
+            detail: { pesan: `Gagal cek status.${error}`, status: false } 
+        }));
+    }
+}, 1 * 60 * 1000);
 
 const btnSave = getEl('btn-save')
 btnSave.addEventListener('click', async function() {

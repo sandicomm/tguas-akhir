@@ -348,7 +348,8 @@ export function resizeElements(edit = false) {
           if(key.startsWith('dropdown')) return;
           
           const element = document.getElementById(key)
-  
+          if (!element) return
+
           if(!isMobile){
             //console.log('restore')
             restoreOriginalSize(element);

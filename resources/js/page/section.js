@@ -85,7 +85,7 @@ const createSection = (idPrefix,borderWave,order,count,style,edit,zIndex)=>{
     let dropdown=''
     if(edit){
       svg=`
-        <div class="bg-green-400 rounded-full absolute right-1 top-1 z-20 cursor-pointer" data-dropdown-toggle="dropdown-${idPrefix}" data-dropdown-placement="right-end">
+        <div class="bg-green-400 rounded-full absolute right-0 top-0 z-20 cursor-pointer" data-dropdown-toggle="dropdown-${idPrefix}" data-dropdown-placement="right-end">
           ${renderSvg()}               
         </div>
       `
@@ -132,7 +132,7 @@ const createSection = (idPrefix,borderWave,order,count,style,edit,zIndex)=>{
     <div id="webpage-${idPrefix}" data-element-order="${order}" class="bg-gray-200 flex flex-col ${idPrefix.includes('prolog') ? 'min-h-[100dvh]' : ''} justify-center items-center border border-gray-700 z-10" style="${styleWebpage}">
         ${svg}
         ${dropdown}
-        <div id="editor-container-${idPrefix}" data-element-count="${count}" class="md:px-3 md:py-5 md:pt-0 px-4 py-5 pt-10 w-full flex flex-col" style="${styleEditor}"></div>
+        <div id="editor-container-${idPrefix}" data-element-count="${count}" class="md:px-3 md:pb-3 px-4 pb-4 pt-8 w-full flex flex-col" style="${styleEditor}"></div>
         ${btnNextProlog}
       </div>   
    `
@@ -159,7 +159,7 @@ let section=`
       :''
     }
 
-    <div id="editor-container-${idPrefix}" data-element-count="${count}" class="p-5 w-full flex flex-col flex-1" style="justify-content:start;align-items:start;"></div>
+    <div id="editor-container-${idPrefix}" data-element-count="${count}" class="md:px-3 md:pb-3 px-4 pb-4 pt-8 w-full flex flex-col flex-1" style="justify-content:start;align-items:start;"></div>
     <div class="bg-white text-center p-2 w-full text-sm">Copyright © 2024 Smart Health Diabetes. All Right Reserved</div>
     </div>   
 `
@@ -176,7 +176,7 @@ const createSectionAccordion = (section,edit) => `
         :''
     }
 
-    <div id="wrapper-${section.id}" data-element-count="${section.element_count}" class="p-2 w-full flex justify-start items-center flex-col">
+    <div id="wrapper-${section.id}" data-element-count="${section.element_count}" class="md:px-3 md:pb-3 px-4 pb-4 pt-5 w-full flex justify-start items-center flex-col">
     <!-- Body Accordion -->
     
     </div>
@@ -359,7 +359,7 @@ const addSection = (event)=>{
           ${dropdown}
               ${renderSvg()}                
           </div>
-          <div id="editor-container-section-${newCount}" data-element-count="0" class="p-2 py-4 w-full flex flex-col flex-1" style="justify-content:start;align-items:center;"></div>
+          <div id="editor-container-section-${newCount}" data-element-count="0" class="md:px-3 md:pb-3 px-4 pb-4 pt-8 w-full flex flex-col flex-1" style="justify-content:start;align-items:center;"></div>
         </div>
     `
 

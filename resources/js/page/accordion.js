@@ -392,14 +392,14 @@ const addAccordion=(event)=>{
             ${renderSvg()}   
           </div>
 
-          <div id="wrapper-section-${newPrefix}-1" data-element-count="1" class="p-4 flex justify-start items-center flex-col">
+          <div id="wrapper-section-${newPrefix}-1" data-element-count="1" class="md:px-3 md:pb-3 px-4 pb-4 pt-5 w-full flex justify-start items-center flex-col">
             <!-- Body Accordion -->
-            <div data-element-order="1" style="position: relative;" class="my-1">
+            <div data-element-order="1" style="position: relative;">
               <div type="button" class="bg-white rounded-full absolute  right-[-1.5rem] top-[1rem] z-20 cursor-pointer" data-dropdown-toggle="dropdown-field-${newPrefix}-1-${1}" data-dropdown-placement="right-end">
                 ${renderSvg()}   
               </div>
               
-              <div id="field-${newPrefix}-1-${1}" style="" class="border border-b-1 border-gray-500 px-1 max-w-[100%] scroll-hidden overflow-scroll" contenteditable="true">
+              <div id="field-${newPrefix}-1-${1}" style="" class="border border-b-1 border-gray-500 p-1 max-w-[100%] scroll-hidden overflow-scroll" contenteditable="true">
                 <font size="3">isi section ${1} di field ${1}</font>
               </div>
             </div>  

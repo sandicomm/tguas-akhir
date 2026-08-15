@@ -499,7 +499,21 @@ function fontStylingField(){
     
         if (startInside && endInside && !range.collapsed) {
           fontField.dataset.fieldFontSize = this.value;
-          globals.originalSizes[editorFieldSelect.id].fontSize.value = this.value
+
+          const id = editorFieldSelect.id;
+
+          // 1. Jika object elemen belum ada, buat object kosong dulu
+          if (!globals.originalSizes[id]) {
+              globals.originalSizes[id] = {};
+          }
+
+          // 2. Jika property fontSize belum ada, buat object-nya
+          if (!globals.originalSizes[id].fontSize) {
+              globals.originalSizes[id].fontSize = {};
+          }
+
+          // 3. Set nilainya (Aman tanpa tanda ?.)
+          globals.originalSizes[id].fontSize.value = this.value;
 
           if(!(document.getElementById('heading-text-wrapper').classList.contains('hidden'))){
             editorFieldSelect.dataset.fieldFontSize = this.value;
@@ -516,7 +530,21 @@ function fontStylingField(){
           
           // Terapkan warna ke seluruh teks dalam fontField
           fontField.dataset.fieldFontSize = this.value;
-          globals.originalSizes[editorFieldSelect.id].fontSize.value = this.value
+
+          const id = editorFieldSelect.id;
+
+          // 1. Jika object elemen belum ada, buat object kosong dulu
+          if (!globals.originalSizes[id]) {
+              globals.originalSizes[id] = {};
+          }
+
+          // 2. Jika property fontSize belum ada, buat object-nya
+          if (!globals.originalSizes[id].fontSize) {
+              globals.originalSizes[id].fontSize = {};
+          }
+
+          // 3. Set nilainya (Aman tanpa tanda ?.)
+          globals.originalSizes[id].fontSize.value = this.value;
 
           if(!(document.getElementById('heading-text-wrapper').classList.contains('hidden'))){
             editorFieldSelect.dataset.fieldFontSize = this.value;
@@ -1012,7 +1040,21 @@ function widthHeightField(){
         let sectionAcc=accordionSelect.querySelectorAll('[id^="section-"]')
   
         accordionSelect.style.width=`${this.value}px`
-        globals.originalSizes[accordionSelect.id].width =`${this.value}px`;
+
+        const id = accordionSelect.id;
+
+        // 1. Jika object elemen belum ada, buat object kosong dulu
+        if (!globals.originalSizes[id]) {
+            globals.originalSizes[id] = {};
+        }
+
+        // 2. Jika property fontSize belum ada, buat object-nya
+        if (!globals.originalSizes[id].fontSize) {
+            globals.originalSizes[id].fontSize = {};
+        }
+
+        // 3. Set nilainya (Aman tanpa tanda ?.)
+        globals.originalSizes[id].fontSize.value = this.value;
         
         if(sectionAcc){
           sectionAcc.forEach(sec=>{
@@ -1103,7 +1145,21 @@ function widthHeightField(){
         console.log(parentElement,width, actualWidth)
         
         editorFieldSelect.style.width=`${this.value}px`
-        globals.originalSizes[editorFieldSelect.id].width =`${this.value}px`;
+
+        const id = editorFieldSelect.id;
+
+        // 1. Jika object elemen belum ada, buat object kosong dulu
+        if (!globals.originalSizes[id]) {
+            globals.originalSizes[id] = {};
+        }
+
+        // 2. Jika property fontSize belum ada, buat object-nya
+        if (!globals.originalSizes[id].fontSize) {
+            globals.originalSizes[id].fontSize = {};
+        }
+
+        // 3. Set nilainya (Aman tanpa tanda ?.)
+        globals.originalSizes[id].fontSize.value = this.value;
 
         console.log('field: ',editorFieldSelect.id.split('-').slice(1,-1).join('-'))
       }
@@ -1131,7 +1187,21 @@ function widthHeightField(){
       console.log(parentElement,width, actualWidth)
 
       carouselSelect.style.width=`${this.value}px`
-      globals.originalSizes[carouselSelect.id].width =`${this.value}px`;
+
+      const id = carouselSelect.id;
+
+      // 1. Jika object elemen belum ada, buat object kosong dulu
+      if (!globals.originalSizes[id]) {
+          globals.originalSizes[id] = {};
+      }
+
+      // 2. Jika property fontSize belum ada, buat object-nya
+      if (!globals.originalSizes[id].fontSize) {
+          globals.originalSizes[id].fontSize = {};
+      }
+
+      // 3. Set nilainya (Aman tanpa tanda ?.)
+      globals.originalSizes[id].fontSize.value = this.value;
 
       updateStyle(carouselSelect)
       globals.carouselSelect=carouselSelect
@@ -1145,18 +1215,45 @@ function widthHeightField(){
     if(editorFieldSelect){
       if(editorFieldSelect.id.startsWith('webpage')){
         editorFieldSelect.style.minHeight=`${this.value}px`
-        globals.originalSizes[editorFieldSelect.id].height =`${this.value}px`;
       }else{
         editorFieldSelect.style.height=`${this.value}px`
-        globals.originalSizes[editorFieldSelect.id].height =`${this.value}px`;
       }
+      
+      const id = editorFieldSelect.id;
+
+      // 1. Jika object elemen belum ada, buat object kosong dulu
+      if (!globals.originalSizes[id]) {
+          globals.originalSizes[id] = {};
+      }
+
+      // 2. Jika property fontSize belum ada, buat object-nya
+      if (!globals.originalSizes[id].fontSize) {
+          globals.originalSizes[id].fontSize = {};
+      }
+
+      // 3. Set nilainya (Aman tanpa tanda ?.)
+      globals.originalSizes[id].fontSize.value = this.value;
 
       updateStyle(editorFieldSelect)
       globals.editorFieldSelect=editorFieldSelect
 
     }else if(carouselSelect){
       carouselSelect.style.height=`${this.value}px`
-      globals.originalSizes[carouselSelect.id].height =`${this.value}px`;
+
+      const id = carouselSelect.id;
+
+      // 1. Jika object elemen belum ada, buat object kosong dulu
+      if (!globals.originalSizes[id]) {
+          globals.originalSizes[id] = {};
+      }
+
+      // 2. Jika property fontSize belum ada, buat object-nya
+      if (!globals.originalSizes[id].fontSize) {
+          globals.originalSizes[id].fontSize = {};
+      }
+
+      // 3. Set nilainya (Aman tanpa tanda ?.)
+      globals.originalSizes[id].fontSize.value = this.value;
       updateStyle(carouselSelect)
       globals.carouselSelect=carouselSelect
     }

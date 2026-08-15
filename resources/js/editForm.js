@@ -130,7 +130,7 @@ setInterval(async () => {
         await submitInBatch(formData, true); 
         
     }
-},0.5 * 60 * 1000); // Cek setiap 5 menit
+},5 * 60 * 1000); // Cek setiap 5 menit
 
 // ================= CEK STATUS VISIT ================
 setInterval(async () => {
@@ -160,7 +160,7 @@ setInterval(async () => {
         //     detail: { pesan: `Gagal cek status.${error}`, status: false } 
         // }));
     }
-}, 0.2 * 60 * 1000);
+}, 1 * 60 * 1000);
 
 
 function loadBtnSubmit(){

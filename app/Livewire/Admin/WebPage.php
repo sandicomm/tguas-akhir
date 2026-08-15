@@ -47,7 +47,7 @@ class WebPage extends Component
     
             WebpageVisited::updateOrCreate(
                 ['user_id' => $userId],
-                ['expires_at' => Carbon::now()->addMinutes(1)]
+                ['expires_at' => Carbon::now()->addMinutes(7)]
             );
     
             $this->param = $params;
@@ -173,7 +173,7 @@ class WebPage extends Component
 
             WebpageVisited::updateOrCreate(
                 ['user_id' => Auth::id()],
-                ['expires_at' => Carbon::now()->addMinutes(1)]
+                ['expires_at' => Carbon::now()->addMinutes(7)]
             );
 
             return response()->json(['success' => true, 'message' => 'Data berhasil diperbarui', 'datano'=>$this->dataStyle, 'datapuri'=>$this->dataStylePuri,'datacontent'=>$this->dataContent]);
@@ -254,7 +254,7 @@ class WebPage extends Component
     {
         try{
             $update = WebpageVisited::where('user_id', Auth::id())
-                ->update(['expires_at' => Carbon::now()->addMinutes(1)]);
+                ->update(['expires_at' => Carbon::now()->addMinutes(7)]);
     
             if($update === 0){
                 session()->flash('error', 'Sesi akses menu telah berakhir atau di-reset dari sesi lain.');
