@@ -52,7 +52,7 @@ function rgbToHex(r, g, b) {
   return "#" + toHex(r) + toHex(g) + toHex(b);
 }
 
-function rgbToHexFull(rgb) {
+export function rgbToHexFull(rgb) {
     const match = rgb.match(/\d+/g);
     if (!match) return null;
 
@@ -262,6 +262,10 @@ export function updateStylingControls(data, field) {
         
       }else if(data.id.startsWith('btn-modal') || data.id.startsWith('btn-heading-accordion')){
         let headingText = document.getElementById("heading-text")
+        
+        headingText.removeAttribute('data-field-font-size')
+        headingText.removeAttribute('data-field-font-family')
+
         headingText.innerHTML = ''
         headingText.innerHTML = data.children[0].innerHTML
 
@@ -370,22 +374,7 @@ export function updateStylingControls(data, field) {
 
       }else if(data.id.startsWith('section-accordion')){
 
-        let headingText = document.getElementById("heading-text")
-        headingText.innerHTML = ''
-        headingText.innerHTML = data.parentElement.parentElement.querySelector('[id^="btn-heading-accordion"]').children[0].innerHTML
-
-        let colorFontHeading = findTextColor(headingText) ?? '';
-
-        if(colorFontHeading.includes('rgb')){
-
-          colorFontHeading = rgbToHexFull(colorFontHeading)
-        }
-      
-        let bgColor = isLightColor(colorFontHeading) ? '#000000' : '#ffffff';
-        headingText.style.backgroundColor = bgColor;
-
-        let stylingWebpage=['heading-text-wrapper','accordion-head-indicator-wrapper',
-          'accordion-font-styling-wrapper','accordion-box-field-wrapper','box-width-field','accordion-accordion-type',
+        let stylingWebpage=['accordion-head-indicator-wrapper','accordion-box-field-wrapper','box-width-field','accordion-accordion-type',
           'accordion-border-field-wrapper','accordion-background-wrapper','bg-image-styling','accordion-padding-wrapper',
           'accordion-margin-wrapper','wrapper-btn-save'
         ]

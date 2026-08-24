@@ -7,7 +7,7 @@ import {findParentWidth,storeOriginalSize} from '../../loadWebpage.js';
 // ======== UTILITIES =========
 import { updateContent, updateActionProperty } from '../utils/updateContent.js';
 import { parseStyleObj, stringifyStyleObj } from '../utils/baseStyleObj.js';
-import { updateStylingControls, isLightColor } from './stylingControls.js';
+import { updateStylingControls, isLightColor, rgbToHexFull } from './stylingControls.js';
 // ======== Validation get element ==========
 import { getEl } from '../utils/validationGetElement.js';
 
@@ -226,9 +226,18 @@ function updateStyle(editorFieldSelect, indicator, file, indicatorCarousel, url,
           styleObj.css = newStyle;
           item.style = stringifyStyleObj(styleObj);
           
+          let newItemContent = parseStyleObj(item.content)
+          if(indicator){
+            newItemContent.darkSliderIndicator = indicator
+          }else{
+            delete newItemContent.darkSliderIndicator
+          }  
+          
+          item.content = stringifyStyleObj(newItemContent);
+          console.log(item.content, parseStyleObj(item.content), newItemContent, stringifyStyleObj(newItemContent))
+          
         }else{
           if(id.startsWith('item-carousel')){
-       
             let baseStyle = editorFieldSelect.style.cssText
             if(editorFieldSelect.querySelector('[id^="img-text"]')){
           
@@ -299,6 +308,7 @@ function updateStyle(editorFieldSelect, indicator, file, indicatorCarousel, url,
   globals.webpageDb=webpageDb
   globals.file=fileDb
 }
+
 // ------- Font Styling --------
 function fontStylingField(){
   document.getElementById('heading-text').addEventListener('keyup', function () {
@@ -1825,6 +1835,7 @@ function colorBackgroundField(){
 
     if(fieldEditor.id.startsWith('carousel')){
       fieldEditor.dataset.fieldBgColor = this.value;
+
       fieldEditor.querySelectorAll('[id^="item-carousel-"]').forEach(item =>{
         if(fieldEditor.dataset.textPosition === 'on-image'){
           let Style = item.style.cssText
@@ -1874,6 +1885,29 @@ function colorBackgroundField(){
             item.style.backgroundColor = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${alpha})`
           }
         })
+      }
+
+      const matches =fieldEditor.querySelector('[id^="item-carousel"]').getAttribute('style').match(/rgba\(([^)]+)\)/g);
+      if (matches) {
+        // Ambil hanya nilainya tanpa tulisan "rgba(" dan ")"
+        const rgbaValues = matches.map(m => m.replace(/rgba\(|\)/g, ''));
+
+        let hex = rgbToHexFull(rgbaValues[0])
+        let darkSlider = false
+        
+        if(rgbaValues[0].split(',')[3] < 0.35){
+          fieldEditor.querySelector('[id^="slide-indicator-carousel"]').classList.remove('dot-dark')
+          darkSlider = false
+        }else{
+          if(isLightColor(hex)) {
+            fieldEditor.querySelector('[id^="slide-indicator-carousel"]').classList.add('dot-dark')
+            darkSlider = true
+          }else{
+            fieldEditor.querySelector('[id^="slide-indicator-carousel"]').classList.remove('dot-dark')
+            darkSlider = false
+          }
+        }
+        updateStyle(fieldEditor, darkSlider)
       }
   
       globals.carouselSelect=carouselSelect
@@ -1970,6 +2004,33 @@ function colorBackgroundField(){
           }
         })
       }
+
+      console.log(fieldEditor.querySelector('[id^="item-carousel"]').getAttribute('style'))
+      
+      const matches =fieldEditor.querySelector('[id^="item-carousel"]').getAttribute('style').match(/rgba\(([^)]+)\)/g);
+      if (matches) {
+        // Ambil hanya nilainya tanpa tulisan "rgba(" dan ")"
+        const rgbaValues = matches.map(m => m.replace(/rgba\(|\)/g, ''));
+
+        let hex = rgbToHexFull(rgbaValues[0])
+        let darkSlider = false
+        
+        if(rgbaValues[0].split(',')[3] < 0.35){
+          fieldEditor.querySelector('[id^="slide-indicator-carousel"]').classList.remove('dot-dark')
+          darkSlider = false
+        }else{
+          if(isLightColor(hex)) {
+            fieldEditor.querySelector('[id^="slide-indicator-carousel"]').classList.add('dot-dark')
+            darkSlider = true
+          }else{
+            fieldEditor.querySelector('[id^="slide-indicator-carousel"]').classList.remove('dot-dark')
+            darkSlider = false
+          }
+        }
+
+        updateStyle(fieldEditor, darkSlider)
+      }
+
       globals.carouselSelect=carouselSelect
 
     }else{

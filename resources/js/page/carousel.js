@@ -22,6 +22,9 @@ let bodyItem=globals.bodyItem
 
 const createCarousel = (carousel, childElements,editorContainer,edit) => {
     let dataSet = parseStyleObj(carousel.content)
+    if(carousel.id === "carousel-element-section-21-7"){
+      console.log(dataSet)
+    }
     return`
       <div id="${carousel.id}" data-element-order="${carousel.element_order}" data-text-position="${dataSet.dataTextPosition}" data-text="${dataSet.dataText}" data-next-btn-hide="${dataSet.dataNextBtnHide}" data-carousel="static" class="flex justify-center items-center flex-col" style="${parseStyleObj(carousel.style).css}">
         ${
@@ -39,9 +42,9 @@ const createCarousel = (carousel, childElements,editorContainer,edit) => {
               ${createCarouselItem(carousel, childElements, editorContainer, dataSet.dataTextPosition, dataSet.dataText, dataSet.dataNextBtnHide,edit)}
           </div>
           <!-- slideIndicator --!>
-          ${slideIndicator(carousel, childElements)}
+          ${slideIndicator(carousel, childElements, dataSet.darkSliderIndicator)}
           <!-- Slider controls -->
-          <button id="slider-prev-btn" type="button" style="${parseStyleObj(carousel.style).paddingSlideController}" class="absolute top-0 start-0 z-30 flex items-center justify-center h-full cursor-pointer group focus:outline-none" data-carousel-prev>
+          <button id="slider-prev-btn" type="button" style="${parseStyleObj(carousel.style).paddingSlideController}" class="${dataSet.dataNextBtnHide === 'false' ? '':'w-[32px]'} absolute top-0 start-0 z-30 flex items-center justify-center h-full cursor-pointer group focus:outline-none" data-carousel-prev>
               <span style="${parseStyleObj(carousel.style).slideControlWrapperSize}" class="${dataSet.dataNextBtnHide === 'false' ? '':'hidden'} inline-flex items-center justify-center rounded-full bg-gray-400/30 group-hover:bg-gray-400/50 group-focus:ring-4 group-focus:ring-gray-300 group-focus:outline-none">
                   <svg style="${parseStyleObj(carousel.style).controlerSlideSize}" class="text-gray-500 rtl:rotate-180" aria-hidden="true" fill="none" viewBox="0 0 6 10">
                       <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 1 1 5l4 4"/>
@@ -49,7 +52,7 @@ const createCarousel = (carousel, childElements,editorContainer,edit) => {
                   <span class="sr-only">Previous</span>
               </span>
           </button>
-          <button id="slider-next-btn" type="button" style="${parseStyleObj(carousel.style).paddingSlideController}" class="absolute top-0 end-0 z-30 flex items-center justify-center h-full cursor-pointer group focus:outline-none" data-carousel-next>
+          <button id="slider-next-btn" type="button" style="${parseStyleObj(carousel.style).paddingSlideController}" class="${dataSet.dataNextBtnHide === 'false' ? '':'w-[32px]'} absolute top-0 end-0 z-30 flex items-center justify-center h-full cursor-pointer group focus:outline-none" data-carousel-next>
               <span style="${parseStyleObj(carousel.style).slideControlWrapperSize}" class="${dataSet.dataNextBtnHide === 'false' ? '':'hidden'} inline-flex items-center justify-center rounded-full bg-gray-400/30 group-hover:bg-gray-400/50 group-focus:ring-4 group-focus:ring-gray-300 group-focus:outline-none">
                   <svg class=" text-gray-500 rtl:rotate-180" aria-hidden="true" style="${parseStyleObj(carousel.style).controlerSlideSize}" fill="none" viewBox="0 0 6 10">
                       <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 9 4-4-4-4"/>
@@ -92,15 +95,19 @@ const createCarouselItem = (carousel, childElements,editorContainer, textPositio
 
         if(arraySubsequenceMatch(el.id.split('-'), carousel.id.split('-')) && el.id.startsWith('item-carousel')){
             let style=''
+
             if(textPosition === 'on-image'){
               style = el.style
             }else{
               style = 'flex-direction:column;'
             }
+
+            
+
             item += `
-            <div id="${el.id}" data-item-order="${el.element_order}" class="duration-700 ease-in-out flex justify-center items-center ${textPosition === 'below-image' ? '':'p-6'}" style="${style}" data-carousel-item>
-            ${textImage}
-            </div>
+              <div id="${el.id}" data-item-order="${el.element_order}" class="duration-700 ease-in-out flex justify-center items-center ${textPosition === 'below-image' ? '':'p-6'}" style="${style}" data-carousel-item>
+              ${textImage}
+              </div>
             `
         }
       }
@@ -108,7 +115,7 @@ const createCarouselItem = (carousel, childElements,editorContainer, textPositio
   return item
 }
 
-const slideIndicator = (carousel, childElements)=>{
+const slideIndicator = (carousel, childElements, darkSlideIndicator)=>{
   let itemCarouselLength = childElements.filter(el => arraySubsequenceMatch(el.id.split('-'), carousel.id.split('-')) && el.type === 'item-carousel').length
 
   let slide=``
@@ -116,12 +123,12 @@ const slideIndicator = (carousel, childElements)=>{
       let indicator = i
       slide += `
       <button type="button" style="${parseStyleObj(carousel.style).indicatorSize}" 
-      class="rounded-full !bg-gray-300/40 hover:!bg-gray-400/80 dark:!bg-gray-300/40 dark:hover:!bg-gray-400/80" aria-current="true" aria-label="Slide ${indicator+1}" data-carousel-slide-to="${i}"></button>
+      class="rounded-full" aria-current="true" aria-label="Slide ${indicator+1}" data-carousel-slide-to="${i}"></button>
       `
   }
 
   return `
-  <div style="${parseStyleObj(carousel.style).bottomIndicatorPosition}" id="slide-indicator-${carousel.id}" class="absolute z-30 flex -translate-x-1/2 left-1/2 space-x-3 rtl:space-x-reverse">
+  <div style="${parseStyleObj(carousel.style).bottomIndicatorPosition}" id="slide-indicator-${carousel.id}" class="${darkSlideIndicator ? 'dot-dark' : ''} absolute z-30 flex -translate-x-1/2 left-1/2 space-x-3 rtl:space-x-reverse">
       ${slide}
   </div>`
 }
@@ -1065,8 +1072,10 @@ function btnHideNext(event){
   carouselSelect.querySelectorAll('[id^="slider-"]').forEach(btn=>{
     if(btn.children[0].classList.contains('hidden')){
       btn.children[0].classList.remove('hidden')
+      btn.classList.remove('w-[32px]')
     }else{
       btn.children[0].classList.add('hidden')
+      btn.classList.add('w-[32px]')
     }
   })
 

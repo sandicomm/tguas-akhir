@@ -74,9 +74,9 @@
     }
     
 textarea {
-    resize: none; /* Menghilangkan handle tarik di pojok */
-    overflow: hidden; /* Menghilangkan scrollbar */
-    min-height: 40px; /* Ukuran minimum agar tidak terlalu gepeng */
+    resize: none;
+    overflow: hidden;
+    min-height: 40px;
 }
 
 .btn-cta p{
@@ -97,10 +97,22 @@ textarea {
 
 /* Hilangkan scrollbar tapi tetap bisa scroll */
 .scroll-hidden {
-  scrollbar-width: none;       /* Firefox */
-  -ms-overflow-style: none;    /* IE 10+ */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 .scroll-hidden::-webkit-scrollbar {
-  display: none;               /* Chrome, Safari, Edge */
+  display: none;
+}
+
+/* --- WARNA DOT-DARK (STATUS AKTIF) --- */
+[id^="slide-indicator"].dot-dark button[aria-current="true"] {
+  background-color: #4b5563 !important;
+  opacity: 1 !important;
+}
+
+/* --- WARNA DOT-DARK (STATUS TIDAK AKTIF) --- */
+[id^="slide-indicator"].dot-dark button[aria-current="false"] {
+  background-color: #9ca3af !important;
+  opacity: 0.5 !important;
 }
