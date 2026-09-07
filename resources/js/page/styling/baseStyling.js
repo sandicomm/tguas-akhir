@@ -2204,7 +2204,7 @@ function setImageGallery(indicator){
   }
   fileDb.forEach(file =>{
     if(file.filetype === 'img' || file.type === 'img'){
-      let url=`http://127.0.0.1:8000/media/${file.id}` //ubah klo pengen ke hostingan
+      let url=`https://smartdiabetes.my.id/media/${file.id}` //ubah klo pengen ke hostingan
       if(file.url){
         url=file.url
       }

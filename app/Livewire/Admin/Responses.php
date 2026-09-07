@@ -52,8 +52,8 @@ class Responses extends Component
 
     public function export($formId)
     {   
-        try{
-            // 1. Ambil Pertanyaan (Sama dengan loadData)
+        try {
+            // 1. Ambil Pertanyaan
             $questions = DB::table('questions')
                 ->join('sections', 'sections.id', '=', 'questions.section_id')
                 ->where('sections.form_id', $formId)
@@ -61,16 +61,23 @@ class Responses extends Component
                 ->orderBy('sections.order')
                 ->orderBy('questions.order')
                 ->get();
-    
+
             if ($questions->isEmpty()) return;
-    
-            // 2. Ambil Header Users (Gunakan get() tapi dengan Logic Sorting yang sama)
+
+            // 2. Ambil Header Users (Tambahkan Filter Email di sini!)
             $allUsers = Response::query()
                 ->with('responden') 
                 ->select('form_id', 'responden_id', 'uuid', 'attempt')
                 ->selectRaw('MAX(created_at) as created_at')
                 ->where('form_id', $formId)
                 
+                // Tambahkan filter searchByEmail agar header user terfilter
+                ->when(!empty($this->searchByEmail), function ($q) {
+                    $q->whereHas('responden', fn ($subQ) => 
+                        $subQ->where('email', 'like', '%' . $this->searchByEmail . '%')
+                    );
+                })
+
                 ->addSelect(['first_sub' => Response::selectRaw('MIN(created_at)')
                     ->from('responses as r2')
                     ->whereColumn('r2.form_id', 'responses.form_id')
@@ -88,16 +95,26 @@ class Responses extends Component
                 ->orderBy('responden_id', 'asc')
                 ->orderBy('uuid', 'asc')
                 ->orderBy('attempt', 'asc')
-                ->get(); // Pakai get() untuk ambil semua data tanpa potongan halaman
-    
-            // 2.1 UserKeys (Langsung gunakan $allUsers karena ini sudah collection)
+                ->get();
+
+            if ($allUsers->isEmpty()) {
+                $this->dispatch('error-alert', message: 'Tidak ada data responden yang cocok.');
+                return;
+            }
+
             $userKeys = $allUsers; 
-    
+
             // 3. Ambil Jawaban (Matrix Content)
             $responses = collect();
             if ($userKeys->isNotEmpty()) {
                 $responses = Response::query()
                     ->where('responses.form_id', $formId)
+                    // Filter email juga disaat query jawaban
+                    ->when(!empty($this->searchByEmail), function ($q) {
+                        $q->whereHas('responden', fn ($subQ) => 
+                            $subQ->where('email', 'like', '%' . $this->searchByEmail . '%')
+                        );
+                    })
                     ->where(function($q) use ($userKeys) {
                         foreach ($userKeys as $key) {
                             $q->orWhere(function($sq) use ($key) {
@@ -114,13 +131,13 @@ class Responses extends Component
                     ->select(['responses.*', 'answers.answer', 'answers.question_id'])
                     ->get();
             }
-    
-            // Helper Key (Harus sama dengan loadData)
+
+            // Helper Key
             $generateKey = function($item) {
                 $prefix = $item->responden_id ? 'uid:'.$item->responden_id : 'uuid:'.$item->uuid;
                 return $prefix . '-att:' . $item->attempt;
             };
-    
+
             // 4. Olah Columns
             $columns = $userKeys->map(function ($r) use ($generateKey) {
                 return [
@@ -132,26 +149,26 @@ class Responses extends Component
                     'key'          => $generateKey($r),
                 ];
             });
-    
+
             // 5. Olah Matrix
             $cellMatrix = $responses->groupBy('question_id')->map(function ($items) use ($generateKey) {
                 return $items->groupBy(function ($item) use ($generateKey) {
                     return $generateKey($item);
                 });
             });
-    
-            // Ambil nama form untuk nama file
+
+            // Nama File
             $formName = Form::find($formId)->form_name ?? 'Form';
             $fileName = "Rekap_Response_" . \Str::slug($formName) . ".xlsx";
-    
+
+            // Tetap menggunakan FormResponseSingleExport
             return Excel::download(
                 new FormResponseSingleExport($formName, $questions, $allUsers, $columns, $cellMatrix),
                 $fileName
             );
 
-        } catch (\Exception $e){
-            //session()->flash('error', 'error export response');
-           $this->dispatch('error-alert', message: 'error export response');
+        } catch (\Exception $e) {
+            $this->dispatch('error-alert', message: 'error export response');
         }
     }
 
