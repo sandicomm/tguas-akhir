@@ -1250,9 +1250,31 @@ function widthHeightField(){
  
     if(editorFieldSelect.id.startsWith('webpage')){
       editorFieldSelect.style.minHeight='100dvh'
+      
+      updateStylingControls(editorFieldSelect)
+      const id = editorFieldSelect.id;
+      
+      // 1. Jika object elemen belum ada, buat object kosong dulu
+      if (!globals.originalSizes[id]) {
+          globals.originalSizes[id] = {};
+      }
+
+      // 3. Set nilainya (Aman tanpa tanda ?.)
+      globals.originalSizes[id].height = `${document.getElementById('height-field').value}px`;
+
     }else{
       editorFieldSelect.style.width=''
       editorFieldSelect.style.height=''
+      const id = editorFieldSelect.id;
+
+      // 1. Jika object elemen belum ada, buat object kosong dulu
+      if (!globals.originalSizes[id]) {
+          globals.originalSizes[id] = {};
+      }
+
+      // 3. Set nilainya (Aman tanpa tanda ?.)
+      globals.originalSizes[id].height = ``;
+      globals.originalSizes[id].width = ``;
     }
     updateStyle(editorFieldSelect)
     updateStylingControls(editorFieldSelect)

@@ -297,7 +297,7 @@ function resizeFont(el, windowWidth, value) {
     console.log('halo', numericSize, currentValue, el.style)
   }
 
-  if(windowWidth <= 550){
+  if(value.fontSize && windowWidth <= 550){
     if (value.fontSize.value == 7) {    
       if(el.id.startsWith('btn-heading')){
         newSize = 5;
@@ -312,7 +312,9 @@ function resizeFont(el, windowWidth, value) {
       newSize = 3;
     }
   }else{
-    newSize = value.fontSize.value
+    if(value.fontSize){
+      newSize = value.fontSize.value
+    }
   }
 
   applyFontSize(el, newSize);
