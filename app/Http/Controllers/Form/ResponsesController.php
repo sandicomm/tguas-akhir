@@ -63,6 +63,7 @@ class ResponsesController extends \App\Http\Controllers\Controller
         ]);
 
         if ($collect_email) {
+            //dd(session('already_fill_form'));
             $responden = Responden::firstOrCreate(
                 ['email' => $responden_email], // Kondisi pencarian
                 [
@@ -108,25 +109,54 @@ class ResponsesController extends \App\Http\Controllers\Controller
                 }
             }
 
-            $formIds = Responses::whereHas('responden', function ($query) use ($request) {
-                $query->where('email', session('responden_email'));
-            })
-            ->distinct()
-            ->pluck('form_id'); // Ambil hanya kolom form_id
+            $dbFormIds = Responses::whereHas('responden', function ($query) use ($responden) {
+                    $query->where('email', $responden->email);
+                })
+                ->distinct()
+                ->pluck('form_id'); // Contoh hasil: [1, 2]
+
+            // 2. Ambil ID form yang sudah ada di session anonim sebelumnya
+            $existingFormIds = collect(session('already_fill_form', []))->flatten(); // flatten() memastikan array awal 100% flat
+
+            // 3. Gabungkan ID form dari database dan session anonim, lalu hapus duplikatnya
+            //dd($existingFormIds, $request->form_id);
+            $mergedFormIds = $existingFormIds
+                ->merge($dbFormIds)          // Menggabungkan kedua list ID
+                ->push($request->form_id) // Pastikan ID form yang baru disubmit juga ikut masuk
+                ->unique()                   // Hapus ID yang sama/duplikat
+                ->values()                   // Reset index array (0, 1, 2, dst)
+                ->toArray();
 
             if ((!session()->has('pre_test_email') || session('pre_test_email') !== $request['collect_email']) && $request['placement'] === 'pre-test-interaktif') {
                 session(['pre_test_email' =>  $request['collect_email']]);
                 //dd($request['collect_email']);
             }
 
+            if(str_contains(strtolower($response['placement'] ?? ''), 'post-test')){
+                session()->put([
+                    'post_test_done'=>true,
+                    'responden_email'=>$responden->email,
+                    'form_name'=>$response['form_name'], 
+                    'already_fill_form'=>$mergedFormIds
+                ]);
+            }else{
+                session()->put([
+                    'pre_test_done'=>true,
+                    'responden_email'=>$responden->email,
+                    'form_name'=>$response['form_name'], 
+                    'already_fill_form'=>$mergedFormIds
+                ]);
+            }
 
-            session()->put([
-                'pre_test_done'=>true,
-                'responden_email'=>$responden->email,
-                'form_name'=>$response['form_name'], 
-                'already_fill_form'=>$formIds
-            ]);
+            if (session('page_visited') === 'emodul') {
+                $lastUrl = session('last_emodul_url');
 
+                if ($lastUrl) {
+                    return redirect()->route('emodul.preview', ['url' => $lastUrl])
+                                    ->with('success', 'Response Berhasil Direkam');
+                }
+            } 
+            
             return redirect(route(session('page_visited')))->with('success', 'Response Berhasil Direkam');
         }else{
             //dd(session('pre_test_done'), session('form_name') == $response['form_name'], session('no_email_user') != null, Str::contains($response['placement'] ?? '', 'post-test') );
@@ -154,13 +184,45 @@ class ResponsesController extends \App\Http\Controllers\Controller
                 session(['pre_test_email' =>  $request['collect_email']]);
             }
 
-            session()->put([
-                'pre_test_done'=>true,
-                'responden_email'=>null,
-                'form_name'=>$response['form_name'],
-                'already_fill_form'=>$formIds
-            ]);
-            
+            // 1. Ambil session, ratakan array (flatten), dan reset index
+            $existingFormIds = collect(session('already_fill_form', []))
+                ->flatten()
+                ->map(fn($id) => (int) $id); // Pastikan semua ID bertipe integer
+
+            $currentFormId = (int) $request->form_id;
+
+            // 2. Tambahkan ID baru jika belum ada
+            if (!$existingFormIds->contains($currentFormId)) {
+                $existingFormIds->push($currentFormId);
+            }
+
+            $formIds = $existingFormIds->values()->toArray();
+
+            if(str_contains(strtolower($response['placement'] ?? ''), 'post-test')){
+                session()->put([
+                    'post_test_done'=>true,
+                    'responden_email'=>null,
+                    'form_name'=>$response['form_name'],
+                    'already_fill_form'=>$formIds
+                ]);
+            }else{
+                session()->put([
+                    'pre_test_done'=>true,
+                    'responden_email'=>null,
+                    'form_name'=>$response['form_name'],
+                    'already_fill_form'=>$formIds
+                ]);
+            }
+         
+            if (session('page_visited') === 'emodul') {
+                $lastUrl = session('last_emodul_url');
+
+                if ($lastUrl) {
+                    return redirect()->route('emodul.preview', ['url' => $lastUrl])
+                                    ->with('success', 'Response Berhasil Direkam');
+                }
+            } 
+
             return redirect(route(session('page_visited')))->with('success', 'Response Berhasil Direkam');
         }
     }

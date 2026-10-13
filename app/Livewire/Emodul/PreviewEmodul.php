@@ -13,6 +13,9 @@ class PreviewEmodul extends Component
     public function mount($url)
     {
         $this->path = base64_decode($url);
+        session(['page_visit_fix'=> 'emodul']);
+        session(['page_visited'=> 'emodul']);
+        session(['last_emodul_url' => $url]);
     }
 
     public function render()

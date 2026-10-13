@@ -15,12 +15,21 @@ use Illuminate\Support\Facades\Notification;
 class CekEmailController extends  \App\Http\Controllers\Controller
 {
     public function cek_email(Request $request){
-        $formIds = Responses::whereHas('responden', function ($query) use ($request) {
-                $query->where('email', $request->input('responden_email'));
+        //$formIds = Responses::whereHas('responden', function ($query) use ($request) {
+            //    $query->where('email', $request->input('responden_email'));
+           // })
+            //->distinct()
+            //->pluck('form_id'); // Ambil hanya kolom form_id
+
+        $dbFormIds = Responses::whereHas('responden', function ($query) use ($request) {
+                    $query->where('email', $request->input('responden_email'));
             })
             ->distinct()
-            ->pluck('form_id'); // Ambil hanya kolom form_id
+            ->pluck('form_id'); // Contoh hasil: [1, 2]
 
+        // 2. Ambil ID form yang sudah ada di session anonim sebelumnya
+        $existingFormIds = collect(session('already_fill_form', []))->flatten(); // flatten() memastikan array awal 100% flat
+        
         try {
             // Validasi berhasil
             $request->validate([
@@ -32,8 +41,16 @@ class CekEmailController extends  \App\Http\Controllers\Controller
 
             $form = Form::where('placement', $request['placement'])->select('id','form_name','collect_email','one_attempt','must_fill')->first();
 
+            $mergedFormIds = $existingFormIds
+                ->merge($dbFormIds)          // Menggabungkan kedua list ID
+                ->push($form->id) // Pastikan ID form yang baru disubmit juga ikut masuk
+                ->unique()                   // Hapus ID yang sama/duplikat
+                ->values()                   // Reset index array (0, 1, 2, dst)
+                ->toArray();
+            //dd($mergedFormIds);
+
             session([
-                'already_fill_form' => $formIds,
+                'already_fill_form' => $mergedFormIds,
             ]);
             // hapus token lama
             PreTestToken::where('email', $request->responden_email)

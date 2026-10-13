@@ -11,8 +11,12 @@
                 <div class="w-full flex justify-center mb-8 mx-3">
                     <div class="bg-blue-50 dark:bg-slate-700 p-6 rounded-lg w-full lg:w-3/4 shadow-sm border border-blue-100 dark:border-slate-600">
                         <label class="block mb-2 text-sm font-medium dark:text-gray-300">Tulis Komentar Baru sebagai Admin:</label>
-                        <textarea wire:model="comment" rows="3"
-                            class="bg-white border border-gray-300 text-sm rounded-lg block w-full p-2.5 dark:bg-slate-600 dark:text-white" 
+                        <textarea wire:model="comment"
+                            maxlength="10000"
+                            rows="3" 
+                            x-data
+                            x-on:input="$el.style.height = 'auto'; $el.style.height = Math.min($el.scrollHeight, 500) + 'px'"
+                            class="bg-white border border-gray-300 text-sm rounded-lg block w-full p-2.5 dark:bg-slate-600 dark:text-white max-h-[500px] overflow-y-auto resize-none"
                             placeholder="Komentar utama..."></textarea>
                         <button wire:click="store" class="mt-3 text-white bg-blue-700 hover:bg-blue-800 font-medium rounded-lg text-sm px-5 py-2.5 w-full">
                             Kirim Komentar
@@ -40,7 +44,7 @@
                                     @if ($comment->is_admin)
                                         <span class="ml-2 text-[10px] bg-blue-600 text-white px-2 py-0.5 rounded uppercase">Admin</span>
                                     @endif
-                                    <p class="text-gray-700 dark:text-gray-300 mt-1">{{ $comment->comment }}</p>
+                                    <p class="text-gray-700 dark:text-gray-300 mt-1 whitespace-pre-wrap">{{ $comment->comment }}</p>
                                 </div>
                             </div>
 
@@ -59,7 +63,20 @@
                             @if($editingId == $comment->id)
                                 <div class="mt-4 p-4 bg-slate-50 dark:bg-slate-800 border rounded-lg animate-pulse-short">
                                     <h4 class="text-xs font-bold mb-2 uppercase text-gray-500">{{ $state == 'edit' ? 'Edit Komentar Anda' : 'Balas Komentar' }}</h4>
-                                    <textarea wire:model="comment" class="w-full text-sm border-gray-300 rounded-lg dark:bg-slate-700 dark:text-white"></textarea>
+                                    <textarea wire:model="comment"
+                                        maxlength="10000"
+                                        rows="3" 
+                                        x-data="{
+                                            resize() {
+                                                $el.style.height = 'auto';
+                                                $el.style.height = Math.min($el.scrollHeight, 500) + 'px';
+                                            }
+                                        }"
+                                        x-init="$nextTick(() => resize())"
+                                        x-intersect="$nextTick(() => resize())"
+                                        x-on:input="resize()"
+                                        class="w-full text-sm border-gray-300 rounded-lg dark:bg-slate-700 dark:text-white max-h-[500px] overflow-y-auto resize-none"
+                                    ></textarea>
                                     <div class="mt-2 flex gap-2">
                                         <button wire:click="{{ $state == 'edit' ? 'update' : 'store' }}" class="bg-green-600 text-white px-3 py-1.5 rounded text-xs">Simpan</button>
                                         <button wire:click="cancelAction" class="bg-gray-400 text-white px-3 py-1.5 rounded text-xs">Batal</button>
@@ -80,7 +97,7 @@
                                             <span class="text-gray-400 text-xs">▸ balas <b>{{ $reply->parent->name ?? 'User' }}</b></span>
                                         @endif
                                     </div>
-                                    <p class="text-sm text-gray-600 dark:text-gray-300">{{ $reply->comment }}</p>
+                                    <p class="text-sm text-gray-600 dark:text-gray-300 whitespace-pre-wrap">{{ $reply->comment }}</p>
                                     
                                     {{-- ACTION REPLIES --}}
                                     <div class="mt-2 flex gap-3 text-[12px]">
@@ -94,7 +111,13 @@
                                     {{-- FORM INLINE UNTUK REPLIES --}}
                                     @if($editingId == $reply->id)
                                         <div class="mt-3 p-3 bg-white dark:bg-slate-800 border rounded shadow-inner">
-                                            <textarea wire:model="comment" class="w-full text-sm rounded dark:bg-slate-700 dark:text-white"></textarea>
+                                            <textarea wire:model="comment"
+                                                maxlength="10000"
+                                                rows="3" 
+                                                x-data
+                                                x-on:input="$el.style.height = 'auto'; $el.style.height = Math.min($el.scrollHeight, 500) + 'px'"
+                                                class="w-full text-sm rounded dark:bg-slate-700 dark:text-white max-h-[500px] overflow-y-auto resize-none"
+                                            ></textarea>
                                             <div class="mt-2 flex gap-2">
                                                 <button wire:click="{{ $state == 'edit' ? 'update' : 'store' }}" class="bg-green-600 text-white px-2 py-1 rounded text-[11px]">Simpan</button>
                                                 <button wire:click="cancelAction" class="bg-gray-400 text-white px-2 py-1 rounded text-[11px]">Batal</button>

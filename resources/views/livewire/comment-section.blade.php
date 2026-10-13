@@ -35,8 +35,12 @@
                             placeholder="Nama atau Email" required>
                     </div>
                     <div class="mb-4">
-                        <textarea wire:model="comment" rows="3"
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" 
+                        <textarea wire:model="comment"
+                            maxlength="1000"
+                            rows="3" 
+                            x-data
+                            x-on:input="$el.style.height = 'auto'; $el.style.height = Math.min($el.scrollHeight, 250) + 'px'"
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 max-h-[250px] overflow-y-auto resize-none"
                             placeholder="Tulis komentar baru..." required></textarea>
                     </div>
                     <button type="submit" wire:loading.attr="disabled"
@@ -71,7 +75,7 @@
                                 <span class="bg-blue-100 text-blue-800 text-xs font-medium ml-2 px-2.5 py-0.5 rounded">Admin</span>
                             @endif
                         </div>
-                        <p class="text-gray-600 mb-2">{{ $comment->comment }}</p>
+                        <p class="text-gray-600 mb-2 whitespace-pre-wrap">{{ $comment->comment }}</p>
                     
                         {{-- Tombol Reply Parent --}}
                         <button class="text-sm text-blue-600 hover:underline font-medium" 
@@ -89,7 +93,13 @@
                                 <div class="text-xs text-gray-500 mb-2">Membalas: <b>{{ $comment->name }}</b></div>
                                 <form wire:submit.prevent="store">
                                     <input type="text" wire:model="name" class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 mb-2" placeholder="Nama..." required>
-                                    <textarea wire:model="comment" class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 mb-2" placeholder="Tulis balasan..." required></textarea>
+                                    <textarea 
+                                        wire:model="comment" 
+                                        maxlength="1000"
+                                        rows="3" 
+                                        x-data
+                                        x-on:input="$el.style.height = 'auto'; $el.style.height = Math.min($el.scrollHeight, 250) + 'px'"
+                                        class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 mb-2 max-h-[250px] overflow-y-auto resize-none" placeholder="Tulis balasan..." required></textarea>
                                     <div class="flex gap-2">
                                         <button type="submit" wire:loading.attr="disabled" class="text-white bg-green-600 hover:bg-green-700 font-medium rounded-lg text-xs px-4 py-2">Kirim</button>
                                         <button type="button" wire:click="cancelReply" class="text-gray-700 bg-gray-200 hover:bg-gray-300 font-medium rounded-lg text-xs px-4 py-2">Batal</button>
@@ -121,7 +131,7 @@
                                     @endif
                                 </div>
 
-                                <p class="text-sm text-gray-600 mt-1">{{ $reply->comment }}</p>
+                                <p class="text-sm text-gray-600 mt-1 whitespace-pre-wrap">{{ $reply->comment }}</p>
 
                                 {{-- Tombol Reply Anak --}}
                                 <button class="text-xs text-gray-500 hover:text-blue-600 mt-1 font-medium" 
@@ -138,7 +148,12 @@
                                         <div class="text-xs text-gray-500 mb-2">Membalas: <b>{{ $reply->name }}</b></div>
                                         <form wire:submit.prevent="store">
                                             <input type="text" wire:model="name" class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2 mb-2" placeholder="Nama..." required>
-                                            <textarea wire:model="comment" class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2 mb-2" placeholder="Tulis balasan..." required></textarea>
+                                            <textarea wire:model="comment"
+                                                maxlength="1000"
+                                                rows="3" 
+                                                x-data
+                                                x-on:input="$el.style.height = 'auto'; $el.style.height = Math.min($el.scrollHeight, 250) + 'px'"
+                                                class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2 mb-2 max-h-[250px] overflow-y-auto resize-none" placeholder="Tulis balasan..." required></textarea>
                                             <div class="flex gap-2">
                                                 <button type="submit" wire:loading.attr="disabled" class="text-white bg-green-600 hover:bg-green-700 font-medium rounded-lg text-xs px-3 py-1.5">Kirim</button>
                                                 <button type="button" wire:click="cancelReply" class="text-gray-700 bg-gray-200 hover:bg-gray-300 font-medium rounded-lg text-xs px-3 py-1.5">Batal</button>

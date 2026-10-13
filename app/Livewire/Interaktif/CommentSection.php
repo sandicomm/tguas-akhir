@@ -17,7 +17,7 @@ class CommentSection extends Component
     // Rules validasi dipisah agar lebih rapi
     protected $rules = [
         'name' => 'required|string|max:30',
-        'comment' => 'required|string|max:255',
+        'comment' => 'required|string|max:1000',
         'parent_id' => 'nullable|exists:comments,id',
     ];
 

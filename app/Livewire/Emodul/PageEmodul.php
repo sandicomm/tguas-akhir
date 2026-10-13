@@ -13,6 +13,7 @@ class PageEmodul extends Component
     public function mount()
     {
         $this->emodulAll = EmodulModel::all();
+
         $path = $this->emodulAll->first()['file_path'];
         if($this->emodulAll->count() < 1){
             return route('emodul.preveiw', ['url'=> $path]);

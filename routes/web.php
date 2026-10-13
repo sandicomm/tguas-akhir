@@ -29,6 +29,7 @@ use App\Http\Controllers\Form\FormTestController;
 use App\Http\Middleware\ValidationCekEmail;
 use App\Http\Middleware\ValidationTokenForm;
 use App\Http\Middleware\CheckPreTestCompleted;
+use App\Http\Middleware\CheckPostTestCompleted;
 use App\Livewire\Emodul\PageEmodul;
 use App\Livewire\Interaktif\CommentSection;
 use App\Livewire\PageInteraktif;
@@ -42,22 +43,7 @@ Route::get('/generate-sitemap', function () {
     return 'Sitemap generated';
 });
 
-Route::get('/', PrologController::class)->name('home');
-
 //Route::get('/dashboard', Dashboard::class)->middleware(['auth', 'verified'])->name('dashboard');
-
-Route::get('/form-test/{placement}', FormTest::class)->middleware([ValidationTokenForm::class])->name('form-test');
-
-Route::get('/form-test/verify/{token}/{placement}', [FormTestController::class, 'verify'])
-    ->name('form-test.verify');
-
-Route::get('/cek-email/{placement}', FormTestEmail::class)->middleware(ValidationCekEmail::class)
-    ->name('cek-email.email');
-    
-Route::post('/cek-email', [CekEmailController::class, 'cek_email'])
-    ->name('cek-email.cek');
-
-Route::post('/form-test/store', [ResponsesController::class, 'store'])->name('form-test.store');
 
 Route::get('/admin', Dashboard::class)->middleware(['auth', 'verified'])->name('admin.dashboard');
 Route::get('/admin/forms', Forms::class)->middleware(['auth', 'verified'])->name('admin.forms');
@@ -83,14 +69,30 @@ Route::post('/admin/webpage/clear', [WebPage::class, 'clearImagePage'])->middlew
 Route::post('/admin/webpage/cek', [WebPage::class, 'cekStatus'])->middleware(['auth', 'verified'])->name('admin.webpage.cek');
 Route::post('/admin/webpage/update-visit', [WebPage::class, 'updateVisit'])->middleware(['auth', 'verified'])->name('admin.webpage.updateVisit');
 
-//------------------ Website interaktif --------------
-Route::middleware([CheckPreTestCompleted::class])->group(function () {
-    Route::get('/interaktif', PageInteraktif::class)->name('interaktif');
-    Route::get('/interaktif/{type}', MediaController::class)->name('interaktif.media');
-    Route::post('/interaktif/comment/store', [CommentSection::class, 'store'])->name('interaktif.comment.store');
+//------------------ MEDIA EDUKASI --------------
+Route::post('/form-test/store', [ResponsesController::class, 'store'])->name('form-test.store');
+Route::post('/cek-email', [CekEmailController::class, 'cek_email'])
+    ->name('cek-email.cek');
 
-    Route::get('/emodul', PageEmodul::class)->name('emodul');
-    Route::get('/emodul/priview/{url}', PreviewEmodul::class)->name('emodul.preview');
+Route::middleware([CheckPostTestCompleted::class])->group(function () {
+    Route::get('/form-test/{placement}', FormTest::class)->middleware([ValidationTokenForm::class])->name('form-test');
+    
+    Route::get('/form-test/verify/{token}/{placement}', [FormTestController::class, 'verify'])
+        ->name('form-test.verify');
+    
+    Route::get('/cek-email/{placement}', FormTestEmail::class)->middleware(ValidationCekEmail::class)
+        ->name('cek-email.email');
+    
+    Route::get('/', PrologController::class)->name('home');
+    
+    Route::middleware([CheckPreTestCompleted::class])->group(function () {
+        Route::get('/interaktif', PageInteraktif::class)->name('interaktif');
+        Route::get('/interaktif/{type}', MediaController::class)->name('interaktif.media');
+        Route::post('/interaktif/comment/store', [CommentSection::class, 'store'])->name('interaktif.comment.store');
+
+        Route::get('/emodul', PageEmodul::class)->name('emodul');
+        Route::get('/emodul/priview/{url}', PreviewEmodul::class)->name('emodul.preview');
+    });
 });
 
 Route::get('/admin/export', function (){

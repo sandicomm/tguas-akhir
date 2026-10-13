@@ -22,7 +22,7 @@ class Comments extends Component
     public bool $isModalOpen = false;
 
     protected $rules = [
-        'comment' => 'required|string|max:255',
+        'comment' => 'required|string|max:10000',
     ];
 
     public function mount()
