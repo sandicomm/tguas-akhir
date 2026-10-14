@@ -11,10 +11,10 @@ class FormTestEmail extends Component
     public $placement;
     public function mount($placement)
     {
-
         $form = Form::where('placement', $placement)->value('must_fill');
         $this->placement = $placement;// Mengambil satu data saja
         $this->formMustFill = $form;// Mengambil satu data saja
+        session(['form_visit'=> $placement]);
     }
 
     public function render()
