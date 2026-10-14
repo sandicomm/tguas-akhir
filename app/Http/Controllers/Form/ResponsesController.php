@@ -200,14 +200,14 @@ class ResponsesController extends \App\Http\Controllers\Controller
 
             if(str_contains(strtolower($response['placement'] ?? ''), 'post-test')){
                 session()->put([
-                    'post_test_done'=>true,
+                    $response['placement'] . '_done'=>true,
                     'responden_email'=>null,
                     'form_name'=>$response['form_name'],
                     'already_fill_form'=>$formIds
                 ]);
             }else{
                 session()->put([
-                    'pre_test_done'=>true,
+                    $response['placement'] . '_done'=>true,
                     'responden_email'=>null,
                     'form_name'=>$response['form_name'],
                     'already_fill_form'=>$formIds

@@ -2,6 +2,7 @@
     @php
         $page = session('page_visited') ?? '';
     @endphp
+    
     @if ($form)
         <div class="rounded mb-2 bg-white p-3 rounded-3 w-full flex justify-center items-center">
             <h1 class="font-bold text-3xl">{{ $form->form_name }}</h1>

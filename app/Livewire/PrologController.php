@@ -12,6 +12,7 @@ class PrologController extends Component
     
     public function mount()
     {
+        session(['form_visit'=> '']);
         $this->param = 'prolog-web';
         $this->webpage = Page::where('id', 'like', '%prolog-web%')->get();
     }

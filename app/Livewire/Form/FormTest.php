@@ -20,6 +20,7 @@ class FormTest extends Component
             ->where('placement', $placement) // Filter berdasarkan form_type
             ->first(); // Ambil form berdasarkan tipe
 
+        session(['form_visit'=> $placement]);
         $this->sections = collect();
         $page= session('page_visited');
         
