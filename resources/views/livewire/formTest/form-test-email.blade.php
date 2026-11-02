@@ -5,7 +5,7 @@
     @php
         $page = session('page_visited') ?? '';
     @endphp
- 
+    
     <div class="box-soal w-100">  
         @if($formMustFill == 0)
             <div class="bg-white w-100 rounded p-4 flex justify-center align-center flex-col text-center mb-4">

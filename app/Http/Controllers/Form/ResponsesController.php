@@ -135,16 +135,16 @@ class ResponsesController extends \App\Http\Controllers\Controller
             if(str_contains(strtolower($response['placement'] ?? ''), 'post-test')){
                 session()->put([
                     $response['placement'] . '_done'=>true,
-                    'responden_email'=>null,
+                    'responden_email'=>$responden->email,
                     'form_name'=>$response['form_name'],
-                    'already_fill_form'=>$formIds
+                    'already_fill_form'=>$mergedFormIds
                 ]);
             }else{
                 session()->put([
                     $response['placement'] . '_done'=>true,
-                    'responden_email'=>null,
+                    'responden_email'=>$responden->email,
                     'form_name'=>$response['form_name'],
-                    'already_fill_form'=>$formIds
+                    'already_fill_form'=>$mergedFormIds
                 ]);
             }
 
@@ -160,7 +160,13 @@ class ResponsesController extends \App\Http\Controllers\Controller
             return redirect(route(session('page_visited')))->with('success', 'Response Berhasil Direkam');
         }else{
             //dd(session('pre_test_done'), session('form_name') == $response['form_name'], session('no_email_user') != null, Str::contains($response['placement'] ?? '', 'post-test') );
-            if(session('pre_test_done') && session('no_email_user') != null && Str::contains($response['placement'] ?? '', 'post-test') ){
+            if(Str::contains($response['placement'], 'interaktif')){
+                $preTestDone = session('pre-test-interaktif_done');
+            }else if(Str::contains($response['placement'], 'emodul')){
+                $preTestDone = session('pre-test-emodul_done');
+            }
+
+            if($preTestDone && session('no_email_user') != null && Str::contains($response['placement'] ?? '', 'post-test') ){
                 $uuid=session('no_email_user');
             }else{
                 $uuid = Str::uuid(); // Buat UUID unik

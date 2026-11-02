@@ -39,19 +39,53 @@ class CekEmailController extends  \App\Http\Controllers\Controller
                 'responden_email.required' => 'Email harus diisi',
             ]);
 
-            $form = Form::where('placement', $request['placement'])->select('id','form_name','collect_email','one_attempt','must_fill')->first();
+            $form = Form::where('placement', $request['placement'])->select('id','form_name','placement','collect_email','one_attempt','must_fill')->first();
 
-            $mergedFormIds = $existingFormIds
-                ->merge($dbFormIds)          // Menggabungkan kedua list ID
-                ->push($form->id) // Pastikan ID form yang baru disubmit juga ikut masuk
-                ->unique()                   // Hapus ID yang sama/duplikat
-                ->values()                   // Reset index array (0, 1, 2, dst)
-                ->toArray();
-            //dd($mergedFormIds);
+            $mergedFormIds = collect($existingFormIds)
+                ->merge(collect($dbFormIds))
+                ->push($form->id)
+                ->unique()
+                ->values();
 
+            // Simpan ID form ke session.
             session([
-                'already_fill_form' => $mergedFormIds,
+                'already_fill_form' => $mergedFormIds->toArray(),
             ]);
+
+            // Placement yang perlu memiliki session _done.
+            $trackedPlacements = [
+                'pre-test-interaktif',
+                'post-test-interaktif',
+                'pre-test-emodul',
+                'post-test-emodul',
+            ];
+
+            // Cari form berdasarkan ID yang ada di mergedFormIds.
+            $completedForms = Form::whereIn('id', $mergedFormIds->all())
+                ->whereIn('placement', $trackedPlacements)
+                ->get(['id', 'placement']);
+
+            // Tandai setiap placement yang ditemukan sebagai selesai.
+            $doneSessions = [];
+
+            foreach ($completedForms as $completedForm) {
+                $doneSessions[$completedForm->placement . '_done'] = true;
+            }
+
+            // Simpan seluruh session _done sekaligus.
+            if (!empty($doneSessions)) {
+                session()->put($doneSessions);
+            }
+
+            // Pertahankan logika one_attempt untuk form yang sedang disubmit.
+            if ((int) $form->one_attempt === 1) {
+                session()->put([
+                    $form->placement . '_done' => true,
+                    'responden_email' => $request->input('responden_email'),
+                    'form_name' => $form->form_name,
+                ]);
+            }
+            
             // hapus token lama
             PreTestToken::where('email', $request->responden_email)
                 ->where('expired_at', '<', now())

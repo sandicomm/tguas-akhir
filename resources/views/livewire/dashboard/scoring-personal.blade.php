@@ -14,7 +14,7 @@
                     $index = 0;
                     $indexNoEmail = 0;
                 @endphp
-
+                
                 <div class="w-full p-3 flex">
                     <div class="w-full">
                         <div class="flex gap-2 mb-2">
@@ -62,12 +62,17 @@
                 
                 <div class="flex flex-wrap gap-2 w-full px-3 pb-3 overflow-y-auto">
                     @if(!$this->groupedAllResponsesScoring->isEmpty())
-
+                        
                         <div class="flex flex-wrap gap-2 w-full max-h-[90vh]">
                                 @foreach($this->groupedAllResponsesScoring as $userKey => $forms)
+                                    
                                     <div class="flex-[1_1_calc(50%-0.5rem)] dark:bg-slate-600 bg-white rounded mb-4">
                                         <div class="flex justify-between items-center p-2 bg-blue-200 dark:bg-indigo-700 rounded">
-                                            <h3 class="font-bold dark:text-white">{{ filter_var($userKey, FILTER_VALIDATE_EMAIL) ? $userKey : 'No_Email' }}</h3>
+                                            @php
+                                                // Mengambil 8 karakter pertama dari UUID
+                                                $shortUuid = is_string($userKey) ? substr($userKey, 0, 8) : '';
+                                            @endphp
+                                            <h3 class="font-bold dark:text-white">{{ filter_var($userKey, FILTER_VALIDATE_EMAIL) ? $userKey : 'No_Email(' . $shortUuid . ')' }}</h3>
                                             <div class="w-full h-fit flex justify-end items-end px-3 pt-2">
                                                 <a data-popover-target="popover-download-excel-scoring-{{ $userKey }}"  wire:click="export( '{{$userKey}}' )" class="p-1 bg-blue-700 text-white rounded hover:bg-blue-600">
                                                     <svg class="w-5 h-5 text-white dark:text-white" aria-hidden="true" width="24" height="24" fill="none" viewBox="0 0 24 24">

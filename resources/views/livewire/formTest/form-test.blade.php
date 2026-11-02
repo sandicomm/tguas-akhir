@@ -13,7 +13,7 @@
                 $formResponded = session('already_fill_form') ?? '';
                 $alreadyFillTheForm = collect($formResponded)->contains($form->id);
             @endphp
-          
+            
             @if ($form->one_attempt == 1 && $alreadyFillTheForm)
 
                 <div class="bg-white w-full rounded p-4 flex justify-center items-center flex-col">
@@ -95,7 +95,7 @@
                                                     for="answer-{{ $question->id }}-{{ $loop->index }}">
                                                     
                                                     {{-- Input Radio disembunyikan --}}
-                                                    <input class="hidden answer-radio" 
+                                                    <input class="sr-only answer-radio" 
                                                         type="radio" 
                                                         id="answer-{{ $question->id }}-{{ $loop->index }}"
                                                         name="sections[{{ $section->id }}][questions][{{ $question->id }}][answer]"  

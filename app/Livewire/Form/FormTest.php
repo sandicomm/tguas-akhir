@@ -21,6 +21,7 @@ class FormTest extends Component
             ->first(); // Ambil form berdasarkan tipe
 
         session(['form_visit'=> $placement]);
+        //dd(session('form_visit'));
         $this->sections = collect();
         $page= session('page_visited');
         
