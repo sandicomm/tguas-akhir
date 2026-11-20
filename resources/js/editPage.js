@@ -644,7 +644,7 @@ const sendBatch = async (batch, indexLabel, extraFields = false) => {
   });
 
   form.append("paramStatus", param);
-  //console.log(form, extraFields)
+  //console.log(form, extraFields, batch)
   let raw = "";
   try {
       const response = await fetch('/admin/webpage/store', {
@@ -669,7 +669,7 @@ const sendBatch = async (batch, indexLabel, extraFields = false) => {
       
       let data = JSON.parse(raw);
       if (data.success) {
-        //console.log('data no puri:',data.datano)
+        //console.log('data no puri:',data.datano, data)
         //console.log('data puri:', data.datapuri)
         //console.log('data content:',data.datacontent)
           batch.forEach(item => {

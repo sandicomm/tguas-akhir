@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('parent_id')->nullable()->constrained('comments')->onDelete('cascade');
             $table->string('name');
-            $table->string('comment');
+            $table->text('comment');
             $table->boolean('is_admin')->default(0);
             $table->timestamps();
         });

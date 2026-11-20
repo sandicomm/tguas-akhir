@@ -1,5 +1,5 @@
 <div class="rounded mt-4 overflow-hidden w-full text-center shadow-md bg-white dark:bg-gray-900">
-    <h1 class="text-3xl font-bold p-3 bg-cyan-600 text-white">Rekap Jawaban</h1>
+    <h1 class="text-3xl font-bold p-3 bg-blue-600 dark:bg-violet-700 text-white">Rekap Jawaban</h1>
         <div class="w-full p-4">
             <div class="w-full bg-slate-300 p-3 rounded mb-2">
                 <p class="font-bold">Pilih Form</p>

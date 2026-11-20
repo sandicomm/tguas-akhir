@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('forms', function (Blueprint $table) {
             $table->id();
             $table->string('form_name');
-            $table->enum('placement', ['post-test-interkatif', 'pre-test-interkatif', 'post-test-emodul', 'pre-test-emodul','disable']);
+            $table->enum('placement', ['post-test-interaktif', 'pre-test-interaktif', 'post-test-emodul', 'pre-test-emodul','disable']);
             $table->boolean('collect_email')->default(true);
             $table->boolean('one_attempt')->default(false);
             $table->boolean('must_fill')->default(false);

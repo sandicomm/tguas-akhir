@@ -154,7 +154,7 @@ class WebPage extends Component
                     if ($page) {
                         // Batasi penghapusan berdasarkan paramStatus (Logika Keamanan Anda)
                         $query = \App\Models\Webpage::where('id', $id);
-                        if ($request->paramStatus === 'prolog-web') {
+                        if ($request->paramStatus === 'prolog') {
                             $query->where('id', 'like', '%prolog-web%')->whereNotIn('id', ['webpage-section-prolog-web-1', 'webpage']);
                         } elseif ($request->paramStatus === 'prolog-emodul') {
                             $query->where('id', 'like', '%prolog-emodul%')->whereNotIn('id', ['webpage-section-prolog-emodul-1', 'webpage']);
@@ -176,7 +176,7 @@ class WebPage extends Component
                 ['expires_at' => Carbon::now()->addMinutes(7)]
             );
 
-            return response()->json(['success' => true, 'message' => 'Data berhasil diperbarui', 'datano'=>$this->dataStyle, 'datapuri'=>$this->dataStylePuri,'datacontent'=>$this->dataContent]);
+            return response()->json(['success' => true, 'message' => 'Data berhasil diperbarui', 'datano'=>$this->dataStyle, 'datapuri'=>$request->paramStatus,'datacontent'=>$this->dataContent]);
 
         } catch (\Throwable $e) {
             DB::rollBack();

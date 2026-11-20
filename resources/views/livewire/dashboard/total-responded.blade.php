@@ -16,7 +16,7 @@
     
     <div class="flex lg:flex-nowrap flex-wrap md:gap-3 gap-10 m-4 mb-12">
         <div class="flex w-full h-fit items-center justify-start flex-col rounded-md bg-white dark:bg-gray-800 shadow-md">
-            <div class="text-center rounded bg-teal-400 w-full p-1">
+            <div class="text-center rounded bg-blue-600 dark:bg-violet-700 w-full p-1">
                 <p class="lg:text-xl text-white">
                     Interaktif Page
                 </p>
@@ -29,7 +29,7 @@
                     
                     <p class="lg:text-2xl text-black dark:text-white">{{ $groupedResponses['interaktif']['responden']['count'] ?? '0' }}</p>
 
-                    <div class="text-white mt-2 text-center flex flex-row items-center justify-center rounded bg-gradient-to-r from-blue-500 to-cyan-500 w-[85%] h-fit">
+                    <div class="text-white mt-2 text-center flex flex-row items-center justify-center rounded bg-gradient-to-r from-blue-600 to-blue-700 dark:from-gray-800 dark:to-violet-600 w-[85%] h-fit">
                         <div class="py-2 text-center flex items-center justify-center flex-col rounded w-full h-full">
                             <p class="xl:text-xl">
                                 Email
@@ -49,7 +49,7 @@
                         Responses
                     </p>
                     
-                    <div class="text-white mt-2 text-center flex flex-row items-center justify-center rounded bg-gradient-to-r from-blue-500 to-cyan-500 w-[90%] h-fit">
+                    <div class="text-white mt-2 text-center flex flex-row items-center justify-center rounded bg-gradient-to-r from-blue-600 to-blue-700 dark:from-gray-800 dark:to-violet-600 w-[90%] h-fit">
                         <div class="py-2 text-center flex items-center justify-center flex-col rounded w-full h-full">
                             <p class="xl:text-xl">
                                 Pre-Test
@@ -93,7 +93,7 @@
         </div>
 
         <div class="flex w-full h-fit items-center justify-start flex-col rounded-md bg-gray-50 dark:bg-gray-800 shadow-md">
-            <div class="text-center rounded bg-teal-400 w-full p-1">
+            <div class="text-center rounded bg-blue-600 dark:bg-violet-700 w-full p-1">
                 <p class="lg:text-xl text-white">
                     Emodul Page
                 </p>
@@ -106,7 +106,7 @@
 
                     <p class="lg:text-2xl text-black dark:text-white">{{ $groupedResponses['emodul']['responden']['count'] ?? '0' }}</p>
 
-                    <div class="text-white mt-2 text-center flex flex-row items-center justify-center rounded bg-gradient-to-r from-blue-500 to-cyan-500 w-[85%] h-fit">
+                    <div class="text-white mt-2 text-center flex flex-row items-center justify-center rounded bg-gradient-to-r from-blue-600 to-blue-700 dark:from-gray-800 dark:to-violet-600 w-[85%] h-fit">
                         <div class="py-2 text-center flex items-center justify-center flex-col rounded w-full h-full">
                             <p class="xl:text-xl">
                                 Email
@@ -126,7 +126,7 @@
                         Responses
                     </p>
 
-                    <div class="text-white mt-2 text-center flex flex-row items-center justify-center rounded bg-gradient-to-r from-blue-500 to-cyan-500 w-[90%] h-fit">
+                    <div class="text-white mt-2 text-center flex flex-row items-center justify-center rounded bg-gradient-to-r from-blue-600 to-blue-700 dark:from-gray-800 dark:to-violet-600 w-[90%] h-fit">
                         <div class="py-2 text-center flex items-center justify-center flex-col rounded w-full h-full">
                             <p class="xl:text-xl">
                                 Pre-Test

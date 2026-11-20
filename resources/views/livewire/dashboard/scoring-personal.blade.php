@@ -1,7 +1,7 @@
 <div>
     <div class="flex lg:flex-nowrap flex-wrap md:gap-3 gap-10 m-4 mb-12">
         <div class="flex w-full h-fit items-center justify-start flex-col rounded-md bg-gray-50 dark:bg-gray-800 shadow-md">
-            <div class="text-center rounded bg-teal-400 w-full p-4 flex">
+            <div class="text-center rounded bg-blue-600 dark:bg-violet-700 w-full p-4 flex">
                 <div class="flex-1">
                     <p class="lg:text-3xl font-bold text-white">
                         SCORING
@@ -147,7 +147,7 @@
                         <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50 overflow-y-auto">
                             <div class="dark:bg-slate-800 bg-slate-200 rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
                                 
-                                <div class="p-4 border-b border-slate-700 flex justify-between items-center bg-blue-600 text-white">
+                                <div class="p-4 border-b border-slate-700 flex justify-between items-center bg-blue-600 dark:bg-violet-700 text-white">
                                     <h2 class="text-lg font-bold">{{ $selectedFormData['form_name'] }} - {{ $selectedFormData['user'] }}</h2>
                                     <button wire:click="closeModal" class="text-white hover:text-gray-200 text-2xl">&times;</button>
                                 </div>
